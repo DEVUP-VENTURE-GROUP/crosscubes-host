@@ -1,0 +1,122 @@
+/**
+ * Storage abstraction. Production binds an S3 implementation that returns
+ * presigned PUT URLs; local dev binds the mock. Callers depend on this
+ * interface only, so swapping to real S3 changes nothing downstream.
+ */
+export interface UploadTarget {
+  key: string;
+  uploadUrl: string; // presigned PUT (client uploads bytes directly here)
+  publicUrl: string; // URL to read the object after upload
+}
+
+/** What kind of object is being stored — drives the key prefix. */
+export type UploadCategory =
+  | 'vehicle_photo'
+  | 'trip_photo' // pre/post condition photos on a trip
+  | 'message' // photo shared in a booking conversation
+  | 'avatar'
+  | 'registration'
+  | 'insurance'
+  | 'kyc'
+  | 'claim'
+  | 'recall_receipt'
+  | 'w9' // Asset Partner tax form
+  | 'title' // vehicle title or loan papers
+  | 'partner_exit'; // estate papers when a partner has died
+
+export const UPLOAD_CATEGORIES = [
+  'vehicle_photo',
+  'trip_photo',
+  'message',
+  'avatar',
+  'registration',
+  'insurance',
+  'kyc',
+  'claim',
+  'recall_receipt',
+  'w9',
+  'title',
+  'partner_exit',
+] as const;
+
+/**
+ * Only these may be uploaded. A presigned PUT is a write capability handed to a
+ * browser — without an allowlist a caller could park HTML or executables in the
+ * bucket and have them served from our own domain.
+ */
+export const ALLOWED_CONTENT_TYPES = [
+  'image/jpeg',
+  'image/jpg', // some Android cameras report this non-standard type
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/heic',
+  'image/heif',
+  'image/gif',
+  'application/pdf', // documents: registration, insurance, KYC
+] as const;
+
+export interface CreateUploadInput {
+  ownerId: string;
+  category: UploadCategory;
+  contentType: string;
+  /** Exact byte size of each file to upload; one target is issued per entry and its length is signed in. */
+  sizes: number[];
+}
+
+/**
+ * Categories whose objects must NEVER be publicly reachable — identity and
+ * legal documents. Their reads go through an authorized, short-lived presigned
+ * GET, not the public CDN. Car photos and avatars are shown on public listings
+ * anyway, so they stay on the fast public path.
+ */
+export const PRIVATE_CATEGORIES: UploadCategory[] = [
+  'registration',
+  'insurance',
+  'kyc',
+  'claim',
+  'recall_receipt',
+  'w9',
+  'title',
+  'partner_exit',
+];
+
+export function isPrivateCategory(category: string): boolean {
+  return (PRIVATE_CATEGORIES as string[]).includes(category);
+}
+
+/** The permission that lets a non-owner (staff) view each private category. */
+export const PRIVATE_CATEGORY_PERMISSION: Record<string, string> = {
+  kyc: 'kyc:review',
+  claim: 'claim:manage',
+  registration: 'vehicle:verify',
+  insurance: 'vehicle:verify',
+  w9: 'host:manage',
+  title: 'host:manage',
+  partner_exit: 'host:manage',
+};
+
+/**
+ * A stored object key looks like `category/YYYY/MM/ownerId/uuid.ext`. Pull the
+ * category and owner back out so a download can be authorized against them.
+ */
+export function parseKey(key: string): { category: string; ownerId: string } | null {
+  if (key.startsWith('/') || key.includes('\\')) return null;
+  const parts = key.split('/');
+  if (parts.length < 5) return null;
+  if (parts.some((p) => p === '' || p === '.' || p === '..')) return null;
+  if (!(UPLOAD_CATEGORIES as readonly string[]).includes(parts[0])) return null;
+  return { category: parts[0], ownerId: parts[3] };
+}
+
+export interface StorageGateway {
+  createUploadTargets(input: CreateUploadInput): Promise<UploadTarget[]>;
+  /** Short-lived read URL for a private object (presigned GET on S3). */
+  createDownloadUrl(key: string, opts?: { publicStable?: boolean }): Promise<string>;
+  /** The object's bytes, read on the server so a private file never needs a link the client could keep. */
+  readObject(key: string): Promise<{ body: Buffer; contentType?: string }>;
+  /** The durable URL an object is served from once uploaded. */
+  publicUrlFor(key: string): string;
+  /** The CDN address of an object, or null when no CDN is configured. */
+  cdnUrlFor(key: string): string | null;
+}

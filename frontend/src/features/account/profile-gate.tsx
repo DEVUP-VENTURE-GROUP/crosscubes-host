@@ -1,0 +1,55 @@
+'use client';
+
+import { usePathname, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '@/features/auth/store';
+import { ADMIN_ROLES } from '@/features/auth/hooks';
+import { accountApi } from './api';
+
+/**
+ * The account-setup gate. After login, a GUEST cannot use the app until they
+ * have set up the identity a rental requires (legal name, DOB, phone, address,
+ * photo, emergency contact). This mounts once at the app root: when the signed-in
+ * guest's profile is incomplete, it routes them to /account/setup and keeps them
+ * there until it's done.
+ *
+ * It applies to guests/hosts only - NOT staff/admins, and not the seeded House
+ * Fleet account. An admin signing into the console is not a renter, so forcing
+ * them through guest onboarding (which is what sent an admin login to
+ * /account/setup) is wrong. House Fleet is the same story one level down: it's
+ * an internal account that lists CatoDrive's own cars and will never itself
+ * rent one, so it gets the same exemption - and only it, not ordinary
+ * self-serve hosts, who still need this before they can book as a guest too.
+ * Both are skipped entirely and never even asked for a profile status.
+ *
+ * Paths that must stay reachable while incomplete are allow-listed - the setup
+ * page itself, auth screens, legal docs, and sign-out - so the redirect never
+ * loops or traps someone trying to read the Terms or log out.
+ */
+const OPEN_PREFIXES = ['/account/setup', '/login', '/register', '/forgot-password', '/legal', '/privacy', '/terms', '/logout', '/verify-email', '/verify'];
+
+const IN_ADMIN_APP = process.env.NEXT_PUBLIC_APP_SURFACE === 'admin';
+
+export function ProfileGate() {
+  const status = useAuthStore((s) => s.status);
+  const user = useAuthStore((s) => s.user);
+  const pathname = usePathname();
+  const router = useRouter();
+  const onOpenPath = OPEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  // Staff/admins, and House Fleet specifically, are not renters - the
+  // guest-onboarding gate never applies to them.
+  const isStaff = !!user?.roles?.some((r) => ADMIN_ROLES.includes(r) || r === 'house_fleet');
+
+  const { data } = useQuery({
+    queryKey: ['profile-status'],
+    queryFn: () => accountApi.profileStatus(),
+    enabled: status === 'authenticated' && !isStaff && !IN_ADMIN_APP,
+    staleTime: 60_000,
+  });
+
+  // No longer a gate after sign-up: renter details are asked for at the moment someone books (the booking API refuses with PROFILE_INCOMPLETE and the car page sends them to setup and back).
+  // Kept for the profile-status query other screens read.
+  void onOpenPath; void router; void data;
+
+  return null;
+}

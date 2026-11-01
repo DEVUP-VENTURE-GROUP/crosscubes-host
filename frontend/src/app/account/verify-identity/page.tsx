@@ -1,0 +1,365 @@
+'use client';
+
+import { ErrorState } from '@/components/ui/states';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  ShieldCheck, IdCard, ScanFace, LockKeyhole, CheckCircle2, XCircle, Clock, ArrowLeft, Camera, RefreshCw,
+} from 'lucide-react';
+import { AuthGuard } from '@/components/layout/auth-guard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { useToast } from '@/components/ui/toast';
+import { formatDay } from '@/lib/utils/format';
+import { accountApi } from '@/features/account/api';
+import { kycApi, type KycStatusView } from '@/features/kyc/api';
+import { KYC_MANUAL_FIELDS, KYC_STEPS, kycReasonLabel } from '@/features/kyc/copy';
+import { openIdentityModal } from '@/features/kyc/stripe-identity';
+import { useStripePublishableKey } from '@/features/payments/stripe-key';
+import { uploadFiles } from '@/features/media/upload';
+import { LiveCamera } from '@/features/trips/components/live-camera';
+import { ApiError } from '@/lib/api/types';
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+/** The three checks Stripe runs, shown up front so there are no surprises. */
+const STEP_ICON = { license: IdCard, selfie: ScanFace, secure: LockKeyhole };
+const STEPS = KYC_STEPS.map((s) => ({ ...s, icon: STEP_ICON[s.key] }));
+
+function VerifyIdentity() {
+  const qc = useQueryClient();
+  const router = useRouter();
+  const toast = useToast();
+  // Always fresh: this screen shows what the person just changed on their account, so a cached copy from a minute ago must never be shown.
+  const me = useQuery({ queryKey: ['me'], queryFn: () => accountApi.me(), refetchOnMount: 'always', staleTime: 0 });
+
+  const status = useQuery({
+    queryKey: ['kyc-status'],
+    queryFn: () => kycApi.status(),
+    // While a decision is pending, poll so the webhook result lands on-screen.
+    refetchInterval: (q) => ((q.state.data as KycStatusView | undefined)?.status === 'pending' ? 5000 : false),
+  });
+
+  const [confirmed, setConfirmed] = useState(false);
+  const [devSession, setDevSession] = useState(false);
+  const [captureFailed, setCaptureFailed] = useState(false);
+  const { key: stripeKey, ready: keyReady } = useStripePublishableKey();
+  const manualAvailable = captureFailed || (keyReady && !stripeKey);
+
+  const refreshStatus = () => qc.invalidateQueries({ queryKey: ['kyc-status'] });
+
+  // Sent here mid-booking: once verified, go straight back to the car with the same selection.
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//')) setReturnTo(next);
+  }, []);
+  useEffect(() => {
+    if (returnTo && status.data?.status === 'approved') router.replace(returnTo);
+  }, [returnTo, status.data?.status, router]);
+
+  const start = useMutation({
+    mutationFn: async () => {
+      const session = await kycApi.startVerification();
+      // Live Stripe Identity: open the hosted capture modal in place.
+      if (session.clientSecret && stripeKey) {
+        const outcome = await openIdentityModal(session.clientSecret);
+        return { outcome } as const;
+      }
+      // Hosted redirect (Stripe can also return a URL).
+      if (session.url && session.url !== 'about:blank') {
+        window.location.assign(session.url);
+        return { outcome: 'redirect' } as const;
+      }
+      // Dev stub (no live provider): reveal the offline decision controls.
+      return { outcome: 'stub' } as const;
+    },
+    onSuccess: (r) => {
+      if (r.outcome === 'completed') { refreshStatus(); toast({ title: 'Submitted for review', tone: 'success' }); }
+      else if (r.outcome === 'stub') { if (isDev) setDevSession(true); else setCaptureFailed(true); }
+      else if (r.outcome === 'canceled') toast({ title: 'Verification canceled', tone: 'info' });
+    },
+    onError: (e) => {
+      setCaptureFailed(true);
+      toast({ title: e instanceof ApiError ? e.message : (e as Error).message, tone: 'error' });
+    },
+  });
+
+  // Dev-only: force a decision so the flow completes without a real webhook.
+  const decide = useMutation({
+    mutationFn: (d: 'verified' | 'rejected') => kycApi.devDecide(d, d === 'rejected' ? 'documents_unreadable' : undefined),
+    onSuccess: () => { setDevSession(false); refreshStatus(); },
+  });
+
+  if (status.isError && !status.data) return <ErrorState message="We couldn’t load your verification status." retry={() => void status.refetch()} />;
+
+  if (me.isError && !me.data) return <ErrorState message="We couldn’t load your account." retry={() => void me.refetch()} />;
+  if (status.isLoading || me.isLoading) {
+    return <div className="mx-auto max-w-2xl space-y-4 py-6"><Skeleton className="h-40 w-full" /><Skeleton className="h-64 w-full" /></div>;
+  }
+
+  const s = status.data?.status ?? 'not_started';
+  const profile = me.data;
+  const nameKnown = !!(profile?.firstName && profile?.lastName);
+  const primaryAddress = profile?.addresses?.find((a) => a.isDefault) ?? profile?.addresses?.[0];
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 py-6">
+      <Link href="/account" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back to account
+      </Link>
+
+      <PageHeader
+        title="Verify your identity"
+        description="Every driver on CatoDrive is identity-verified against a government-issued ID. It's mandatory before you can book - so hosts and guests always know exactly who they're dealing with."
+      />
+
+      {/* ── Terminal & in-progress states ─────────────────────────── */}
+      {s === 'approved' && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <CheckCircle2 className="h-12 w-12 text-success" />
+            <h2 className="text-xl font-bold">You’re verified</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">Your identity is confirmed. You’re all set to book.</p>
+            {returnTo ? (
+              <Button onClick={() => router.push(returnTo)} className="mt-2">Back to your car</Button>
+            ) : (
+              <Button onClick={() => router.push('/search')} className="mt-2">Find a car</Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {s === 'pending' && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <Clock className="h-12 w-12 text-warning" />
+            <h2 className="text-xl font-bold">Under review</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              We’ve got your documents and are reviewing them now. Most checks finish in a few minutes - we’ll notify you the moment it’s done.
+            </p>
+            <Button variant="outline" onClick={refreshStatus} className="mt-2"><RefreshCw className="h-4 w-4" /> Check again</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {(s === 'not_started' || s === 'rejected') && (
+        <>
+          {s === 'rejected' && (
+            <Card className="border-destructive/40 bg-destructive/5">
+              <CardContent className="flex items-start gap-3 py-5">
+                <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+                <div>
+                  <p className="font-semibold text-destructive">Your last check didn’t pass</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {kycReasonLabel(status.data?.reason)} You can try again - a clear, well-lit photo of a valid license usually does it.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Why we need this */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <ShieldCheck className="h-5 w-5 text-primary" /> Why we ask
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>Every driver is checked against a government-issued ID so hosts know exactly who’s behind the wheel - and so you can trust the guests and hosts you meet. It’s how we keep fraud and unsafe drivers off the platform.</p>
+              <p>Your license images are handled by our verification partner and are never shared with hosts or stored on your profile.</p>
+            </CardContent>
+          </Card>
+
+          {/* What to expect */}
+          <Card>
+            <CardHeader><CardTitle className="text-lg">What you’ll do</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {STEPS.map((step, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <step.icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="font-medium">{step.title}</p>
+                    <p className="text-sm text-muted-foreground">{step.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Personal-info confirmation */}
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Confirm your details</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">These must match the license you’re about to scan.</p>
+              <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Detail label="Legal name" value={nameKnown ? `${profile!.firstName} ${profile!.lastName}` : '-'} />
+                <Detail label="Date of birth" value={profile?.dateOfBirth ? formatDay(profile.dateOfBirth) : '-'} />
+                <Detail
+                  label="Address"
+                  value={primaryAddress ? [primaryAddress.line1, primaryAddress.line2, primaryAddress.city, [primaryAddress.state, primaryAddress.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ') : '-'}
+                  full
+                />
+              </dl>
+              <p className="text-xs text-muted-foreground">
+                Something wrong? <Link href="/account" className="font-medium text-primary underline">Change it on your account</Link>, then come back. Your default saved address is the one shown here.
+              </p>
+              {(!nameKnown || !profile?.dateOfBirth) && (
+                <p className="text-sm text-warning">
+                  Add your legal name and date of birth on your{' '}
+                  <Link href="/account" className="font-medium underline">account page</Link> first.
+                </p>
+              )}
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="mt-0.5 accent-[hsl(var(--primary))]"
+                />
+                <span>The details above match my government-issued ID, and I’m ready to scan it.</span>
+              </label>
+
+              {keyReady && !stripeKey && !isDev && (
+                <p className="text-sm text-muted-foreground">Instant verification is unavailable right now. You can take live photos of your documents below instead.</p>
+              )}
+
+              <Button
+                className="w-full"
+                size="lg"
+                loading={start.isPending || !keyReady}
+                disabled={!confirmed || (!nameKnown || !profile?.dateOfBirth) || (keyReady && !stripeKey && !isDev)}
+                onClick={() => start.mutate()}
+              >
+                <Camera className="h-4 w-4" /> {s === 'rejected' ? 'Try again' : 'Start verification'}
+              </Button>
+
+              {/* Dev-only offline decision (no live provider configured). */}
+              {isDev && devSession && (
+                <div className="rounded-lg border border-dashed border-border p-3">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Dev: no live provider - simulate a decision</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" loading={decide.isPending} onClick={() => decide.mutate('verified')}>Approve</Button>
+                    <Button size="sm" variant="outline" loading={decide.isPending} onClick={() => decide.mutate('rejected')}>Reject</Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {manualAvailable && (
+            <ManualUpload
+              disabled={!nameKnown || !profile?.dateOfBirth}
+              onSubmitted={() => { refreshStatus(); toast({ title: 'Submitted for review', tone: 'success' }); }}
+            />
+          )}
+        </>
+      )}
+
+      <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+        <Badge tone="default" className="gap-1"><LockKeyhole className="h-3 w-3" /> Encrypted</Badge>
+        Powered by Stripe Identity
+      </p>
+    </div>
+  );
+}
+
+
+/** Secondary path: photograph the documents live for our team to review by hand. No file picker: every shot is taken here, now, and stamped. */
+function ManualUpload({ disabled, onSubmitted }: { disabled: boolean; onSubmitted: () => void }) {
+  const toast = useToast();
+  const [shots, setShots] = useState<Record<string, { blob: Blob; previewUrl: string } | undefined>>({});
+  const [capturing, setCapturing] = useState<(typeof KYC_MANUAL_FIELDS)[number] | null>(null);
+  const complete = KYC_MANUAL_FIELDS.every((f) => shots[f.id]);
+
+  const submit = useMutation({
+    mutationFn: async () => {
+      const uploaded = await Promise.all(
+        KYC_MANUAL_FIELDS.map((f) => uploadFiles('kyc', [new File([shots[f.id]!.blob], `${f.id}.jpg`, { type: 'image/jpeg' })])),
+      );
+      return kycApi.submitDocuments(KYC_MANUAL_FIELDS.map((f, i) => ({ type: f.type, key: uploaded[i][0].key })));
+    },
+    onSuccess: onSubmitted,
+    onError: (e) => toast({ title: e instanceof ApiError ? e.message : (e as Error).message, tone: 'error' }),
+  });
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-lg">Verify with your camera instead</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Take the photos live with your camera. Each one is stamped with the date, time and place, and there is no option to upload from your gallery.
+          Reviewed by our team, usually within a few hours, and visible only to our verification team.
+        </p>
+        <div className="grid gap-3">
+          {KYC_MANUAL_FIELDS.map((f) => {
+            const shot = shots[f.id];
+            return (
+              <div key={f.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                {shot ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={shot.previewUrl} alt={f.label} className="h-16 w-24 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <span className="grid h-16 w-24 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"><Camera className="h-5 w-5" /></span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{f.label}</p>
+                  <p className="text-xs text-muted-foreground">{shot ? 'Taken' : 'Not taken yet'}</p>
+                </div>
+                <Button size="sm" variant="outline" disabled={disabled || submit.isPending} onClick={() => setCapturing(f)}>
+                  {shot ? 'Retake' : 'Take photo'}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+        <Button className="w-full" loading={submit.isPending} disabled={!complete || disabled} onClick={() => submit.mutate()}>
+          Submit for review
+        </Button>
+      </CardContent>
+
+      {capturing && (
+        <LiveCamera
+          stamp={{ headline: 'CatoDrive identity check', detail: capturing.label }}
+          requireLocation={false}
+          facing={capturing.id === 'selfie' ? 'user' : 'environment'}
+          onUse={async (shot) => {
+            const previewUrl = URL.createObjectURL(shot.blob);
+            setShots((p) => {
+              if (p[capturing.id]) URL.revokeObjectURL(p[capturing.id]!.previewUrl);
+              return { ...p, [capturing.id]: { blob: shot.blob, previewUrl } };
+            });
+            setCapturing(null);
+          }}
+          onClose={() => setCapturing(null)}
+        />
+      )}
+    </Card>
+  );
+}
+
+function Detail({ label, value, full }: { label: string; value: string; full?: boolean }) {
+  return (
+    <div className={full ? 'sm:col-span-2' : ''}>
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 font-medium">{value}</dd>
+    </div>
+  );
+}
+
+
+export default function Page() {
+  return (
+    <AuthGuard>
+      <VerifyIdentity />
+    </AuthGuard>
+  );
+}

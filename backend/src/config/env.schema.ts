@@ -1,0 +1,341 @@
+import { z } from 'zod';
+
+/**
+ * Single source of truth for environment configuration.
+ * Parsed & validated once at boot. If anything is missing/malformed,
+ * the process refuses to start (fail fast, never at 3am under load).
+ */
+/**
+ * Treat an empty env var as unset.
+ *
+ * A documented-but-blank line (`EMAIL_API_URL=`) is the normal way to ship a
+ * .env template. Without this, an empty string reaches `.url()` and the whole
+ * process refuses to boot over a variable the operator deliberately left off.
+ */
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? undefined : v), schema.optional());
+
+/**
+ * A real "true"/"false" string parser for env booleans.
+ *
+ * z.coerce.boolean() runs JS `Boolean(value)` on the raw string, so
+ * SMTP_SECURE=false coerces to `true` — any non-empty string is truthy. That
+ * silently flips the flag to its opposite for exactly the values an operator
+ * would type, so it is never safe to use for a boolean env var.
+ */
+const boolString = () => z.enum(['true', 'false']).transform((v) => v === 'true');
+
+export const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'staging', 'production', 'test']).default('development'),
+  PORT: z.coerce.number().int().positive().default(4000),
+  /** Interface to bind. '0.0.0.0' = all (default, portable); '127.0.0.1'
+   *  = localhost only, correct behind a reverse proxy like Nginx so the Node
+   *  port is never directly reachable from the internet. */
+  HOST: z.string().default('0.0.0.0'),
+  API_PREFIX: z.string().default('/api/v1'),
+  /**
+   * Absolute, publicly reachable base of this API (no trailing slash), e.g.
+   * https://api.cato.com. Used to build media URLs that resolve from a browser
+   * when no CDN is configured. Defaults to localhost for development.
+   */
+  PUBLIC_API_URL: optional(z.string().url()),
+  APP_NAME: z.string().default('CatoDrive'),
+
+  /**
+   * Secret base path for the admin console, e.g. `your-secret-admin-path`.
+   * Keeping the console off the guessable /admin removes it from the bulk
+   * credential-stuffing and scanner traffic that hits every /admin on the
+   * internet. It is obscurity, NOT access control — RBAC still guards every
+   * route — but it meaningfully cuts noise and drive-by attempts.
+   */
+  ADMIN_SLUG: z
+    .string()
+    .min(3)
+    .regex(/^[a-z0-9-]+$/, 'ADMIN_SLUG must be lowercase letters, digits and dashes')
+    .default('admin'),
+
+  MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
+  /**
+   * Mongo connection pool ceiling. Was hardcoded at 20, which queues badly once
+   * concurrent bookings climb — each booking is several sequential round trips
+   * (hold → charge → create → ledger). Raise with load, but never above what
+   * the cluster tier actually permits: Atlas caps connections per tier, and
+   * exceeding it fails connections rather than queueing them.
+   */
+  MONGO_MAX_POOL: z.coerce.number().int().min(5).max(500).default(50),
+  REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+  // Keeps this system's keys and job queues apart when a Redis server is shared with another deployment.
+  REDIS_PREFIX: z.string().regex(/^[a-z0-9-]+$/).default('crosscubes'),
+
+  JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET too short'),
+  JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET too short'),
+  /**
+   * Server-side secret mixed into every password before hashing (a "pepper").
+   * Kept OUT of the database, so a DB-only breach cannot crack even weak
+   * passwords. Optional — omit and hashing falls back to salt-only (still
+   * strong). If set, NEVER lose or change it casually: existing hashes were
+   * bound to it, and rotating requires users to re-verify (handled by the
+   * login rehash path). Store it in a secrets manager, not next to the DB.
+   */
+  PASSWORD_PEPPER: z.string().optional(),
+  /**
+   * Salts the IP hash used to dedupe unique visitors in traffic analytics.
+   * The raw IP is never stored — only this hash — so the salt does not need
+   * secrets-manager handling the way PASSWORD_PEPPER does; it just needs to
+   * be stable so the same visitor hashes the same way across requests.
+   */
+  VISITOR_HASH_SALT: z.string().default('cato-visitor-salt-dev-only'),
+
+  JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900),
+  JWT_REFRESH_TTL: z.coerce.number().int().positive().default(2_592_000),
+
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+
+  /**
+   * How many reverse proxies sit in front of the app.
+   *
+   * This has to match the deployment exactly or every IP-keyed decision in the
+   * app is made against the wrong address. Too low and req.ip resolves to the
+   * nearest proxy, so all users behind it share one rate-limit bucket; too high
+   * and a client can forge X-Forwarded-For to appear as any address it likes.
+   *
+   * 1 = Nginx only (Cloudflare grey-clouded / DNS-only).
+   * 2 = Cloudflare (orange cloud) in front of Nginx — the documented setup.
+   */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
+
+  CORS_ORIGINS: z.string().default('*'),
+
+  // ── Optional integrations: real adapters activate when these are set ──
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_IDENTITY_WEBHOOK_SECRET: optional(z.string()),
+  /** Restricted key (Identity + Files read) for viewing a guest's ID photos; Stripe serves them to no other key. */
+  STRIPE_IDENTITY_READ_KEY: optional(z.string().regex(/^rk_(live|test)_/, 'must be a Stripe restricted key (rk_...)')),
+  /** Public by design. Served to the browser at runtime so card entry and identity capture do not depend on the frontend build having it. */
+  STRIPE_PUBLISHABLE_KEY: optional(z.string()),
+  /**
+   * TEMPORARY end-to-end-testing escape hatch. Lets a sk_test_/rk_test_ key
+   * pass the production guard so the real Stripe test flow (test cards,
+   * webhooks) can be exercised on production infra before live keys exist.
+   * Must be removed/unset before accepting real bookings — logs a loud
+   * warning on every boot specifically so it can't be forgotten.
+   */
+  ALLOW_TEST_STRIPE_IN_PRODUCTION: z.coerce.boolean().default(false),
+
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_PUBLIC_BASE_URL: z.string().optional(), // e.g. https://cdn.cato.com or the bucket URL
+
+  MAPBOX_TOKEN: optional(z.string()),
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
+
+  // ── AI (OpenRouter) ───────────────────────────────────────────────
+  // One key fronts many models, so the model is a config value rather than a
+  // vendor commitment. Absent key = every AI feature degrades to off, never errors.
+  OPENROUTER_API_KEY: optional(z.string()),
+  // Wheelbase dealer account the fleet's insurance is read from; kept out of the source.
+  WHEELBASE_DEALER_ID: optional(z.string().regex(/^\d{1,20}$/)),
+  // 32-byte key (base64 or 64 hex chars) that encrypts saved toll-account logins; without it no login can be saved.
+  TOLL_CREDENTIALS_KEY: optional(z.string().min(32)),
+  /** Second key, tried only when the primary fails on auth, rate limit or credit. */
+  OPENROUTER_API_KEY_FALLBACK: optional(z.string()),
+  /** Default model. Vision-capable, because damage review reads photographs. */
+  OPENROUTER_MODEL: z.string().default('anthropic/claude-sonnet-4.5'),
+  /** Hard ceiling on spend per calendar day, in US cents. 0 = no cap. */
+  AI_DAILY_BUDGET_CENTS: z.coerce.number().int().min(0).default(2000),
+  // ── Social sign-in ────────────────────────────────────────────────
+  /** Apple Services ID (the 'aud' every Apple token is checked against). */
+  /** VinAudit: title, salvage, theft and odometer history. Metered — without
+   *  it, history reports as "not checked" rather than as clean. */
+  VINAUDIT_API_KEY: optional(z.string()),
+  // ── Branding, used in email footers ───────────────────────────────
+  /** Shown in email headers and footers. */
+  BRAND_NAME: z.string().default('CatoDrive'),
+  /** The web app, for links in emails. Falls back to the first CORS origin. */
+  WEB_URL: optional(z.string()),
+  /** The host website (self-serve hosts and their captains), for links to those pages. Falls back to WEB_URL. */
+  HOST_WEB_URL: optional(z.string()),
+  /** The partner website (the Asset Partner portal), for links to those pages. Falls back to WEB_URL. */
+  PARTNER_WEB_URL: optional(z.string()),
+  /** The insurance partner portal, including its secret path; kept out of the repo. Falls back to WEB_URL. */
+  INSURANCE_WEB_URL: optional(z.string()),
+  /** The operations panel, including its secret path; House Fleet Captain invites open here. Falls back to HOST_WEB_URL. */
+  ASSET_IOC_WEB_URL: optional(z.string()),
+  /**
+   * Postal address in the email footer.
+   *
+   * CAN-SPAM requires a valid physical address on commercial mail, and even
+   * transactional mail is safer with it. Deliverability suffers without one.
+   */
+  COMPANY_ADDRESS: z.string().default(''),
+  SUPPORT_EMAIL: z.string().default('support@example.com'),
+  APPLE_CLIENT_ID: optional(z.string()),
+  FACEBOOK_APP_ID: optional(z.string()),
+  FACEBOOK_APP_SECRET: optional(z.string()),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+
+  // ── Bootstrap super-admin (seeded on boot if set) ──
+  // ── Notification channels ──────────────────────────────────────────
+  // Each is optional; a channel with no credentials logs loudly instead of
+  // silently pretending to deliver. Production without email + SMS is an
+  // error at boot, not a surprise in week one.
+  // Email — either SMTP (any mailbox provider) or a transactional HTTP API.
+  // SMTP wins when both are set, since it is the more explicit choice.
+  SMTP_HOST: optional(z.string()),
+  SMTP_PORT: optional(z.coerce.number().int().positive().max(65535)),
+  SMTP_USER: optional(z.string()),
+  SMTP_PASS: optional(z.string()),
+  /** true for port 465 (implicit TLS). Leave false for 587 STARTTLS. */
+  SMTP_SECURE: optional(boolString()),
+  EMAIL_API_URL: optional(z.string().url()),
+  EMAIL_API_KEY: optional(z.string()),
+  /** Envelope sender, e.g. "CatoDrive <no-reply@cato.com>". Required either way. */
+  EMAIL_FROM: optional(z.string()),
+  /** Sentry DSN. Absent = errors are logged locally only. */
+  SENTRY_DSN: optional(z.string()),
+  /** Release identifier shown against each event (e.g. a git SHA). */
+  RELEASE: optional(z.string()),
+  SMS_ACCOUNT_SID: optional(z.string()),
+  /**
+   * Twilio API key (SK…) + its secret — the recommended credentials: scoped to
+   * SMS and revocable without touching the account. The Account SID above is
+   * still required (it identifies the account in the request URL).
+   */
+  SMS_API_KEY_SID: optional(z.string()),
+  SMS_API_KEY_SECRET: optional(z.string()),
+  /** Legacy fallback — full-account Auth Token. Prefer an API key above. */
+  SMS_AUTH_TOKEN: optional(z.string()),
+  SMS_FROM: optional(z.string()),
+  FCM_SERVER_KEY: optional(z.string()),
+  // Firebase service account JSON, base64-encoded — for the FCM HTTP v1 API.
+  FCM_SERVICE_ACCOUNT_BASE64: optional(z.string()),
+
+  ADMIN_EMAIL: z.string().email().optional(),
+  ADMIN_PASSWORD: z.string().min(8).optional(),
+  ADMIN_NAME: z.string().optional(),
+
+  // House Fleet: the single seeded Host account for CatoDrive's own vehicles.
+  HOUSE_FLEET_EMAIL: z.string().email().optional(),
+  HOUSE_FLEET_PASSWORD: z.string().min(8).optional(),
+  HOUSE_FLEET_NAME: z.string().default('CatoDrive Fleet'),
+});
+
+/**
+ * Production-only guard rails.
+ *
+ * The base schema is deliberately permissive so local dev is frictionless — but
+ * those same defaults are dangerous in production: CORS_ORIGINS defaults to '*'
+ * (any site can call the API with a user's credentials) and a short dev secret
+ * satisfies min(16). Rather than trust a deploy checklist, production refuses to
+ * boot when it is misconfigured. A crash at deploy is recoverable; a wide-open
+ * API discovered later is not.
+ */
+const PROD_MIN_SECRET = 32;
+
+export const envSchemaWithProdGuards = envSchema.superRefine((env, ctx) => {
+  if (env.NODE_ENV !== 'production') return;
+
+  const fail = (path: string, message: string) =>
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+
+  // 1. Wildcard CORS in production would let any origin make credentialed calls.
+  if (env.CORS_ORIGINS.includes('*')) {
+    fail('CORS_ORIGINS', 'must list explicit origins in production — "*" is not allowed');
+  }
+
+  // 2. Secrets must be long, and must not be the values shipped in .env.example.
+  const weak = /^(change[-_ ]?me|secret|password|dev|test|example|placeholder)/i;
+  for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const) {
+    const v = env[key];
+    if (v.length < PROD_MIN_SECRET) {
+      fail(key, `must be at least ${PROD_MIN_SECRET} characters in production`);
+    }
+    if (weak.test(v)) fail(key, 'looks like a placeholder — generate a real random secret');
+  }
+
+  // 3. Reusing one secret for both tokens means a leaked access token can be
+  //    replayed as a refresh token.
+  if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) {
+    fail('JWT_REFRESH_SECRET', 'must differ from JWT_ACCESS_SECRET');
+  }
+
+  // 4. A seeded admin with a weak password is a permanent back door.
+  if (env.ADMIN_PASSWORD && (env.ADMIN_PASSWORD.length < 12 || weak.test(env.ADMIN_PASSWORD))) {
+    fail('ADMIN_PASSWORD', 'must be at least 12 characters and not a placeholder in production');
+  }
+
+  // 5. Half-configured S3 silently degrades to mock storage, so uploads "work"
+  //    in prod but every photo URL is a dead placeholder.
+  const s3 = [env.AWS_ACCESS_KEY_ID, env.AWS_SECRET_ACCESS_KEY, env.S3_BUCKET];
+  if (s3.some(Boolean) && !s3.every(Boolean)) {
+    fail('S3_BUCKET', 'AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and S3_BUCKET must all be set together');
+  }
+
+  // 6. Placeholder AWS credentials are worse than none: they are truthy, so a
+  //    naive check switches on the real S3 client and every upload fails auth.
+  //    In production, refuse rather than fall back to mock (which would serve
+  //    dead placeholder image URLs to real users).
+  if (s3.every(Boolean)) {
+    if ((env.AWS_ACCESS_KEY_ID ?? '').trim().length < 16) {
+      fail('AWS_ACCESS_KEY_ID', 'looks like a placeholder — real AWS access key IDs are 20 characters');
+    }
+    if ((env.AWS_SECRET_ACCESS_KEY ?? '').trim().length < 32) {
+      fail('AWS_SECRET_ACCESS_KEY', 'looks like a placeholder — real AWS secret keys are 40 characters');
+    }
+  }
+
+  // 7. Live Stripe with no webhook secret is a money hole: the webhook is the
+  //    authoritative source of payment status, and without the signing secret
+  //    it cannot be verified — a forged POST could mark a booking paid. If the
+  //    secret key is present in production, the webhook secret must be too.
+  //    No key at all is the worst case of the same failure: the gateway falls
+  //    back to MockGateway, which returns `succeeded` for every intent without
+  //    contacting a card. Production would confirm real trips having charged
+  //    nobody, and nothing in the logs would look wrong.
+  if (!env.STRIPE_SECRET_KEY) {
+    fail('STRIPE_SECRET_KEY', 'required in production — without it payments fall back to the mock gateway, which confirms every booking without charging a card');
+  } else {
+    if (!env.STRIPE_WEBHOOK_SECRET) {
+      fail('STRIPE_WEBHOOK_SECRET', 'required when STRIPE_SECRET_KEY is set — unverified webhooks let anyone mark a booking paid');
+    }
+    if (weak.test(env.STRIPE_SECRET_KEY)) {
+      fail('STRIPE_SECRET_KEY', 'looks like a placeholder');
+    }
+    // A test key in production takes real bookings that never charge a card.
+    // Restricted keys (rk_) are as valid as secret keys (sk_) and were missed
+    // by a check that only looked for sk_test_, so a test key could ship.
+    const isTestKey = /^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY);
+    if (isTestKey && !env.ALLOW_TEST_STRIPE_IN_PRODUCTION) {
+      fail('STRIPE_SECRET_KEY', 'is a TEST key — production must use a live key (sk_live_ or rk_live_), or set ALLOW_TEST_STRIPE_IN_PRODUCTION=true for end-to-end testing only');
+    }
+    if (!isTestKey && !/^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY)) {
+      fail('STRIPE_SECRET_KEY', 'must be a live Stripe key (sk_live_ or rk_live_)');
+    }
+  }
+
+  // 8. The admin is provisioned only from the environment, and there must be
+  //    exactly one. In production, refusing to boot without it prevents both a
+  //    console with no way in and any reliance on a leftover account.
+  // A pepper is optional, but a short one is a false sense of security.
+  if (env.PASSWORD_PEPPER && env.PASSWORD_PEPPER.trim().length < 32) {
+    fail('PASSWORD_PEPPER', 'must be at least 32 random characters when set');
+  }
+
+  if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD) {
+    fail('ADMIN_EMAIL', 'ADMIN_EMAIL and ADMIN_PASSWORD are required in production — the sole admin is provisioned from them');
+  }
+
+  // 9. Behind Cloudflare (orange cloud → Nginx → Node) this must be 2, or every
+  //    IP-keyed control reads the Cloudflare edge address. It is deployment
+  //    truth, so production must set it CONSCIOUSLY rather than inherit a
+  //    default that is right for only one topology.
+  if (process.env.TRUST_PROXY_HOPS === undefined) {
+    fail('TRUST_PROXY_HOPS', 'must be set explicitly in production (1 = Nginx only, 2 = Cloudflare → Nginx) — see DEPLOY.md');
+  }
+});
+
+export type Env = z.infer<typeof envSchema>;

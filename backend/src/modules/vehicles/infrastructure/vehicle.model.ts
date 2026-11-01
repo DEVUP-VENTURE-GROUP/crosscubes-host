@@ -1,0 +1,420 @@
+import { Schema, model } from 'mongoose';
+import { uuid } from '../../../shared/utils/uuid';
+import type { OperationalState } from '../domain/vehicle-lifecycle';
+
+export type VehicleStatus = 'draft' | 'pending_verification' | 'listed' | 'paused' | 'delisted';
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+
+export interface VehiclePhoto {
+  url: string;
+  key?: string; // S3 key
+  isCover?: boolean;
+}
+
+export type DeliveryLocationKind = 'airport' | 'hotel' | 'business' | 'custom';
+export type DeliveryAccessMethod = 'lockbox' | 'remote_unlock' | 'in_person';
+
+/**
+ * One place a host will bring the car to, priced on its own.
+ *
+ * Replaces a single set of on/off modes sharing one flat fee: a host charges
+ * differently for DFW than for a suburban hotel, and an airport handover has
+ * constraints (which terminal, who pays parking) a hotel drop does not.
+ */
+export interface DeliveryLocation {
+  /** Stable across edits — bookings reference it, so it is never regenerated. */
+  id: string;
+  kind: DeliveryLocationKind;
+  name: string;
+  address: string;
+  lat?: number;
+  lng?: number;
+  fee: number; // minor units
+  /** Trip length this location requires. 0 = offered on any trip. */
+  minTripDays: number;
+  accessMethod: DeliveryAccessMethod;
+  /** `custom` only — deliver anywhere the guest picks within this radius. */
+  radiusMiles?: number;
+  /** Airports: the specific terminals/counters handover may happen at. */
+  subLocations?: { name: string; note?: string }[];
+  /** Airports/hotels: what the guest should expect to pay to park. */
+  parkingRate?: 'free' | 'hourly' | 'daily';
+  enabled: boolean;
+}
+
+export interface SeasonalRule {
+  label: string;
+  start: string; // 'YYYY-MM-DD'
+  end: string;
+  multiplierBps: number; // 12000 = 1.2x
+}
+
+export interface WheelbaseLink {
+  rentalId: number;
+  name: string;
+  /** How the link was made: matched on year/make/model, or chosen by an admin. */
+  linkedBy: 'auto' | 'admin';
+  insuranceState?: string;
+  coverage?: string;
+  eligible?: boolean;
+  planLabel?: string;
+  minRenterAge?: number;
+  /** False when the listing is no longer in the dealer's Wheelbase account. */
+  found: boolean;
+  syncedAt: Date;
+}
+
+export interface PhotoMatch {
+  status: 'match' | 'partial' | 'mismatch' | 'unchecked';
+  checkedAt: Date;
+  photosChecked: number;
+  fields: { key: 'plate' | 'make' | 'model' | 'color' | 'same_car'; expected?: string; seen?: string; result: 'match' | 'mismatch' | 'not_visible' }[];
+  note?: string;
+  model?: string;
+}
+
+export interface VehicleDoc {
+  _id: string;
+  hostId: string;
+  /**
+   * Set when this car is in the managed Asset Partner programme.
+   *
+   * hostId alone cannot answer "is this car partner-managed": a partner's Host
+   * record is just the marketplace seller identity, and the same person could
+   * hold cars outside the programme. Partner statements are computed per
+   * vehicle, so the link has to live on the vehicle.
+   */
+  assetPartnerId?: string;
+  // Statements charge a partner car only for the months between these two dates.
+  assetPartnerSince?: Date;
+  assetPartnerEndedAt?: Date;
+  hostIsSuperhost: boolean;
+  fleetId?: string;
+  make: string;
+  model: string;
+  year: number;
+  bodyType: string;
+  category: string; // economy | luxury | suv | van | sports | ev ...
+  transmission: 'manual' | 'automatic';
+  fuelType: 'petrol' | 'diesel' | 'hybrid' | 'ev';
+  seats: number;
+  /**
+   * How to actually find the car once you are at the pin.
+   *
+   * A map pin is street-level; the car is on P3 in bay 44. Every host explains
+   * this by message, to every guest, every time. Stored once instead.
+   */
+  pickup?: {
+    /** "Level 3, bay 44, blue section" */
+    instructions?: string;
+    /** A photo of the parking spot — worth more than the sentence. */
+    spotPhotoUrl?: string;
+    /** Gate/lockbox code, revealed only near the handover window. */
+    accessCode?: string;
+  };
+  vin?: string;
+  vinVerified: boolean;
+  registrationNumber?: string;
+  /** TollTag (or other transponder) number on the car, for matching toll charges. */
+  tollTagId?: string;
+  /** Latest automatic check of the photos against plate, make, model and colour. */
+  photoMatch?: PhotoMatch;
+  /** The Wheelbase listing this car is insured under, and its insurance as last read. */
+  wheelbase?: WheelbaseLink;
+  specs: {
+    doors?: number;
+    color?: string;
+    mileageKm?: number;
+    largeBags?: number;
+    smallBags?: number;
+  };
+  features: string[];
+  photos: VehiclePhoto[];
+  addOns: { code: string; label: string; priceType: 'per_trip' | 'per_day'; amount: number }[];
+  tripRules: string[];
+  mileageLimit: { perDayKm: number; overageFeePerKm: number }; // perDayKm 0 = unlimited
+  location: {
+    type: 'Point';
+    coordinates: [number, number];
+    address: string;
+    city: string;
+    /**
+     * Two-letter state code. Rental tax is levied per state, so a car without
+     * one cannot be taxed correctly — it is derived at listing time from the
+     * geocoded address rather than typed by the host.
+     */
+    state?: string;
+  };
+  listing: {
+    title: string;
+    description: string;
+    instantBook: boolean;
+    minTripHours: number;
+    /**
+     * Days kept free after a trip ends, for cleaning, refuelling or servicing.
+     * 0 means back-to-back trips are welcome.
+     */
+    turnaroundDays?: number;
+    maxTripHours: number;
+    /**
+     * Minimum lead time before a trip may start — a guest cannot book a car for
+     * sooner than this many hours from now. 0 means it can be booked to start
+     * immediately. Mirrors Turo's "advance notice".
+     */
+    advanceNoticeHours?: number;
+    cancellationPolicy: 'flexible' | 'moderate' | 'strict';
+    /**
+     * Superseded by `deliveryLocations`. Kept readable so bookings taken on the
+     * old shape still price, and so a doc the migration missed is not a $0
+     * delivery.
+     */
+    delivery: {
+      airport: boolean;
+      home: boolean;
+      hotel: boolean;
+      business: boolean;
+      radiusKm: number;
+      fee: number; // flat delivery fee (minor units)
+    };
+    deliveryLocations?: DeliveryLocation[];
+  };
+  pricing: {
+    dailyPrice: number;
+    currency: string;
+    cleaningFee: number;
+    weekendMultiplierBps: number;
+    weeklyDiscountBps: number;
+    monthlyDiscountBps: number;
+    earlyBirdBps: number; // discount for booking far in advance
+    lastMinuteBps: number; // discount for near-term bookings
+    dynamicPricing: boolean;
+    seasonalRules: SeasonalRule[];
+    promoActive: boolean;
+    promoDiscountBps: number;
+  };
+  purposes: string[];
+  status: VehicleStatus;
+  /**
+   * Where the physical car is in its operational lifecycle (idle / on_trip /
+   * cleaning / maintenance / repair / …), independent of the marketplace
+   * `status`. States that mean the car is physically down also stop new
+   * bookings — see vehicle-lifecycle.ts. Defaults to 'idle'.
+   */
+  operationalState: OperationalState;
+  lifecycle?: {
+    /** Per-vehicle monotonic counter backing the timeline's total order. */
+    timelineSeq: number;
+    /** Why the car is in a blocking state, surfaced to ops/host. */
+    downReason?: string;
+    /** When it went down, for how-long-down reporting. */
+    downSince?: Date;
+  };
+  /** Paused automatically because a mandatory doc (insurance/registration)
+   *  lapsed. Distinguishes a compliance hold from a host-initiated pause so the
+   *  car is auto-relisted on renewal, not left down. */
+  complianceHold?: boolean;
+  /** Paused after a trip because of an unresolved safety recall. */
+  recallHold?: boolean;
+  /** Recalls the host and team were last told about, so each new one is announced once. */
+  recallNoticeCount?: number;
+  /** Informational only — does not pause the car. E.g. maintenance is overdue. */
+  maintenanceRisk?: boolean;
+  verificationStatus: VerificationStatus;
+  ratingAvg: number;
+  ratingCount: number;
+  /** True for cars CatoDrive owns (the House Fleet); shown as a badge. */
+  fleetOwned?: boolean;
+  /** A real rating the car earned on another platform, entered by an admin and always shown with its source; never blended into ratingAvg. */
+  externalRating?: { source: string; rating: number; trips: number };
+  totalTrips: number;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+const schema = new Schema<VehicleDoc>(
+  {
+    _id: { type: String, default: () => uuid() },
+    hostId: { type: String, required: true },
+    assetPartnerId: String,
+    assetPartnerSince: Date,
+    assetPartnerEndedAt: Date,
+    hostIsSuperhost: { type: Boolean, default: false },
+    fleetId: { type: String },
+    make: { type: String, required: true },
+    model: { type: String, required: true },
+    year: { type: Number, required: true },
+    bodyType: { type: String, required: true },
+    category: { type: String, default: 'economy' },
+    transmission: { type: String, enum: ['manual', 'automatic'], required: true },
+    fuelType: { type: String, enum: ['petrol', 'diesel', 'hybrid', 'ev'], required: true },
+    seats: { type: Number, required: true },
+    pickup: {
+      instructions: { type: String, maxlength: 600 },
+      spotPhotoUrl: { type: String },
+      accessCode: { type: String, maxlength: 40 },
+    },
+    vin: { type: String },
+    vinVerified: { type: Boolean, default: false },
+    registrationNumber: { type: String },
+    tollTagId: { type: String },
+    wheelbase: {
+      rentalId: Number,
+      name: String,
+      linkedBy: { type: String, enum: ['auto', 'admin'] },
+      insuranceState: String,
+      coverage: String,
+      eligible: Boolean,
+      planLabel: String,
+      minRenterAge: Number,
+      found: Boolean,
+      syncedAt: Date,
+    },
+    photoMatch: {
+      status: { type: String, enum: ['match', 'partial', 'mismatch', 'unchecked'] },
+      checkedAt: Date,
+      photosChecked: Number,
+      fields: [{ _id: false, key: String, expected: String, seen: String, result: String }],
+      note: String,
+      model: String,
+    },
+    specs: {
+      doors: Number,
+      color: String,
+      mileageKm: Number,
+      largeBags: Number,
+      smallBags: Number,
+    },
+    features: { type: [String], default: [] },
+    photos: {
+      type: [{ url: String, key: String, isCover: Boolean }],
+      default: [],
+    },
+    addOns: {
+      type: [{ code: String, label: String, priceType: { type: String, enum: ['per_trip', 'per_day'] }, amount: Number }],
+      default: [],
+    },
+    tripRules: { type: [String], default: [] },
+    mileageLimit: {
+      perDayKm: { type: Number, default: 0 },
+      overageFeePerKm: { type: Number, default: 0 },
+    },
+    location: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], required: true },
+      address: { type: String, default: '' },
+      city: { type: String, default: '' },
+      state: { type: String, uppercase: true, trim: true },
+    },
+    listing: {
+      title: { type: String, required: true },
+      description: { type: String, default: '' },
+      instantBook: { type: Boolean, default: false },
+      minTripHours: { type: Number, default: 24 },
+      turnaroundDays: { type: Number, default: 0, min: 0, max: 7 },
+      maxTripHours: { type: Number, default: 24 * 30 },
+      advanceNoticeHours: { type: Number, default: 0, min: 0, max: 720 },
+      cancellationPolicy: {
+        type: String,
+        enum: ['flexible', 'moderate', 'strict'],
+        default: 'moderate',
+      },
+      delivery: {
+        airport: { type: Boolean, default: false },
+        home: { type: Boolean, default: false },
+        hotel: { type: Boolean, default: false },
+        business: { type: Boolean, default: false },
+        radiusKm: { type: Number, default: 0 },
+        fee: { type: Number, default: 0 },
+      },
+      deliveryLocations: {
+        type: [
+          {
+            _id: false,
+            id: { type: String, required: true },
+            kind: { type: String, enum: ['airport', 'hotel', 'business', 'custom'], required: true },
+            name: { type: String, required: true },
+            address: { type: String, default: '' },
+            lat: Number,
+            lng: Number,
+            fee: { type: Number, default: 0, min: 0 },
+            minTripDays: { type: Number, default: 0, min: 0, max: 30 },
+            accessMethod: {
+              type: String,
+              enum: ['lockbox', 'remote_unlock', 'in_person'],
+              default: 'in_person',
+            },
+            radiusMiles: { type: Number, min: 0, max: 200 },
+            subLocations: [{ _id: false, name: String, note: String }],
+            parkingRate: { type: String, enum: ['free', 'hourly', 'daily'] },
+            enabled: { type: Boolean, default: true },
+          },
+        ],
+        default: undefined,
+      },
+    },
+    pricing: {
+      dailyPrice: { type: Number, required: true },
+      currency: { type: String, default: 'USD' },
+      cleaningFee: { type: Number, default: 0 },
+      weekendMultiplierBps: { type: Number, default: 10000 },
+      weeklyDiscountBps: { type: Number, default: 0 },
+      monthlyDiscountBps: { type: Number, default: 0 },
+      earlyBirdBps: { type: Number, default: 0 },
+      lastMinuteBps: { type: Number, default: 0 },
+      dynamicPricing: { type: Boolean, default: false },
+      seasonalRules: {
+        type: [{ label: String, start: String, end: String, multiplierBps: Number }],
+        default: [],
+      },
+      promoActive: { type: Boolean, default: false },
+      promoDiscountBps: { type: Number, default: 0 },
+    },
+    purposes: { type: [String], default: ['rent'] },
+    status: { type: String, default: 'draft' },
+    operationalState: { type: String, default: 'idle' },
+    lifecycle: {
+      timelineSeq: { type: Number, default: 0 },
+      downReason: String,
+      downSince: Date,
+    },
+    complianceHold: { type: Boolean, default: false },
+    recallHold: { type: Boolean, default: false },
+    recallNoticeCount: { type: Number },
+    maintenanceRisk: { type: Boolean, default: false },
+    verificationStatus: { type: String, default: 'unverified' },
+    ratingAvg: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
+    fleetOwned: { type: Boolean, default: false },
+    externalRating: { type: { source: String, rating: Number, trips: Number }, _id: false, default: undefined },
+    totalTrips: { type: Number, default: 0 },
+    deletedAt: { type: Date, default: null },
+  },
+  { timestamps: true, _id: false },
+);
+
+// Plain geo index — used by unfiltered proximity queries (recommendations,
+// similar cars).
+schema.index({ location: '2dsphere' });
+schema.index({ 'wheelbase.rentalId': 1 }, { sparse: true });
+
+/*
+ * The search index. Search is by far the hottest query and always filters
+ * status:'listed' before the $near proximity sort. A compound 2dsphere index
+ * with the equality-matched status first lets the planner narrow to listed cars
+ * and THEN walk the geometry, instead of walking every car in the radius and
+ * discarding the unlisted ones. That difference is invisible at a few hundred
+ * cars and decisive at 100K+ in a dense metro.
+ */
+schema.index({ status: 1, location: '2dsphere' });
+schema.index({ status: 1, verificationStatus: 1 });
+schema.index({ hostId: 1, status: 1 });
+// Every partner statement starts by finding that partner's vehicles.
+schema.index({ assetPartnerId: 1 });
+// Ops dashboards query "which cars are down / in maintenance / blocked".
+schema.index({ operationalState: 1 });
+schema.index({ fleetId: 1 });
+schema.index({ 'location.city': 1, category: 1 });
+schema.index({ purposes: 1 });
+
+export const VehicleModel = model<VehicleDoc>('Vehicle', schema);

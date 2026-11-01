@@ -1,0 +1,170 @@
+# Continuous integration — the gate every commit passes before it can ship.
+#
+# Runs on every push and pull request. Nothing reaches production that has not
+# been linted, type-checked, tested and built here first, so a deploy is always
+# traceable to a green commit rather than a manual copy.
+name: CI
+
+on:
+  push:
+    branches: [main, 'main-checkpoint-*', 'release/**']
+  pull_request:
+    branches: [main, 'main-checkpoint-*', 'release/**']
+
+# A newer push to the same branch cancels the older in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend — lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      # The jest suite is pure logic — it never connects to Mongo or Redis — but
+      # importing config validates the environment and exits if required vars are
+      # missing. CI has no .env, so provide throwaway values that satisfy the
+      # schema. NODE_ENV=test skips the production guards. DB-backed checks run
+      # against a real database outside CI.
+      - name: Test
+        shell: bash
+        run: |
+          set +e
+          npx jest --runInBand --ci 2>&1 | tee test.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            grep -E '^(FAIL| +●|.*(Error|Cannot|Timeout|timeout))' test.log | head -25 | while IFS= read -r line; do echo "::error::${line}"; done
+          fi
+          exit "$code"
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/cato_test
+          REDIS_URL: redis://localhost:6379
+          JWT_ACCESS_SECRET: ci_test_access_secret_0123456789abcdef
+          JWT_REFRESH_SECRET: ci_test_refresh_secret_fedcba9876543210
+      - run: npm run build
+
+  frontend:
+    name: Frontend — typecheck · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # No lint step: the frontend has no ESLint config (next lint is
+      # interactive and deprecated). typecheck + build are the real gates.
+      - run: npm run typecheck
+      # The build's own error is copied into an annotation, because the raw log is only readable with admin rights.
+      - name: Build
+        shell: bash
+        run: |
+          set +e
+          npm run build 2>&1 | tee build.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            grep -v '^\s*$' build.log | tail -25 | while IFS= read -r line; do echo "::error::${line}"; done
+          fi
+          exit "$code"
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+          NEXT_PUBLIC_APP_NAME: CATO
+
+  admin-web:
+    name: Admin app — typecheck · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          # There is no lockfile at the repo root, so the cache needs to be told where they are.
+          cache-dependency-path: |
+            frontend/package-lock.json
+            admin-web/package-lock.json
+      # The admin app compiles shared source from ../frontend/src, so the public
+      # app's dependencies must be present for those files to resolve.
+      - run: npm ci
+        working-directory: frontend
+      - run: npm ci
+        working-directory: admin-web
+      - run: npm run typecheck
+        working-directory: admin-web
+      - run: npm run build
+        working-directory: admin-web
+        env:
+          NEXT_PUBLIC_ADMIN_SLUG: ci-build-slug
+
+  sites:
+    name: ${{ matrix.app }} — typecheck · build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [host-web, partner-web, catodrive-asset-ioc, insurance-web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            ${{ matrix.app }}/package-lock.json
+      # Like the admin app, each site compiles shared source from ../frontend/src.
+      - run: npm ci
+        working-directory: frontend
+      - run: npm ci
+        working-directory: ${{ matrix.app }}
+      - run: npm run typecheck
+        working-directory: ${{ matrix.app }}
+      - run: npm run build
+        working-directory: ${{ matrix.app }}
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+          CATODRIVE_ASSET_IOC_SLUG: ci-build-slug
+          CATODRIVE_INSURANCE_SLUG: ci-build-slug
+
+  security:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Shipped (production) dependencies fail on HIGH or CRITICAL; all seven apps were at 0 on 2026-10-23.
+      # Dev-only tooling (Jest, Tailwind 3 file watchers) still fails only on CRITICAL: its open highs need major upgrades.
+      - name: Audit shipped dependencies
+        shell: bash
+        run: |
+          for app in backend frontend admin-web host-web partner-web catodrive-asset-ioc insurance-web; do
+            echo "::group::$app"
+            (cd "$app" && npm audit --omit=dev --audit-level=high) || exit 1
+            echo "::endgroup::"
+          done
+      - name: Audit all dependencies (critical only)
+        shell: bash
+        run: |
+          for app in backend frontend admin-web host-web partner-web catodrive-asset-ioc insurance-web; do
+            (cd "$app" && npm audit --audit-level=critical) || exit 1
+          done

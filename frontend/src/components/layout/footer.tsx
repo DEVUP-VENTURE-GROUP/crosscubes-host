@@ -1,0 +1,126 @@
+'use client';
+
+import { Logo } from '@/components/layout/logo';
+import { usePrograms } from '@/features/platform/config';
+import Link from 'next/link';
+import { config } from '@/lib/config';
+import { siteForPath } from '@/lib/sites';
+import { SiteLink } from './site-link';
+
+// Host self-serve and Corporate links return when config.assetPartnersOnly is off.
+const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: 'Explore',
+    links: [
+      { label: 'How it works', href: '/about' },
+      { label: 'Browse vehicles', href: '/search' },
+      { label: 'Compare cars', href: '/compare' },
+      { label: 'Saved cars', href: '/wishlist' },
+      { label: 'Rewards', href: '/rewards' },
+      { label: 'Refer a friend', href: '/referral' },
+    ],
+  },
+  {
+    title: 'Hosting',
+    links: [
+      { label: 'Asset Partners', href: '/asset-partners' },
+      { label: 'Partner dashboard', href: '/asset-partners/dashboard' },
+      ...(config.assetPartnersOnly
+        ? []
+        : [
+            { label: 'Become a host', href: '/host' },
+            { label: 'List your car', href: '/host/listings/new' },
+            { label: 'Host earnings', href: '/host/earnings' },
+            { label: 'Fleet management', href: '/host/fleet' },
+          ]),
+    ],
+  },
+  {
+    title: 'Business',
+    links: [
+      ...(config.assetPartnersOnly || !config.corporate
+        ? []
+        : [
+            { label: 'CatoDrive for Business', href: '/corporate' },
+            { label: 'Corporate login', href: '/corporate/login' },
+            { label: 'Cost centers', href: '/corporate/cost-centers' },
+            { label: 'Invoices', href: '/corporate/invoices' },
+          ]),
+      { label: 'Investor Relations', href: '/investors' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'Contact us', href: '/contact' },
+      { label: 'Help center', href: '/help' },
+      { label: 'Support tickets', href: '/support' },
+      { label: 'Claims', href: '/claims' },
+      { label: 'My trips', href: '/bookings' },
+      { label: 'Account', href: '/account' },
+    ],
+  },
+];
+
+export function Footer() {
+  const programs = usePrograms();
+  return (
+    <footer className="mt-24 border-t border-border bg-subtle">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+        {/* Two link columns per row on phones so the footer isn't one long list. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-5">
+          <div className="col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2.5">
+              <Logo className="h-9 w-9 shrink-0" />
+              <span className="display text-xl tracking-tight">{config.appName}</span>
+            </div>
+            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
+              Premium managed vehicles, delivered curbside at DFW and Love Field. Book in seconds, no rental counter.
+            </p>
+          </div>
+
+          {/* Link columns */}
+          {COLUMNS.map((col) => ({ ...col, links: col.links.filter((l) => (l.href !== '/rewards' || programs.rewards) && (l.href !== '/referral' || programs.referral)) })).map((col) => (
+            <div key={col.title}>
+              <h3 className="text-sm font-semibold">{col.title}</h3>
+              <ul className="mt-4 space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.href}>
+                    {siteForPath(l.href) !== 'guest' ? (
+                      <SiteLink path={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                        {l.label}
+                      </SiteLink>
+                    ) : (
+                      <Link href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                        {l.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border pt-8 sm:flex-row sm:items-center">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} CatoDrive Inc. All rights reserved.
+          </p>
+          {/* Terms and privacy stay one click from every page. */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <Link href="/terms" className="transition-colors hover:text-foreground">
+              Terms
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/insurance" className="transition-colors hover:text-foreground">
+              Trust &amp; Safety
+            </Link>
+            <span>United States (USD $)</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

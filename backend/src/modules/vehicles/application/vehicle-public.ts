@@ -1,0 +1,39 @@
+import type { VehicleDoc } from '../infrastructure/vehicle.model';
+
+// Two decimals is roughly a kilometre: enough for a search map, not enough to find a car.
+const APPROX_COORD_FACTOR = 100;
+
+const approx = (n: number) => Math.round(n * APPROX_COORD_FACTOR) / APPROX_COORD_FACTOR;
+
+/** The one serializer for every vehicle a non-owner can see: no codes, plate, VIN, spot photo or street address. */
+export function toPublicVehicle<T extends Partial<VehicleDoc>>(v: T): T {
+  const { location, ...rest } = v as Partial<VehicleDoc>;
+  const out: Partial<VehicleDoc> = { ...rest };
+  delete out.vin;
+  delete out.registrationNumber;
+  delete out.tollTagId;
+  delete out.photoMatch;
+  // Guests see only whether the car is insured, under which plan, and the minimum driver age.
+  const wb = out.wheelbase;
+  delete out.wheelbase;
+  if (wb) {
+    (out as Record<string, unknown>).insurance = {
+      approved: wb.insuranceState === 'approved',
+      planLabel: wb.planLabel,
+      minRenterAge: wb.minRenterAge,
+    };
+  }
+  delete out.pickup;
+  if (location) {
+    const [lng, lat] = location.coordinates ?? [];
+    out.location = {
+      type: 'Point',
+      coordinates: [approx(lng), approx(lat)],
+      // "Irving, TX": the state from the car, or read off its street address ("…, Irving, TX 75062").
+      address: [location.city, location.state ?? location.address?.match(/,\s*([A-Z]{2})\s*\d{5}/)?.[1]].filter(Boolean).join(', '),
+      city: location.city,
+      state: location.state,
+    };
+  }
+  return out as T;
+}

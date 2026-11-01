@@ -1,0 +1,296 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarClock, Check, Clock, Mail, XCircle } from 'lucide-react';
+import { AuthGuard } from '@/components/layout/auth-guard';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/states';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/toast';
+import { eligibilityApi } from '@/features/account/eligibility-api';
+import { assetPartnerApi, type OnboardingStage, type PartnerOnboarding } from '@/features/asset-partners/api';
+import { ApiError } from '@/lib/api/types';
+import { formatDate } from '@/lib/utils/format';
+import { cn } from '@/lib/utils/cn';
+import { ApplicationForm } from '~/features/onboarding/application-form';
+import { SignDocuments } from '~/features/onboarding/sign-documents';
+import { UploadDocuments } from '~/features/onboarding/upload-documents';
+import { ProfileForm } from '~/features/onboarding/profile-form';
+import { IdentityStep } from '~/features/onboarding/identity-step';
+
+const TRACK: { label: string; stages: OnboardingStage[] }[] = [
+  { label: 'Email', stages: ['verify_email'] },
+  { label: 'Application', stages: ['apply', 'changes', 'rejected'] },
+  { label: 'Review', stages: ['review'] },
+  { label: 'You & ID', stages: ['profile', 'identity'] },
+  { label: 'Agreement', stages: ['agreement', 'agreement_expired'] },
+  { label: 'Papers', stages: ['documents', 'payout'] },
+];
+
+const failMessage = (e: unknown, fallback: string) => (e instanceof ApiError ? e.message : fallback);
+
+function Tracker({ stage }: { stage: OnboardingStage }) {
+  const at = TRACK.findIndex((t) => t.stages.includes(stage));
+  return (
+    <ol className="grid grid-cols-6 gap-1.5 sm:gap-3" aria-label="Getting started">
+      {TRACK.map((t, i) => (
+        <li key={t.label} className="min-w-0">
+          <div className={cn('h-1.5 rounded-full', i < at ? 'bg-primary' : i === at ? 'bg-primary/60' : 'bg-muted')} />
+          <p className={cn('mt-2 truncate text-xs font-semibold sm:text-xs', i === at ? 'text-primary' : i < at ? 'text-foreground' : 'text-muted-foreground')}>
+            {i < at && <Check className="me-1 inline h-3 w-3" />}
+            {t.label}
+          </p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function VerifyEmail({ email, onDone }: { email?: string; onDone: () => void }) {
+  const [code, setCode] = useState('');
+  const [devCode, setDevCode] = useState<string>();
+  const [sentTo, setSentTo] = useState<string>();
+  const [notSent, setNotSent] = useState(false);
+  const send = useMutation({
+    meta: { silentError: true },
+    mutationFn: () => eligibilityApi.send('email'),
+    onSuccess: (r) => {
+      setDevCode(r.devCode);
+      // A failed send still answers 200; without this the partner waits for a code that never comes.
+      setNotSent(!r.sent);
+      if (r.sent) setSentTo(r.to);
+    },
+  });
+  const confirm = useMutation({ meta: { silentError: true }, mutationFn: () => eligibilityApi.confirm('email', code.trim()), onSuccess: onDone });
+
+  return (
+    <Card>
+      <CardContent className="space-y-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Mail className="h-5 w-5" /></span>
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold">Confirm your email</h2>
+            <p className="break-words text-sm text-muted-foreground">We’ll send a 6-digit code to {email ?? 'your email'}.</p>
+          </div>
+        </div>
+        {notSent && (
+          <p role="alert" className="text-sm text-destructive">We couldn’t send the code just now. Wait a few minutes, then press Send code again.</p>
+        )}
+        {!send.isSuccess || notSent ? (
+          <Button className="w-full sm:w-auto" loading={send.isPending} onClick={() => send.mutate()}>Send code</Button>
+        ) : (
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (code.trim().length === 6) confirm.mutate(); }}>
+            {sentTo && <p className="text-sm text-muted-foreground">Code sent to {sentTo}. It can take a minute; check spam too.</p>}
+            {devCode && <p className="rounded-xl bg-warning/10 p-3 text-sm">Email isn’t set up on this server, so here’s your code: <span className="font-mono font-bold">{devCode}</span></p>}
+            <Field label="Code" htmlFor="code" error={confirm.isError ? failMessage(confirm.error, 'That code didn’t work') : undefined}>
+              <Input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+            </Field>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="submit" className="w-full sm:w-auto" disabled={code.length !== 6} loading={confirm.isPending}>Confirm</Button>
+              <Button type="button" variant="ghost" disabled={send.isPending} onClick={() => send.mutate()}>Send a new code</Button>
+            </div>
+          </form>
+        )}
+        {send.isError && <p role="alert" className="text-sm text-destructive">{failMessage(send.error, 'We couldn’t send the code. Try again.')}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InReview({ data }: { data: PartnerOnboarding }) {
+  const app = data.application!;
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-warning/10 text-warning"><Clock className="h-5 w-5" /></span>
+          <div>
+            <h2 className="text-lg font-bold">We’re reviewing your application</h2>
+            <p className="text-sm text-muted-foreground">A partner manager will contact you to arrange the inspection. We’ll email you at every step.</p>
+          </div>
+        </div>
+        <dl className="grid grid-cols-1 gap-3 rounded-lg bg-muted/50 p-4 text-sm sm:grid-cols-3">
+          <div><dt className="text-xs text-muted-foreground">Reference</dt><dd className="font-mono font-semibold">{app.reference}</dd></div>
+          <div><dt className="text-xs text-muted-foreground">Car</dt><dd className="font-medium">{app.vehicle.year} {app.vehicle.make} {app.vehicle.model}</dd></div>
+          <div><dt className="text-xs text-muted-foreground">Sent</dt><dd className="font-medium">{formatDate(app.createdAt)}</dd></div>
+        </dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** How long is left to sign, shown above the agreement. */
+function OfferDeadline({ offer }: { offer: PartnerOnboarding['offer'] }) {
+  if (!offer) return null;
+  const urgent = offer.daysLeft <= 5;
+  return (
+    <p className={cn('flex items-center gap-2 rounded-lg p-3 text-sm', urgent ? 'bg-warning/10 text-warning' : 'bg-muted/50 text-muted-foreground')} role="status">
+      <CalendarClock className="h-4 w-4 shrink-0" />
+      Please sign by {formatDate(offer.expiresAt)} ({offer.daysLeft} day{offer.daysLeft === 1 ? '' : 's'} left). After that we’ll need to send it again.
+    </p>
+  );
+}
+
+function OfferExpired({ data, onDone }: { data: PartnerOnboarding; onDone: () => void }) {
+  const ask = useMutation({ meta: { silentError: true }, mutationFn: () => assetPartnerApi.requestNewOffer(), onSuccess: onDone });
+  const asked = !!data.offer?.reissueRequestedAt || ask.isSuccess;
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning"><CalendarClock className="h-5 w-5" /></span>
+          <div>
+            <h2 className="text-xl font-bold">Your offer to sign has ended</h2>
+            <p className="text-sm text-muted-foreground">
+              The agreement was open for signing until {data.offer ? formatDate(data.offer.expiresAt) : 'its end date'}. Ask for a new copy and we’ll send it with a fresh signing window.
+            </p>
+          </div>
+        </div>
+        {asked ? (
+          <p className="rounded-lg bg-muted/50 p-3 text-sm" role="status">We’ve got your request. We’ll email you as soon as the new copy is ready.</p>
+        ) : (
+          <Button className="w-full sm:w-auto" loading={ask.isPending} onClick={() => ask.mutate()}>Ask for a new copy</Button>
+        )}
+        {ask.isError && <p role="alert" className="text-sm text-destructive">{failMessage(ask.error, 'We couldn’t send that. Try again.')}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Declined({ data, onReapply }: { data: PartnerOnboarding; onReapply: () => void }) {
+  const r = data.rejection;
+  const note = data.application?.reviewNotes;
+  return (
+    <Card>
+      <CardContent className="space-y-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive"><XCircle className="h-5 w-5" /></span>
+          <div>
+            <h2 className="text-xl font-bold">We couldn’t approve this application</h2>
+            <p className="text-sm text-muted-foreground">Here’s why, and what would help next time.</p>
+          </div>
+        </div>
+        {r && r.reasons.length > 0 && (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {r.reasons.map((x) => (
+              <li key={x.code} className="space-y-1 p-4">
+                <p className="font-semibold">{x.label}</p>
+                <p className="text-sm text-muted-foreground">{x.why}</p>
+                <p className="text-sm"><span className="font-medium">What would help:</span> {x.improve}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+        {(r?.improvements || note) && (
+          <div className="space-y-1 rounded-lg bg-muted/50 p-4 text-sm">
+            <p className="font-semibold">A note from our team</p>
+            {note && <p>{note}</p>}
+            {r?.improvements && <p>{r.improvements}</p>}
+          </div>
+        )}
+        {r && !r.canReapply && r.reapplyAfter ? (
+          <p className="text-sm text-muted-foreground" role="status">You can apply again from {formatDate(r.reapplyAfter)}.</p>
+        ) : (
+          <Button variant="outline" className="w-full sm:w-auto" onClick={onReapply}>Apply again</Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Payout({ method, onDone }: { method: 'check' | 'zelle'; onDone: () => void }) {
+  const [value, setValue] = useState('');
+  const save = useMutation({
+    meta: { silentError: true },
+    mutationFn: () => assetPartnerApi.setPayoutDetails(method === 'zelle' ? { zelleHandle: value.trim() } : { mailingAddress: value.trim() }),
+    onSuccess: onDone,
+  });
+  return (
+    <Card>
+      <CardContent className="space-y-5 p-5 sm:p-6">
+        <div>
+          <h2 className="text-lg font-bold">Where should we send your earnings?</h2>
+          <p className="text-sm text-muted-foreground">{method === 'zelle' ? 'We pay monthly by Zelle.' : 'We pay monthly by check.'} You can change this later in your profile.</p>
+        </div>
+        {method === 'zelle' ? (
+          <Field label="Zelle email or phone" htmlFor="zelle"><Input id="zelle" value={value} maxLength={120} onChange={(e) => setValue(e.target.value)} /></Field>
+        ) : (
+          <Field label="Mailing address for checks" htmlFor="mailing"><Textarea id="mailing" rows={3} maxLength={300} value={value} onChange={(e) => setValue(e.target.value)} /></Field>
+        )}
+        {save.isError && <p role="alert" className="text-sm text-destructive">{failMessage(save.error, 'We couldn’t save that. Try again.')}</p>}
+        <Button className="w-full sm:w-auto" disabled={value.trim().length < 5} loading={save.isPending} onClick={() => save.mutate()}>Save and open my dashboard</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GettingStarted() {
+  const router = useRouter();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({ queryKey: ['partner-onboarding'], queryFn: () => assetPartnerApi.onboarding() });
+  const [reapply, setReapply] = useState(false);
+  const refresh = useCallback(() => qc.invalidateQueries({ queryKey: ['partner-onboarding'] }), [qc]);
+
+  useEffect(() => {
+    if (q.data?.stage === 'ready') router.replace('/dashboard');
+  }, [q.data?.stage, router]);
+
+  if (q.isLoading || q.data?.stage === 'ready') return <Skeleton className="h-96 w-full rounded-lg" />;
+  if (q.isError || !q.data) return <ErrorState message="We couldn’t load your progress." retry={() => q.refetch()} />;
+  const data = q.data;
+  const app = data.application;
+  const sent = () => {
+    toast({ tone: 'success', title: 'Application sent', description: 'We’ll review it and email you.' });
+    setReapply(false);
+    void refresh();
+  };
+
+  return (
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <h1 className="display text-3xl sm:text-4xl">{data.partner ? `Welcome, ${data.partner.displayName}` : 'Become a CatoDrive partner'}</h1>
+        <p className="text-muted-foreground">Finish these steps and your partner dashboard opens.</p>
+      </header>
+      <Tracker stage={data.stage} />
+
+      {data.stage === 'verify_email' && <VerifyEmail email={data.email} onDone={() => void refresh()} />}
+      {(data.stage === 'apply' || (data.stage === 'rejected' && reapply)) && (
+        <ApplicationForm mode="partner" initial={data.stage === 'rejected' ? app : undefined} draftKey="cd-partner-application" onSubmit={(input) => assetPartnerApi.submitApplication(input).then(sent)} />
+      )}
+      {data.stage === 'changes' && app && (
+        <ApplicationForm mode="partner" initial={app} reviewNote={app.reviewNotes} draftKey={`cd-partner-application-${app._id}`} submitLabel="Send again"
+          onSubmit={(input) => assetPartnerApi.resubmitApplication(app._id, input).then(sent)} />
+      )}
+      {data.stage === 'review' && <InReview data={data} />}
+      {data.stage === 'rejected' && !reapply && <Declined data={data} onReapply={() => setReapply(true)} />}
+      {data.stage === 'profile' && <ProfileForm initial={data.profile} ownPhone={data.profile?.ownPhone} onSaved={() => void refresh()} />}
+      {data.stage === 'identity' && <IdentityStep state={data.identity?.state ?? 'not_started'} reason={data.identity?.reason} onChange={refresh} />}
+      {data.stage === 'agreement_expired' && <OfferExpired data={data} onDone={() => void refresh()} />}
+      {data.stage === 'agreement' && (
+        <>
+          <OfferDeadline offer={data.offer} />
+          <SignDocuments data={data} onDone={() => void refresh()} />
+        </>
+      )}
+      {data.stage === 'documents' && <UploadDocuments documents={data.documents ?? []} onChange={() => void refresh()} />}
+      {data.stage === 'payout' && <Payout method={data.payoutMethod ?? 'check'} onDone={() => void refresh()} />}
+    </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <AuthGuard loginPath="/sign-in?next=/onboarding">
+      <div className="mx-auto max-w-3xl py-2">
+        <GettingStarted />
+      </div>
+    </AuthGuard>
+  );
+}

@@ -1,0 +1,293 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Search, Menu, X, Car, Info, HelpCircle, FileText, ShieldCheck, Calculator, Sparkles, TrendingUp } from 'lucide-react';
+import { config } from '@/lib/config';
+import { Logo } from '@/components/layout/logo';
+import { useAuthStore } from '@/features/auth/store';
+import { useIsHost } from '@/features/host/hooks';
+import { useIsAssetPartner } from '@/features/asset-partners/hooks';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils/cn';
+import { ThemeToggle } from './theme-toggle';
+import { UserMenu } from './user-menu';
+import { ProBadge } from '@/features/subscriptions/member-ui';
+import { useMembership } from '@/features/subscriptions/hooks';
+import { NotificationBell } from './notification-bell';
+import { SiteLink } from './site-link';
+import { SearchBarFields } from '@/features/search/search-bar-fields';
+
+export function Navbar() {
+  const { status } = useAuthStore();
+  // CatoDrive's own fleet is run from the operations panel, never the host site.
+  const isHouseFleet = useAuthStore((s) => s.user?.roles?.includes('house_fleet') ?? false);
+  const pathname = usePathname();
+  const authed = status === 'authenticated';
+  const { isMember } = useMembership();
+  const isHost = useIsHost();
+  const isAssetPartner = useIsAssetPartner();
+  const isSearch = pathname === '/search';
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // The header is fixed so it never leaves the viewport - on a content-heavy
+  // screen (chat, a long form) that means it permanently sits over whatever
+  // scrolls underneath it. Hiding it on scroll-down and bringing it back on
+  // scroll-up (or near the top) gives the content the full screen without
+  // losing one-swipe access back to navigation.
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const goingDown = y > lastY;
+      const pastThreshold = y > 96; // below the header's own height + margin
+      setHidden(goingDown && pastThreshold);
+      lastY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Sticky bars below the header (search filters) read this to move up when the header slides away.
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-nav-hidden', hidden && !mobileMenuOpen);
+    return () => document.documentElement.removeAttribute('data-nav-hidden');
+  }, [hidden, mobileMenuOpen]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Prevent scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
+
+  return (
+    <>
+      <header className={cn(
+        'fixed top-4 inset-x-4 z-50 mx-auto rounded-2xl border border-white/10 bg-background/60 backdrop-blur-2xl shadow-xl shadow-black/10 transition-all duration-300',
+        isSearch ? 'max-w-7xl' : 'max-w-6xl',
+        hidden && !mobileMenuOpen && '-translate-y-24 opacity-0',
+      )}>
+        <div className="flex h-14 items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6">
+        {/* Left: Mobile Menu Toggle & Wordmark */}
+        <div className="flex min-w-0 items-center gap-3">
+          <button 
+            className="xl:hidden p-1 -ms-1 text-foreground" 
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          
+          <Link href="/" className="flex min-w-0 items-center gap-2.5">
+            <Logo className="h-9 w-9 shrink-0" />
+            {/* `xs:` isn't a breakpoint this project defines, so this was
+                permanently hidden regardless of screen size - `sm:` matches
+                the hamburger toggle's own breakpoint just above. */}
+            <span className="display truncate text-xl tracking-tight">{config.appName}</span>
+          </Link>
+        </div>
+
+        {/* On the search page the full Where / From / Until bar lives inline in
+            the navbar (desktop) - one integrated top bar, no separate box. */}
+        {isSearch && (
+          <div className="hidden min-w-0 flex-1 lg:block">
+            <SearchBarFields variant="nav" />
+          </div>
+        )}
+
+        {/* Compact search affordance elsewhere (not home, not the search page). */}
+        {pathname !== '/' && !isSearch && (
+          <Link
+            href="/search"
+            className="hidden flex-1 items-center gap-2 rounded-full border border-border/50 bg-background/40 px-4 py-1.5 text-sm text-muted-foreground transition-all hover:bg-background/80 md:flex md:max-w-xs"
+          >
+            <Search className="h-4 w-4 text-primary" />
+            <span className="font-medium">Search cars</span>
+          </Link>
+        )}
+
+        <nav className={cn('flex shrink-0 items-center gap-1 sm:gap-2', isSearch && 'lg:ms-4')}>
+          {/* Explore and Host live in the avatar menu on the search page, so the
+              inline search bar has room to breathe. */}
+          {!isSearch && (
+            <>
+              <Link
+                href="/search"
+                className="hidden rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:bg-primary/10 hover:text-primary xl:block"
+              >
+                Explore
+              </Link>
+              <Link
+                href="/about"
+                className="hidden rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:bg-primary/10 hover:text-primary xl:block"
+              >
+                How it works
+              </Link>
+              {/* Primary acquisition path - own the car, CatoDrive runs it. Leads
+                  over the self-managed host flow. Once actually enrolled,
+                  this goes straight to the partner's own dashboard rather
+                  than the public pitch they no longer need. */}
+              {isAssetPartner ? (
+                <SiteLink path="/asset-partners/dashboard" className="hidden rounded-full px-4 py-1.5 text-sm font-semibold text-primary transition-all hover:bg-primary/10 xl:block">
+                  Partner dashboard
+                </SiteLink>
+              ) : (
+                <Link href="/asset-partners" className="hidden rounded-full px-4 py-1.5 text-sm font-semibold text-primary transition-all hover:bg-primary/10 xl:block">
+                  Asset Partners
+                </Link>
+              )}
+              {/*
+                Asset-Partners-only launch: don't invite a NEW self-serve
+                host. An EXISTING host still reaches their own dashboard -
+                that isn't an invitation, it's their own listing.
+
+                `!isAssetPartner` is load-bearing, not decoration: every Asset
+                Partner also carries a verified Host record underneath (it's
+                the marketplace-seller plumbing a Vehicle hangs off), so
+                isHost reads true for partners too. Without this, every
+                partner saw "Host dashboard" here and could reach the
+                self-serve tools - including Add a car, which lists a vehicle
+                with no assetPartnerId and bills it as an ordinary host
+                booking instead of running it through their actual terms.
+              */}
+              {(isHost || !config.assetPartnersOnly) && !isAssetPartner && !isHouseFleet ? (
+                <SiteLink path="/host" className="hidden rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:bg-primary/10 hover:text-primary xl:block">
+                  {isHost ? 'Host dashboard' : 'Become a host'}
+                </SiteLink>
+              ) : null}
+              {/* Lower-frequency destination - only at wider widths so it
+                  doesn't crowd the primary consumer/partner links. */}
+              <Link
+                href="/investors"
+                className="hidden rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:bg-primary/10 hover:text-primary xl:block"
+              >
+                Investors
+              </Link>
+            </>
+          )}
+
+          <div className="hidden h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent sm:flex ms-1">
+            <ThemeToggle />
+          </div>
+
+          {authed ? (
+            <div className="ms-1 flex items-center gap-1">
+              <NotificationBell />
+              {isMember && <ProBadge className="hidden sm:inline-flex" />}
+              <UserMenu />
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center ms-2">
+              {/* One entry point, not two - /login itself offers "New to CatoDrive?
+                  Sign up" for anyone who isn't a returning user yet. */}
+              <Link href="/login">
+                <Button size="sm" className="rounded-full px-5 font-semibold">Log in</Button>
+              </Link>
+            </div>
+          )}
+        </nav>
+      </div>
+      </header>
+
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex xl:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm" 
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          
+          {/* Drawer */}
+          <div className="fixed inset-y-0 start-0 w-[85%] max-w-sm bg-background shadow-2xl animate-slide-in-right flex flex-col">
+            <div className="flex items-center justify-between gap-2 px-4 h-16 border-b border-border">
+              <Link href="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setMobileMenuOpen(false)}>
+                <Logo className="h-9 w-9 shrink-0" />
+                <span className="display truncate text-xl tracking-tight">{config.appName}</span>
+              </Link>
+              <button
+                className="shrink-0 p-2 -me-2 text-foreground"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto py-4">
+              {!authed && (
+                <div className="px-4 pb-6 border-b border-border mb-4">
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full justify-start text-base py-6">Log in</Button>
+                  </Link>
+                </div>
+              )}
+              
+              <nav className="px-2 space-y-1">
+                {isAssetPartner ? (
+                  <SiteLink path="/asset-partners/dashboard" className="flex items-center gap-3 px-4 py-3 text-base font-semibold text-primary rounded-xl hover:bg-primary/10" onNavigate={() => setMobileMenuOpen(false)}>
+                    <Sparkles className="h-5 w-5" />
+                    Partner dashboard
+                  </SiteLink>
+                ) : (
+                  <Link href="/asset-partners" className="flex items-center gap-3 px-4 py-3 text-base font-semibold text-primary rounded-xl hover:bg-primary/10" onClick={() => setMobileMenuOpen(false)}>
+                    <Sparkles className="h-5 w-5" />
+                    Asset Partners
+                  </Link>
+                )}
+                {/* See the desktop link above for why !isAssetPartner matters here. */}
+                {(isHost || !config.assetPartnersOnly) && !isAssetPartner && !isHouseFleet && (
+                  <SiteLink path="/host" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onNavigate={() => setMobileMenuOpen(false)}>
+                    <Car className="h-5 w-5 text-muted-foreground" />
+                    {isHost ? 'Host dashboard' : 'Become a host'}
+                  </SiteLink>
+                )}
+                <Link href="/investors" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
+                  <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                  Investors
+                </Link>
+                <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  Why choose {config.appName}
+                </Link>
+                <Link href="/support" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
+                  <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                  Get help
+                </Link>
+                <Link href="/legal" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
+                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  Legal
+                </Link>
+                <Link href="/insurance" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
+                  <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                  Insurance & protection
+                </Link>
+                <Link href="/calculator" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
+                  <Calculator className="h-5 w-5 text-muted-foreground" />
+                  Carculator
+                </Link>
+              </nav>
+            </div>
+            <div className="p-4 border-t border-border flex justify-between items-center">
+              <span className="text-sm font-medium text-muted-foreground">Appearance</span>
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Minimal road/motion mark - reads as a brand, not a stock car icon. */

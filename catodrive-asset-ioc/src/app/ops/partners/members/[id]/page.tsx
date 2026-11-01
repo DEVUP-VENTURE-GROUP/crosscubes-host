@@ -1,0 +1,475 @@
+'use client';
+
+import { use, useState } from 'react';
+import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/states';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
+import { formatMoney, formatDate } from '@/lib/utils/format';
+import { partnerManageApi } from '@/features/asset-partners/manage-api';
+import { PartnerPaperwork } from '~/features/partners/partner-paperwork';
+import { IntakeReports } from '~/features/partners/intake-reports';
+import { PartnerEnvelopes } from '~/features/partners/partner-envelopes';
+import { TermsHistory } from '~/features/partners/terms-history';
+import { PartnerLifecycleCard } from '~/features/partners/partner-lifecycle-card';
+import { ApiError } from '@/lib/api/types';
+import { safeMessage } from '@/lib/utils/safe-message';
+
+const manage = partnerManageApi('/ioc');
+
+/**
+ * One Asset Partner: where they are in the programme, the terms actually in
+ * force, and the month's statement as the partner sees it.
+ *
+ * Terms are shown resolved, not just the overrides, so ops quotes the same
+ * numbers the partner's statement is built from.
+ */
+
+const NEXT_STATUS: Record<string, { to: string; label: string; destructive?: boolean }[]> = {
+  onboarding: [
+    { to: 'active', label: 'Mark active (car is live)' },
+    { to: 'exited', label: 'Exit programme', destructive: true },
+  ],
+  active: [
+    { to: 'suspended', label: 'Suspend', destructive: true },
+    { to: 'exited', label: 'Exit programme', destructive: true },
+  ],
+  suspended: [
+    { to: 'active', label: 'Reinstate' },
+    { to: 'exited', label: 'Exit programme', destructive: true },
+  ],
+  exited: [],
+};
+
+const TONE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'muted'> = {
+  onboarding: 'warning',
+  active: 'success',
+  suspended: 'destructive',
+  exited: 'muted',
+};
+
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const qc = useQueryClient();
+  const confirm = useConfirm();
+  const toast = useToast();
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['admin-asset-partner', id],
+    queryFn: () => manage.partner(id),
+  });
+  const statement = useQuery({
+    queryKey: ['admin-asset-partner-statement', id],
+    queryFn: () => manage.statement(id),
+  });
+
+  const setStatus = useMutation({
+    mutationFn: ({ status, reason }: { status: string; reason?: string }) =>
+      manage.setStatus(id, status, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-asset-partner', id] });
+      qc.invalidateQueries({ queryKey: ['admin-asset-partners'] });
+      toast({ tone: 'success', title: 'Status updated' });
+    },
+    onError: () => toast({ tone: 'error', title: 'Could not update status' }),
+  });
+
+  const saveTerms = useMutation({
+    mutationFn: (terms: Record<string, number | string | undefined>) =>
+      manage.setTerms(id, terms),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-asset-partner', id] });
+      qc.invalidateQueries({ queryKey: ['admin-asset-partner-statement', id] });
+      toast({ tone: 'success', title: 'Terms updated — the next statement uses them' });
+    },
+    onError: () => toast({ tone: 'error', title: 'Could not save terms' }),
+  });
+
+  const proposeTerms = useMutation({
+    mutationFn: (input: Parameters<typeof manage.proposeTerms>[1]) => manage.proposeTerms(id, input),
+    onSuccess: () => {
+      setDraft({});
+      qc.invalidateQueries({ queryKey: ['ioc-terms-history', id] });
+      toast({ tone: 'success', title: 'Sent to the partner to sign', description: 'Nothing changes until they sign it.' });
+    },
+    onError: (e) => toast({ tone: 'error', title: e instanceof ApiError ? safeMessage(e.message) : 'Could not send the change' }),
+  });
+
+  const [draft, setDraft] = useState<Record<string, string>>({});
+
+  if (isLoading) return <Skeleton className="h-96 w-full" />;
+  if (isError || !data) {
+    return <ErrorState message="Couldn’t load that partner." retry={() => refetch()} />;
+  }
+
+  const { partner, terms } = data;
+  const money = (v: number) => formatMoney({ amount: v, currency: 'USD' });
+
+  const onStatus = async (to: string, destructive?: boolean) => {
+    const { ok, reason } = await confirm({
+      title: `Move ${partner.displayName} to "${to}"?`,
+      description:
+        to === 'suspended'
+          ? 'A suspended partner takes no new bookings. Money already earned is still owed.'
+          : to === 'exited'
+            ? 'Exiting is final — a partner cannot be un-exited.'
+            : 'The partner will be told their car is live and start appearing in statements as active.',
+      confirmLabel: `Move to ${to}`,
+      tone: destructive ? 'destructive' : 'default',
+      reason:
+        to === 'suspended'
+          ? { label: 'Reason (recorded)', placeholder: 'e.g. Insurance lapsed', required: true }
+          : undefined,
+    });
+    if (ok) setStatus.mutate({ status: to, reason });
+  };
+
+  /** Only send fields the operator actually typed — the rest stay inherited. */
+  // After signing, money terms change only through an amendment the partner signs; the payout method stays theirs to pick.
+  const signed = !!partner.agreement?.signedAt;
+  const submitTerms = async () => {
+    const out: Record<string, number | string | undefined> = {};
+    for (const [k, v] of Object.entries(draft)) {
+      if (v === '' || k === 'requestedFrom' || k === 'reason') continue;
+      out[k] = k === 'payoutMethod' ? v : Number(v);
+    }
+    if (Object.keys(out).length === 0) {
+      toast({ tone: 'error', title: 'Nothing to save' });
+      return;
+    }
+    if (!signed) {
+      saveTerms.mutate(out);
+      return;
+    }
+    const { payoutMethod, ...money } = out;
+    if (payoutMethod) saveTerms.mutate({ payoutMethod });
+    if (Object.keys(money).length === 0) return;
+    const { ok } = await confirm({
+      title: 'Send this change to the partner?',
+      description: 'They review and sign it in their portal. It starts on the date you chose, or when they sign if that is later. Past trips keep their old terms.',
+      confirmLabel: 'Send for signature',
+    });
+    if (!ok) return;
+    proposeTerms.mutate({
+      ...(money as Record<string, number>),
+      ...(draft.requestedFrom ? { requestedFrom: new Date(`${draft.requestedFrom}T00:00:00`).toISOString() } : {}),
+      ...(draft.reason?.trim() ? { reason: draft.reason.trim() } : {}),
+    });
+  };
+
+  return (
+    <div className="space-y-5">
+      <Link
+        href={'/ops/partners/members'}
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Partners
+      </Link>
+
+      <Card>
+        <CardContent className="flex flex-wrap items-start justify-between gap-4 py-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge tone={TONE[partner.status] ?? 'muted'}>{partner.status}</Badge>
+              <span className="text-xs capitalize text-muted-foreground">{partner.partnerType}</span>
+              {terms.negotiated && <Badge tone="warning">Negotiated terms</Badge>}
+            </div>
+            <h1 className="display mt-2 text-2xl">{partner.displayName}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {partner.email ?? '—'} · {partner.phone ?? '—'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Approved {partner.approvedAt ? formatDate(partner.approvedAt) : '—'}
+              {partner.activatedAt && ` · Live ${formatDate(partner.activatedAt)}`}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(NEXT_STATUS[partner.status] ?? []).map((a) => (
+              <Button
+                key={a.to}
+                size="sm"
+                variant="outline"
+                className={a.destructive ? 'text-destructive' : undefined}
+                loading={setStatus.isPending}
+                onClick={() => onStatus(a.to, a.destructive)}
+              >
+                {a.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {partner.suspendedReason && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="py-4 text-sm">
+            <span className="font-semibold">Suspended:</span> {partner.suspendedReason}
+          </CardContent>
+        </Card>
+      )}
+
+      <PartnerLifecycleCard partnerId={id} cars={(data.vehicles ?? []).map((v: { _id: string; year: number; make: string; model: string; assetPartnerEndedAt?: string }) => ({ ...v, endedAt: v.assetPartnerEndedAt }))} />
+
+      <PartnerPaperwork partnerId={id} signed={{ agreement: partner.agreement, nda: partner.nda }} />
+
+      <PartnerEnvelopes partnerId={id} />
+
+      <IntakeReports partnerId={id} applications={data.applications ?? []} />
+
+      {/* Terms in force — resolved, so this is what the statement uses. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Terms in force</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {signed
+              ? 'These are the terms the partner signed. A change is sent to them to review and sign, and only applies once signed.'
+              : 'Leave a field blank to use the platform default. What you set here goes into the agreement the partner signs.'}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Management fee %" hint={`Now ${terms.managementFeeBps / 100}%`}>
+              <Input
+                type="number"
+                step="0.5"
+                placeholder={String(terms.managementFeeBps / 100)}
+                value={draft.managementFeeBps ?? ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    managementFeeBps: e.target.value === '' ? '' : String(Number(e.target.value) * 100),
+                  })
+                }
+              />
+            </Field>
+            <Field label="Insurance / vehicle / mo ($)" hint={`Now ${money(terms.insuranceMonthlyCents)}`}>
+              <Input
+                type="number"
+                placeholder={String(terms.insuranceMonthlyCents / 100)}
+                value={draft.insuranceMonthlyCents ?? ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    insuranceMonthlyCents:
+                      e.target.value === '' ? '' : String(Math.round(Number(e.target.value) * 100)),
+                  })
+                }
+              />
+            </Field>
+            <Field label="Detailing / vehicle / mo ($)" hint={`Now ${money(terms.detailingMonthlyCents)}`}>
+              <Input
+                type="number"
+                placeholder={String(terms.detailingMonthlyCents / 100)}
+                value={draft.detailingMonthlyCents ?? ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    detailingMonthlyCents:
+                      e.target.value === '' ? '' : String(Math.round(Number(e.target.value) * 100)),
+                  })
+                }
+              />
+            </Field>
+            <Field label="Deductible cap ($)" hint={`Now ${money(terms.deductibleCapCents)}`}>
+              <Input
+                type="number"
+                placeholder={String(terms.deductibleCapCents / 100)}
+                value={draft.deductibleCapCents ?? ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    deductibleCapCents:
+                      e.target.value === '' ? '' : String(Math.round(Number(e.target.value) * 100)),
+                  })
+                }
+              />
+            </Field>
+            <Field
+              label="Maintenance approval over ($)"
+              hint={`Now ${money(terms.maintenanceApprovalCents)}`}
+            >
+              <Input
+                type="number"
+                placeholder={String(terms.maintenanceApprovalCents / 100)}
+                value={draft.maintenanceApprovalCents ?? ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    maintenanceApprovalCents:
+                      e.target.value === '' ? '' : String(Math.round(Number(e.target.value) * 100)),
+                  })
+                }
+              />
+            </Field>
+            <Field label="Payout day" hint={`Now the ${terms.payoutDayOfMonth}th`}>
+              <Input
+                type="number"
+                min={1}
+                max={28}
+                placeholder={String(terms.payoutDayOfMonth)}
+                value={draft.payoutDayOfMonth ?? ''}
+                onChange={(e) => setDraft({ ...draft, payoutDayOfMonth: e.target.value })}
+              />
+            </Field>
+            <Field label="Payout method" hint={`Now ${terms.payoutMethod}`}>
+              <Select
+                value={draft.payoutMethod ?? ''}
+                onChange={(e) => setDraft({ ...draft, payoutMethod: e.target.value })}
+              >
+                <option value="">Inherit ({terms.payoutMethod})</option>
+                <option value="check">Check</option>
+                <option value="zelle">Zelle</option>
+              </Select>
+            </Field>
+          </div>
+          {signed && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Starts on" hint="Today or later. If the partner signs after this date, it starts when they sign.">
+                <Input type="date" min={new Date().toISOString().slice(0, 10)} value={draft.requestedFrom ?? ''} onChange={(e) => setDraft({ ...draft, requestedFrom: e.target.value })} />
+              </Field>
+              <Field label="Note to the partner (optional)">
+                <Input maxLength={500} value={draft.reason ?? ''} onChange={(e) => setDraft({ ...draft, reason: e.target.value })} />
+              </Field>
+            </div>
+          )}
+          <Button loading={saveTerms.isPending || proposeTerms.isPending} onClick={() => void submitTerms()}>
+            {signed ? 'Send change for signature' : 'Save terms for the agreement'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <TermsHistory partnerId={id} />
+
+      {/* Their cars — ops had no way to see these from the partner record. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            Vehicles {data.vehicles?.length ? `· ${data.vehicles.length}` : ''}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2.5 text-sm">
+          {data.vehicles?.length ? (
+            data.vehicles.map((v: any) => (
+              <div
+                key={v._id}
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5 last:border-0 last:pb-0"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium">
+                    {v.year} {v.make} {v.model}
+                    {v.trim ? ` ${v.trim}` : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {v.plate ? `Plate ${v.plate}` : 'No plate on file'}
+                    {v.vin ? ` · VIN ${v.vin}` : ''}
+                  </p>
+                </div>
+                <Badge tone={v.status === 'listed' ? 'success' : 'muted'}>{v.status}</Badge>
+              </div>
+            ))
+          ) : (
+            <p className="text-muted-foreground">
+              No vehicles onboarded yet — added once the car is photographed and inspected.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* What they actually submitted. Absent for a partner ops added directly. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Application on file</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          {data.applications?.length ? (
+            data.applications.map((a: any) => (
+              <div key={a._id} className="space-y-2 border-b border-border pb-3 last:border-0 last:pb-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={a.status === 'approved' ? 'success' : a.status === 'rejected' ? 'destructive' : 'warning'}>
+                    {a.status}
+                  </Badge>
+                  <span className="font-mono text-xs text-muted-foreground">{a.reference}</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(a.createdAt)}</span>
+                </div>
+                <Row
+                  label="Vehicle"
+                  value={`${a.vehicle?.year ?? ''} ${a.vehicle?.make ?? ''} ${a.vehicle?.model ?? ''}`.trim() || '—'}
+                />
+                <Row label="VIN" value={a.vehicle?.vin ?? '—'} />
+                <Row label="Plate" value={a.vehicle?.plate ?? '—'} />
+                <Row label="Mileage" value={a.vehicle?.mileage ? `${a.vehicle.mileage.toLocaleString()} mi` : '—'} />
+                <Row label="Ownership" value={a.ownership ?? '—'} />
+                <Row label="Insurance" value={a.insurance?.carrier ?? '—'} />
+                <Row label="Availability" value={a.availability ?? '—'} />
+                <Row label="Location" value={[a.city, a.state].filter(Boolean).join(', ') || '—'} />
+                {a.reviewNotes && (
+                  <p className="rounded-lg bg-muted/40 p-3 text-xs">
+                    <span className="font-semibold">Review note:</span> {a.reviewNotes}
+                  </p>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-muted-foreground">
+              Added directly by ops — no application was submitted, so there is nothing to review here.
+              Vehicle and document details come from onboarding instead.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* The statement, exactly as the partner sees it. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            Statement {statement.data ? `· ${statement.data.period}` : ''}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2.5 text-sm">
+          {statement.isLoading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : statement.data ? (
+            <>
+              <Row label="Gross booking revenue" value={money(statement.data.totals.gross)} />
+              <Row
+                label={`Management fee (${statement.data.terms.managementFeeBps / 100}%)`}
+                value={`−${money(statement.data.totals.managementFee)}`}
+              />
+              <Row label="Fleet insurance" value={`−${money(statement.data.totals.insurance)}`} />
+              <Row label="Detailing" value={`−${money(statement.data.totals.detailing)}`} />
+              <div className="border-t border-border pt-2.5">
+                <Row label="Partner net" value={money(statement.data.totals.net)} strong />
+              </div>
+              <p className="pt-2 text-xs text-muted-foreground">
+                {statement.data.totals.trips} completed trip
+                {statement.data.totals.trips === 1 ? '' : 's'} · pays{' '}
+                {formatDate(statement.data.payoutDate)} by {statement.data.payoutMethod} ·{' '}
+                {statement.data.final ? 'final' : 'month still running'}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">No statement available.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={strong ? 'font-bold' : 'font-medium'}>{value}</span>
+    </div>
+  );
+}

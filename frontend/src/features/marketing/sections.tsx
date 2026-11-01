@@ -1,0 +1,216 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowRight, TrendingUp, Briefcase, Building2, Users } from 'lucide-react';
+import { Reveal } from '@/components/ui/reveal';
+import { config } from '@/lib/config';
+import { useFacets } from '@/features/vehicles/hooks';
+
+/**
+ * Shared CatoDrive marketing sections, so the homepage and the About page show
+ * the same social proof and audience story from ONE source - change it once,
+ * it changes everywhere. Figures are business-supplied marketing copy.
+ */
+
+export const BRAND = 'CatoDrive';
+
+export function SectionEyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-primary">
+      <span className="h-px w-6 bg-primary/50" /> {children}
+    </span>
+  );
+}
+
+/* ── Traction / social-proof stats ─────────────────────────────────────── */
+
+const STATS = [
+  { prefix: '$', value: 766143, suffix: '+', decimals: 0, label: 'Fleet Revenue', comma: true },
+  { prefix: '', value: 4.96, suffix: '★', decimals: 2, label: 'Rating', sub: '2,053 reviews' },
+  { prefix: '', value: 100, suffix: '+', decimals: 0, label: 'Vehicles Managed' },
+  { prefix: '', value: 5100, suffix: '+', decimals: 0, label: 'Trips Completed', comma: true },
+] as const;
+
+/**
+ * Business track-record figures.
+ *
+ * `excludeLive` drops the two tiles the homepage hero already renders from the
+ * live marketplace API (rating and completed trips). Without it the homepage
+ * showed a live average rating in the hero and a hardcoded 4.96★ three
+ * sections below it - two different ratings for the same company on one
+ * screen, which reads as fabricated even when both numbers are genuine. The
+ * live figure wins there; these historical, year-labelled ones stand alone on
+ * /about where there is no hero to contradict.
+ */
+export function TractionStats({
+  heading = 'The numbers, unedited.',
+  excludeLive = false,
+}: { heading?: string; excludeLive?: boolean }) {
+  const live = useFacets().data?.stats;
+  const liveReviews = !excludeLive && live && live.ratingCount > 0
+    ? {
+        prefix: '', value: live.ratingCount, suffix: '', decimals: 0, comma: true, label: `Reviews on ${BRAND}`,
+        sub: live.ratingAvg != null ? `${live.ratingAvg.toFixed(2)}★ average, live` : undefined,
+      }
+    : null;
+  // Live reviews take the revenue tile's place once there are any; until then the revenue figure stays.
+  const base = liveReviews ? [liveReviews, ...STATS.slice(1)] : STATS;
+  const stats = excludeLive
+    ? base.filter((s) => s.label !== 'Rating' && s.label !== 'Trips Completed')
+    : base;
+  return (
+    <section>
+      <Reveal className="mx-auto max-w-2xl text-center">
+        <SectionEyebrow>Proven traction · Zero outside capital</SectionEyebrow>
+        <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">{heading}</h2>
+        <p className="mt-4 text-base text-muted-foreground sm:text-lg">Real figures from a real fleet - 100% bootstrapped.</p>
+      </Reveal>
+      <div className={`mt-12 grid gap-8 sm:grid-cols-2 ${stats.length === 4 ? 'lg:grid-cols-4 lg:gap-8' : 'lg:grid-cols-2 max-w-4xl mx-auto lg:gap-16'}`}>
+        {stats.map((s, i) => (
+          <Reveal key={s.label} delay={i * 90}>
+            <StatCard {...s} />
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function StatCard({ prefix = '', value, suffix = '', decimals = 0, comma, label, sub }: {
+  prefix?: string; value: number; suffix?: string; decimals?: number; comma?: boolean; label: string; sub?: string;
+}) {
+  return (
+    <div className="group relative flex min-w-0 flex-col items-center sm:items-start text-center sm:text-left py-6 transition-transform duration-500 hover:-translate-y-1">
+      <div className="pointer-events-none absolute -left-4 top-0 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-opacity duration-500 group-hover:bg-primary/10" />
+      {/* Sized to the column on wide screens so a long figure ($766,143+) never runs into the next one. */}
+      <p className="numeric max-w-full whitespace-nowrap text-4xl font-extrabold tracking-tight text-primary sm:text-5xl lg:text-[clamp(2rem,2.9vw,2.85rem)] drop-">
+        {prefix}
+        <CountUp value={value} decimals={decimals} comma={comma} />
+        {suffix}
+      </p>
+      <p className="mt-4 text-sm font-bold uppercase tracking-wider text-foreground">{label}</p>
+      {sub && <p className="mt-1.5 text-sm text-muted-foreground">{sub}</p>}
+    </div>
+  );
+}
+
+/* ── Who we serve - image cards ────────────────────────────────────────── */
+
+/**
+ * Corporate/Enterprise cards drop out entirely while config.assetPartnersOnly
+ * is on - see the config comment. Two cards left still fills the same
+ * 2-column grid cleanly; nothing needed to change in the layout below.
+ */
+const AUDIENCES = [
+  // Was pointed at /host - the self-serve flow, not this program. A visitor
+  // clicking "Become a partner" landed on the wrong pitch entirely.
+  { icon: TrendingUp, image: '/newsections/asset_partners.webp', title: 'Asset Partners', body: 'List a vehicle you already own. Net $1,066–$1,878/month - we run everything, you get paid.', href: '/asset-partners', cta: 'Become a partner' },
+  { icon: Briefcase, image: '/newsections/business_travels.webp', title: 'Business Travelers', body: 'Car delivered to your terminal at DFW or Love Field, 5–15% below market rate. Paperless end-to-end. Zero friction.', href: '/search', cta: 'Book a car' },
+  { icon: Building2, image: '/newsections/corporate_accounts.webp', title: 'Corporate Accounts', body: 'B2B fleet accounts for enterprises and staffing agencies, auto-repair loaner programs, and white-glove SUV delivery to private terminals.', href: '/corporate', cta: 'Talk to us' },
+  { icon: Users, image: '/newsections/enterprise_volume.webp', title: 'Enterprise & Volume', body: 'Volume pricing, dedicated account management, consolidated billing, and priority terminal delivery for regular DFW travel.', href: '/corporate', cta: 'Corporate portal' },
+] as const;
+
+export function AudienceSection({ heading = 'Two sides of one platform.' }: { heading?: string }) {
+  const audiences = (config.assetPartnersOnly ? AUDIENCES.slice(0, 2) : AUDIENCES).filter((a) => config.corporate || a.href !== '/corporate');
+  return (
+    <section>
+      <Reveal className="max-w-3xl">
+        <SectionEyebrow>Who {BRAND} serves</SectionEyebrow>
+        <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">{heading}</h2>
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">Travel without hassle. Earn without effort.</p>
+      </Reveal>
+      <div className="mt-12 grid gap-12 sm:grid-cols-2 lg:gap-16">
+        {audiences.map((a, i) => (
+          <Reveal key={a.title} delay={i * 80}>
+            <AudienceCard {...a} />
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AudienceCard({ icon: Icon, image, title, body, href, cta }: {
+  icon: typeof Users; image: string; title: string; body: string; href: string; cta: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex h-full flex-col transition-all duration-500"
+    >
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-border/40 mb-6">
+        <Image
+          src={image}
+          alt={title}
+          fill
+          sizes="(min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <span className="absolute left-5 top-5 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md">
+          <Icon className="h-4 w-4" />
+        </span>
+        <h3 className="display absolute bottom-5 left-5 right-5 text-2xl text-white drop-shadow-md">{title}</h3>
+      </div>
+      <div className="flex flex-1 flex-col">
+        <p className="flex-1 text-[15px] leading-relaxed text-muted-foreground">{body}</p>
+        <span className="mt-5 inline-flex w-fit items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-primary">
+          {cta} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+/* ── Count up on scroll ────────────────────────────────────────────────── */
+
+export function CountUp({ value, decimals = 0, comma, durationMs = 1300 }: {
+  value: number; decimals?: number; comma?: boolean; durationMs?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplay(value);
+      return;
+    }
+    let raf = 0;
+    let start = 0;
+    const run = (t: number) => {
+      if (!start) start = t;
+      const p = Math.min((t - start) / durationMs, 1);
+      const eased = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+      setDisplay(value * eased);
+      if (p < 1) raf = requestAnimationFrame(run);
+    };
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          raf = requestAnimationFrame(run);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(el);
+    return () => {
+      obs.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [value, durationMs]);
+
+  return (
+    <span ref={ref}>
+      {display.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: !!comma,
+      })}
+    </span>
+  );
+}

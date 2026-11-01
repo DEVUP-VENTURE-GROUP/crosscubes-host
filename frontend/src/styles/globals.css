@@ -1,0 +1,430 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens (light) ─────────────────────────────────────────────
+   MERIDIAN. Two rules govern this palette:
+
+   1. The NEUTRALS are the brand. They are warm (a hue around 35–40°, never
+      blue) because a car handed to a stranger is a warm physical thing, and
+      because warm neutrals carry no cultural charge in any market we ship to.
+      Blue-black would make a marketplace read like a bank.
+
+   2. The ACCENT is a guest, not the host. Deep teal is the least
+      culturally-loaded hue at 50-market scale - saffron is political in India,
+      red pulls three ways, purple is mourning in Brazil and Thailand and is
+      already Turo's. Teal is also rare on car bodywork, so it never fights the
+      photography, and it leaves green free to mean exactly one thing: cleared.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --background: 40 30% 96%;        /* paper - warm, never grey-blue */
+  --foreground: 38 21% 7%;         /* ink */
+  --subtle: 40 24% 93%;
+  /* Cards stay PURE WHITE on purpose: a warm ground behind a silver or white
+     car reads as a yellowed photo, and silver + white are 39% of the US fleet.
+     The warmth lives in the page behind the cards, never under a photograph. */
+  --card: 0 0% 100%;
+  --card-foreground: 38 21% 7%;
+  --primary: 180 82% 26%;          /* meridian teal, dark enough for 4.5:1 text on paper */
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 180 40% 93%;
+  --secondary: 40 24% 93%;
+  --secondary-foreground: 38 21% 7%;
+  --muted: 40 20% 93%;
+  --muted-foreground: 33 9% 40%;   /* road */
+  --accent: 180 40% 93%;
+  --accent-foreground: 38 21% 7%;
+  --destructive: 4 64% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 159 76% 30%;          /* cleared - semantic only, never brand */
+  --success-foreground: 0 0% 100%;
+  /* Amber, kept clear of the teal brand so "needs attention" never reads as
+     "on brand". Dark enough to pass on the warm paper ground. */
+  --warning: 32 88% 34%;
+  --warning-foreground: 0 0% 100%;
+  --border: 39 20% 86%;
+  --input: 39 20% 86%;
+  --ring: 180 82% 26%;
+  --radius: 0.75rem;
+
+  /* Ink scale - high-contrast marketing surfaces (asphalt) */
+  --ink: 30 18% 7%;
+  --ink-foreground: 38 31% 93%;
+
+  /* Chart series, in this order; identity is always repeated in a label */
+  --chart-1: 158 83% 34%;
+  --chart-2: 239 84% 67%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 350 89% 60%;
+  --chart-5: 189 94% 43%;
+}
+
+/* ── Design tokens (dark) ─────────────────────────────────────────────
+   Not an inversion. The ground warms rather than cooling, and the accent
+   lightens so it clears contrast on a dark surface - a 31%-lightness teal is
+   unreadable on asphalt.
+   ───────────────────────────────────────────────────────────────────── */
+.dark {
+  --background: 30 18% 7%;         /* asphalt */
+  --foreground: 38 31% 93%;
+  --subtle: 30 15% 10%;
+  /* Photos still sit on a lifted surface rather than the page ground, so a
+     dark card never swallows the darker half of the fleet. */
+  --card: 30 15% 11%;
+  --card-foreground: 38 31% 93%;
+  --primary: 180 55% 45%;
+  --primary-foreground: 30 18% 7%;
+  --primary-soft: 183 55% 11%;
+  --secondary: 33 12% 17%;
+  --secondary-foreground: 38 31% 93%;
+  --muted: 33 12% 16%;
+  --muted-foreground: 34 11% 61%;
+  --accent: 183 55% 11%;
+  --accent-foreground: 38 31% 93%;
+  --destructive: 5 73% 63%;
+  --destructive-foreground: 30 18% 7%;
+  --success: 159 54% 46%;
+  --success-foreground: 30 18% 7%;
+  --warning: 38 92% 58%;
+  --warning-foreground: 30 18% 7%;
+  --border: 37 17% 15%;
+  --input: 37 17% 18%;
+  --ring: 180 55% 45%;
+
+  --ink: 30 15% 10%;
+  --ink-foreground: 38 31% 93%;
+
+  --chart-1: 158 60% 45%;
+  --chart-2: 239 84% 74%;
+  --chart-3: 38 92% 58%;
+  --chart-4: 350 89% 68%;
+  --chart-5: 189 80% 50%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Lock the page to the viewport width. Without this on <html> (not just
+     <body>) mobile Safari still lets a sliver of overflow pan the whole page
+     side to side.
+
+     `clip`, not `hidden`, for the same reason <body> uses clip (see
+     layout.tsx): overflow-x:hidden forces the computed overflow-y to auto,
+     turning the element into a scroll container - and `position: sticky`
+     resolves against its nearest scrolling ancestor. `clip` does the same
+     horizontal clipping without creating one. */
+  overflow-x: clip;
+  /* No rubber-band / drift: the page can only scroll straight up and down,
+     it can't be dragged around or bounce at the edges. */
+  overscroll-behavior: none;
+  
+}
+
+/* No visible scrollbars anywhere: pages, popups and panels still scroll by wheel, touch and keyboard. */
+* {
+  scrollbar-width: none;
+}
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+body {
+  /* Belt-and-braces with the className guard: nothing may exceed the screen.
+     `clip` for the sticky-positioning reason documented on html above - this
+     rule was still `hidden` and would have fought the overflow-x-clip utility
+     the body element carries. */
+  max-width: 100%;
+  overflow-x: clip;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display headings: tight, confident, marketing-grade.
+   Now actually uses the display FACE - until the font pairing landed this
+   class only changed weight and tracking on the body font, which is why
+   headings never had a voice of their own. */
+.display {
+  font-family: var(--font-display), ui-sans-serif, sans-serif;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  font-weight: 800;
+}
+
+/* Money, dates, plates, references - data, not prose.
+   Tabular figures keep columns aligned and stop a total from dancing
+   sideways as its digits change. */
+.numeric {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* The scrim every photo gets.
+   Host-uploaded photography is uncontrollable - a white car at noon and a
+   black car at dusk arrive in the same grid - so chrome NEVER sits directly
+   on an image. This guarantees a legible field for it regardless. */
+.photo-scrim::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 3.25rem;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.42), transparent);
+  pointer-events: none;
+}
+
+/* ── Reusable design utilities ───────────────────────────────────────── */
+@layer utilities {
+  .brand-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(196 70% 38%));
+  }
+  .text-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(198 72% 40%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .glass {
+    background-color: hsl(var(--background) / 0.72);
+    backdrop-filter: saturate(180%) blur(12px);
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Cinematic hero backdrop: layered radial mesh, no external assets. */
+  .hero-mesh {
+    background-color: hsl(var(--ink));
+    background-image:
+      radial-gradient(ellipse 80% 60% at 15% 0%, hsl(180 70% 38% / 0.30), transparent 62%),
+      radial-gradient(ellipse 70% 60% at 85% 15%, hsl(196 68% 42% / 0.22), transparent 60%),
+      /* A warm ember low in the frame keeps the ground from reading as cold
+         teal-black - the warmth is the brand, the teal is the guest. */
+      radial-gradient(ellipse 90% 70% at 50% 112%, hsl(28 45% 26% / 0.34), transparent 66%);
+  }
+
+  /* Fine grain so large flat areas don't band. */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Image scrim so white text stays legible over photography. */
+  .scrim {
+    background-image: linear-gradient(
+      to top,
+      hsl(224 47% 5% / 0.85) 0%,
+      hsl(224 47% 5% / 0.35) 45%,
+      transparent 100%
+    );
+  }
+
+  .ring-ink {
+    box-shadow: 0 0 0 1px hsl(var(--foreground) / 0.06);
+  }
+
+  /* Escape the page container for full-bleed marketing sections without
+     refactoring every route's layout. */
+  .full-bleed {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+}
+
+/* Nicer native controls */
+input,
+select,
+textarea {
+  color: hsl(var(--foreground));
+}
+::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────
+   The system defined keyframes that almost nothing called, so the product
+   painted inert. These are the shared entrance used by <Reveal>.
+
+   Transition, not animation, on purpose: an animation runs the moment it is
+   painted, which would fire every card on the page at once regardless of
+   whether it is on screen. A transition waits for the class the observer adds.
+   ───────────────────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  /* Decelerating curve - arrives fast, settles slowly. Linear entrances read
+     as mechanical. */
+  transition:
+    opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Hints the compositor without leaving layers promoted forever. */
+  will-change: opacity, transform;
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* Motion is a preference, and on a page someone books a car through it is also
+   an accessibility requirement. Nothing below animates when it is switched off
+   - including anything that opted in via a utility class. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Interaction ──────────────────────────────────────────────────────
+   A surface that responds to the cursor tells you it is operable before you
+   click it. Kept to a lift and a shadow: scaling a card nudges its neighbours
+   and makes a grid feel loose.
+   ───────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .lift {
+    transition:
+      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.25s ease;
+  }
+  .lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 40px -12px rgb(0 0 0 / 0.18);
+  }
+
+  /* Underline that draws from the leading edge. Logical properties, so it
+     still grows from the start edge in RTL markets. */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position-y: 100%;
+    background-size: 0 1.5px;
+    transition: background-size 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .link-underline:hover {
+    background-size: 100% 1.5px;
+  }
+
+  /* Clear of the iPhone home indicator. `pb-safe` was already in use on the
+     mobile booking bar but had never been defined, so the primary action sat
+     underneath the gesture bar on every notched device. */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Focus is never removed, only made to match the system. Keyboard users are
+   the ones who cannot see a hover state. */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Homepage search halo ───────────────────────────────────────────────────
+   A thin light that travels round the search bar's edge, over frosted glass.
+   No transform on hover: the calendar and phone sheet are fixed-position and
+   a transformed ancestor would pull them out of place. */
+@property --halo-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.search-halo {
+  position: relative;
+  padding: 1.5px;
+  border-radius: 1.1rem;
+  background:
+    conic-gradient(from var(--halo-angle), transparent 0deg, hsl(var(--primary)) 55deg, rgba(255, 255, 255, 0.85) 85deg, hsl(var(--primary)) 115deg, transparent 175deg, transparent 360deg),
+    rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 30px 80px -24px rgba(0, 0, 0, 0.75),
+    0 0 0 6px rgba(255, 255, 255, 0.06),
+    0 0 48px -12px hsl(var(--primary) / 0.55);
+  backdrop-filter: blur(14px) saturate(1.2);
+  animation: halo-spin 7s linear infinite;
+  transition: box-shadow 0.35s ease, filter 0.35s ease;
+}
+.search-halo:hover,
+.search-halo:focus-within {
+  filter: brightness(1.04);
+  box-shadow:
+    0 34px 90px -22px rgba(0, 0, 0, 0.8),
+    0 0 0 7px rgba(255, 255, 255, 0.09),
+    0 0 70px -8px hsl(var(--primary) / 0.75);
+}
+.search-halo-glow {
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.35), transparent 70%);
+  animation: halo-breathe 5s ease-in-out infinite;
+}
+@media (min-width: 640px) {
+  .search-halo { border-radius: 9999px; }
+}
+@keyframes halo-spin { to { --halo-angle: 360deg; } }
+@keyframes halo-breathe { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .search-halo, .search-halo-glow { animation: none; }
+}
+
+/* ── Homepage hero motion ───────────────────────────────────────────────── */
+.hero-drift {
+  animation: hero-drift 24s ease-in-out infinite alternate;
+  /* Anchored top-left so the logo in the artwork never drifts out of frame */
+  transform-origin: 0% 0%;
+}
+@keyframes hero-drift {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+.hero-sweep {
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.07) 48%, hsl(var(--primary) / 0.1) 52%, transparent 65%);
+  background-size: 250% 100%;
+  animation: hero-sweep 9s ease-in-out infinite;
+}
+@keyframes hero-sweep {
+  0% { background-position: 120% 0; }
+  55%, 100% { background-position: -40% 0; }
+}
+.hero-chip {
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+.hero-chip:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-color: hsl(var(--primary) / 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-drift, .hero-sweep { animation: none; }
+}

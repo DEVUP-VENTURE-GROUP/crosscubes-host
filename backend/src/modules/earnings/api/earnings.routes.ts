@@ -1,0 +1,56 @@
+import { Router } from 'express';
+import { earningsService } from '../application/earnings.service';
+import { hostAnalyticsService } from '../application/host-analytics.service';
+import { earningsInsightsService } from '../application/earnings-insights.service';
+import { hostService } from '../../hosts/application/host.service';
+import { ledgerService } from '../../payments/application/ledger.service';
+import { Account } from '../../payments/domain/ledger.accounts';
+import { asyncHandler } from '../../../shared/middleware/async-handler';
+import { authenticate } from '../../../shared/middleware/authenticate';
+import { sendSuccess } from '../../../shared/http/api-response';
+
+const router = Router();
+
+router.get(
+  '/dashboard',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const host = await hostService.requireHostForUser(req.principal!.userId);
+    sendSuccess(res, await earningsService.dashboard(host._id));
+  }),
+);
+
+/** Performance analytics: earnings trend, per-vehicle revenue, occupancy, acceptance. */
+router.get(
+  '/performance',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hostAnalyticsService.performance(req.principal!.userId));
+  }),
+);
+
+/**
+ * Business insight: rates rather than totals — revenue per available day,
+ * the cost of idle days, weekday pattern, and booking lead time.
+ */
+router.get(
+  '/insights',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const days = Math.min(365, Math.max(7, Number(req.query.days ?? 90)));
+    sendSuccess(res, await earningsInsightsService.insights(req.principal!.userId, days));
+  }),
+);
+
+/** Revenue report: recent ledger entries for the host payable account. */
+router.get(
+  '/report',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const host = await hostService.requireHostForUser(req.principal!.userId);
+    const entries = await ledgerService.entriesForAccount(Account.hostPayable(host._id), 200);
+    sendSuccess(res, entries);
+  }),
+);
+
+export const earningsRoutes = router;

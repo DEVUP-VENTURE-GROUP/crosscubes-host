@@ -1,0 +1,186 @@
+import Stripe from 'stripe';
+import { createHash } from 'crypto';
+import { config } from '../../../config';
+import { logger } from '../../../infrastructure/logging/logger';
+import { ExternalServiceError } from '../../../core/errors/app-error';
+
+/** What a verification returns once the provider has decided. */
+export interface IdentityResult {
+  status: 'verified' | 'rejected' | 'pending';
+  reason?: string;
+  /** Extracted, verified fields — the point of using a real provider. */
+  firstName?: string;
+  lastName?: string;
+  dob?: string;
+  licenceExpiry?: string;
+  /** Hashed before it ever leaves this layer — never stored in clear. */
+  licenceNumberHash?: string;
+}
+
+export interface IdentitySession {
+  provider: 'stripe' | 'stub';
+  sessionId: string;
+  /** Client secret for Stripe.js, or a hosted URL to redirect to. */
+  clientSecret?: string;
+  url?: string;
+}
+
+/** The ID photos a verification captured. */
+export type IdPhoto = 'selfie' | 'licence_front' | 'licence_back';
+
+export interface IdentityProvider {
+  readonly kind: 'stripe' | 'stub';
+  /** Begin a document + selfie check for a user. */
+  createSession(userId: string): Promise<IdentitySession>;
+  /** Verify + parse a provider webhook; returns null for events we ignore. */
+  parseEvent(rawBody: Buffer, signature: string): Promise<{ userId: string; result: IdentityResult } | null>;
+  /** Ask the provider for a session's current outcome — the backup for a webhook that never arrived. Null while still undecided. */
+  retrieve(sessionId: string): Promise<{ userId: string; result: IdentityResult } | null>;
+  /** Whether ID photos can be read at all (the provider gives them only to a dedicated read key). */
+  readonly canReadPhotos: boolean;
+  /** One ID photo from a verification, or null when it was not captured. */
+  photo(sessionId: string, kind: IdPhoto): Promise<Buffer | null>;
+}
+
+function hashLicence(v: string): string {
+  return createHash('sha256').update(v.trim().toUpperCase()).digest('hex');
+}
+
+/**
+ * Stripe Identity: document capture, liveness/selfie match, and authenticity
+ * checks, run by Stripe. We never see or store the raw document — only the
+ * verified outputs (name, DOB, expiry) and a decision.
+ */
+class StripeIdentityProvider implements IdentityProvider {
+  readonly kind = 'stripe' as const;
+  private readonly stripe: Stripe;
+  private readonly reader?: Stripe;
+
+  constructor(secretKey: string, private readonly readKey?: string) {
+    this.stripe = new Stripe(secretKey);
+    if (readKey) this.reader = new Stripe(readKey);
+  }
+
+  get canReadPhotos() {
+    return !!this.reader;
+  }
+
+  async photo(sessionId: string, kind: IdPhoto): Promise<Buffer | null> {
+    if (!this.reader || !this.readKey) return null;
+    const vs = await this.reader.identity.verificationSessions.retrieve(sessionId, { expand: ['last_verification_report'] });
+    const report = vs.last_verification_report as Stripe.Identity.VerificationReport | string | null;
+    if (!report || typeof report === 'string') return null;
+    const fileId = kind === 'selfie' ? report.selfie?.selfie : report.document?.files?.[kind === 'licence_front' ? 0 : 1];
+    if (!fileId) return null;
+    // File bytes come from files.stripe.com, which the SDK does not wrap.
+    const res = await fetch(`https://files.stripe.com/v1/files/${encodeURIComponent(fileId)}/contents`, { headers: { Authorization: `Bearer ${this.readKey}` }, signal: AbortSignal.timeout(20_000) });
+    if (!res.ok) throw new ExternalServiceError(`Stripe file ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  }
+
+  async createSession(userId: string): Promise<IdentitySession> {
+    const vs = await this.stripe.identity.verificationSessions.create({
+      type: 'document',
+      metadata: { userId },
+      options: {
+        document: {
+          // The two checks that make this worth doing: a live selfie matched to
+          // the document, and a real capture rather than a photo of a screen.
+          require_matching_selfie: true,
+          require_live_capture: true,
+          allowed_types: ['driving_license', 'passport', 'id_card'],
+        },
+      },
+    });
+    return { provider: 'stripe', sessionId: vs.id, clientSecret: vs.client_secret ?? undefined, url: vs.url ?? undefined };
+  }
+
+  /** Pull the verified outputs — this needs an explicit retrieve with expand, because the webhook payload omits the sensitive fields by design. */
+  private async verifiedResult(sessionId: string): Promise<IdentityResult> {
+    const full = await this.stripe.identity.verificationSessions.retrieve(sessionId, { expand: ['verified_outputs'] });
+    const o = full.verified_outputs;
+    const doc = (o as unknown as { document?: { number?: string; expiration_date?: { day: number; month: number; year: number } } })?.document;
+    const exp = doc?.expiration_date;
+    return {
+      status: 'verified' as const,
+      firstName: o?.first_name ?? undefined,
+      lastName: o?.last_name ?? undefined,
+      dob: o?.dob ? `${o.dob.year}-${String(o.dob.month).padStart(2, '0')}-${String(o.dob.day).padStart(2, '0')}` : undefined,
+      licenceExpiry: exp ? `${exp.year}-${String(exp.month).padStart(2, '0')}-${String(exp.day).padStart(2, '0')}` : undefined,
+      licenceNumberHash: doc?.number ? hashLicence(doc.number) : undefined,
+    };
+  }
+
+  async retrieve(sessionId: string) {
+    const vs = await this.stripe.identity.verificationSessions.retrieve(sessionId);
+    const userId = (vs.metadata?.userId as string) ?? '';
+    if (!userId) return null;
+    if (vs.status === 'verified') return { userId, result: await this.verifiedResult(vs.id) };
+    // A fresh session is also 'requires_input'; only a recorded failed attempt is a rejection.
+    if (vs.status === 'requires_input' && vs.last_error) {
+      return { userId, result: { status: 'rejected' as const, reason: vs.last_error.reason ?? 'verification_failed' } };
+    }
+    if (vs.status === 'canceled') return { userId, result: { status: 'rejected' as const, reason: 'verification_canceled' } };
+    return null;
+  }
+
+  async parseEvent(rawBody: Buffer, signature: string) {
+    const secret = config.kyc.identityWebhookSecret;
+    if (!secret) throw new ExternalServiceError('Identity webhook secret not configured');
+
+    const event = this.stripe.webhooks.constructEvent(rawBody, signature, secret);
+    if (!event.type.startsWith('identity.verification_session.')) return null;
+
+    const vs = event.data.object as Stripe.Identity.VerificationSession;
+    const userId = (vs.metadata?.userId as string) ?? '';
+    if (!userId) return null;
+
+    if (event.type === 'identity.verification_session.verified') {
+      return { userId, result: await this.verifiedResult(vs.id) };
+    }
+
+    if (event.type === 'identity.verification_session.requires_input') {
+      const err = vs.last_error;
+      return { userId, result: { status: 'rejected' as const, reason: err?.reason ?? 'verification_failed' } };
+    }
+
+    return null; // created / processing — nothing to persist yet
+  }
+}
+
+/**
+ * Dev stub: no Stripe account needed. `createSession` returns a fake session,
+ * and there is a service-level helper to force a decision so the whole flow is
+ * testable end to end offline. Never selected when a Stripe key is present.
+ */
+class StubIdentityProvider implements IdentityProvider {
+  readonly kind = 'stub' as const;
+  async createSession(userId: string): Promise<IdentitySession> {
+    // A stub session in production would let a guest believe they were verified; refuse loudly instead.
+    if (config.env === 'production') {
+      logger.error({ userId }, 'Identity verification is NOT configured (STRIPE_SECRET_KEY / STRIPE_IDENTITY_WEBHOOK_SECRET missing)');
+      throw new ExternalServiceError('Identity verification is temporarily unavailable. Please try again shortly.');
+    }
+    logger.warn({ userId }, 'Identity: STUB session — no real verification will run');
+    return { provider: 'stub', sessionId: `stub_${userId}_${Date.now()}`, url: 'about:blank' };
+  }
+  async parseEvent(): Promise<null> {
+    return null; // the stub has no webhooks; decisions are forced via the service
+  }
+  async retrieve(): Promise<null> {
+    return null;
+  }
+  readonly canReadPhotos = false;
+  async photo(): Promise<null> {
+    return null;
+  }
+}
+
+export const identityProvider: IdentityProvider = config.kyc.identityEnabled
+  ? new StripeIdentityProvider(config.stripe.secretKey!, config.kyc.identityReadKey)
+  : new StubIdentityProvider();
+
+if (config.env === 'production' && !config.kyc.identityEnabled) {
+  logger.error('Identity verification is DISABLED in production: set STRIPE_SECRET_KEY and STRIPE_IDENTITY_WEBHOOK_SECRET');
+}
+logger.info(`Identity verification: ${config.kyc.identityEnabled ? 'Stripe Identity (live)' : 'Stub (dev, manual review)'}`);

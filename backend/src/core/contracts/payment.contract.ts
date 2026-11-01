@@ -1,0 +1,36 @@
+import type { Money } from '../types/money';
+
+/** Public interface of the Payments module. Callers depend on this, not the impl. */
+export interface ChargeBookingInput {
+  bookingId: string;
+  guestId: string;
+  hostId: string;
+  capture: boolean; // instant book → true; request-to-book → false (authorize only)
+  total: Money;
+  hostEarnings: Money;
+  commission: Money;
+  tax: Money;
+  /** The part of `commission` owed to the insurance partner covering the trip. */
+  insurer?: { id: string; share: number };
+  walletApplied?: number; // minor units funded from wallet → card charges the remainder
+  idempotencyKey: string;
+  /** Guest pays now on the page with any method Stripe offers (wallets, pay-later, Cash App…) instead of the saved card. */
+  anyMethod?: boolean;
+}
+
+export interface ChargeResult {
+  /** True when the card needs the cardholder present — a 3-D Secure challenge,
+   *  or no saved card to charge. The booking is NOT paid until it clears. */
+  requiresAction?: boolean;
+  paymentId: string;
+  intentId: string;
+  clientSecret: string;
+  status: string;
+}
+
+export interface IPaymentContract {
+  chargeForBooking(input: ChargeBookingInput): Promise<ChargeResult>;
+  captureBooking(bookingId: string): Promise<void>;
+  refundBooking(bookingId: string, amount: Money, reason: string): Promise<{ toCard: number; toWallet: number }>;
+  cancelAuthorization(bookingId: string): Promise<void>;
+}

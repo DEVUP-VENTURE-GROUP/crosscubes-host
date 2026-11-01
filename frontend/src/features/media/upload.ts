@@ -1,0 +1,74 @@
+import { api } from '@/lib/api/client';
+
+/** Must match the backend storage.gateway UploadCategory list exactly. */
+export type UploadCategory =
+  | 'vehicle_photo'
+  | 'trip_photo'
+  | 'message'
+  | 'avatar'
+  | 'registration'
+  | 'insurance'
+  | 'kyc'
+  | 'claim'
+  | 'w9'
+  | 'title'
+  | 'partner_exit';
+
+export interface UploadTarget {
+  key: string;
+  uploadUrl: string;
+  publicUrl: string;
+}
+
+const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+// Papers can be PDFs; photos-only surfaces never ask for these categories.
+const DOC_CATEGORIES: UploadCategory[] = ['registration', 'insurance', 'kyc', 'claim', 'w9', 'title', 'partner_exit'];
+
+/**
+ * The real upload flow, in one place: presign → PUT the bytes to storage →
+ * hand back the URLs.
+ *
+ * This existed inline in three separate components (the listing wizard, the
+ * listing editor, the avatar picker), each re-implementing the same
+ * presign/PUT/verify dance, and a fourth caller faked it entirely with stock
+ * photos. Centralised so every uploader is honest and identical: a rejected
+ * PUT throws rather than being recorded as a successful upload, because fetch
+ * resolves for 4xx/5xx and a silent failure here is how a broken image ends up
+ * attached to a booking.
+ */
+export async function uploadFiles(
+  category: UploadCategory,
+  files: File[],
+): Promise<{ url: string; key: string }[]> {
+  if (files.length === 0) return [];
+
+  for (const f of files) {
+    if (!ALLOWED.includes(f.type) && !(f.type === 'application/pdf' && DOC_CATEGORIES.includes(category))) {
+      throw new Error(DOC_CATEGORIES.includes(category) ? `${f.name}: use a PDF, JPG, PNG or WebP file.` : `${f.name}: use a JPG, PNG or WebP image.`);
+    }
+    if (f.size <= 0) {
+      throw new Error(`${f.name}: the file is empty.`);
+    }
+  }
+
+  const targets = await api.post<UploadTarget[]>('/media/upload-urls', {
+    category,
+    sizes: files.map((f) => f.size),
+    contentType: files[0].type,
+  });
+
+  await Promise.all(
+    files.map(async (file, i) => {
+      const res = await fetch(targets[i].uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      });
+      if (!res.ok) {
+        throw new Error(`Storage rejected ${file.name} (${res.status}).`);
+      }
+    }),
+  );
+
+  return targets.map((t) => ({ url: t.publicUrl, key: t.key }));
+}

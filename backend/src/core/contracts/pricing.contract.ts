@@ -1,0 +1,94 @@
+import type { Money } from '../types/money';
+
+export interface PriceBreakdown {
+  days: number;
+  base: Money;
+  cleaningFee: Money;
+  discount: Money;
+  addOnsTotal: Money;
+  delivery: Money; // host delivers the car to the guest — accrues to the host
+  /**
+   * The delivery location that produced that fee, snapshotted with the price.
+   * A host may later rename or remove it; the booking must still say where it
+   * was actually priced to.
+   */
+  deliveryLocation?: { id: string; name: string };
+  protection: Money;
+  /** Platform service fee charged to the guest on top. Zero when not configured. */
+  serviceFee: Money;
+  protectionPlan: string;
+  /** The plan's name as the guest saw it, for receipts. */
+  protectionLabel?: string;
+  /** Set when an insurance partner's plan was chosen: who covers the trip and the part of `protection` owed to them. */
+  protectionInsurer?: { id: string; name: string; share: Money };
+  selectedAddOns: { code: string; label: string; amount: Money }[];
+  subtotal: Money;
+  commission: Money; // platform take (from host portion)
+  tax: Money; // platform tax on commission (deducted from host earnings)
+  /**
+   * Rental tax charged TO the guest and remitted by the platform — state sales
+   * tax, motor-vehicle excise, city surcharge, airport concession. Separate
+   * lines because each is levied and remitted by a different authority, and the
+   * guest is entitled to see which is which.
+   */
+  taxLines?: { ruleId: string; label: string; kind: string; scope: string; rateBps: number; amount: number }[];
+  /** Sum of taxLines. Included in `total`. */
+  taxTotal?: Money;
+  hostEarnings: Money;
+  total: Money; // what the guest pays / hits the gateway
+  currency: string;
+  /** The commission rate applied to this booking, in basis points. */
+  commissionBps?: number;
+  /** Which commission rule produced that rate, e.g. "category:luxury" or "default". */
+  commissionSource?: string;
+  /**
+   * The platform-config version these numbers were computed against. Stamped
+   * onto the booking so the price is reconstructable against the exact economics
+   * that produced it, no matter how many times the live config changes later.
+   */
+  pricingConfigVersion?: number;
+  /** How many days of the trip were surged, and why. Shown to the guest. */
+  surgeDays?: number;
+  surgeSource?: string;
+  /** Membership savings applied (CatoDrive Plus), in minor units. */
+  memberSavings?: Money;
+  memberPlan?: string;
+  /**
+   * What a NON-member would have saved on this exact trip by joining the best
+   * available plan. Absent for members, and absent when no plan would help.
+   *
+   * A real number on a real booking is the only honest way to sell a
+   * membership — a pricing page asks someone to do the arithmetic themselves.
+   */
+  memberOffer?: { planCode: string; planName: string; monthlyCents: number; savings: Money };
+}
+
+export interface QuoteInput {
+  vehicleId: string;
+  start: Date;
+  end: Date;
+  couponCode?: string;
+  addOnCodes?: string[];
+  protectionPlan?: string;
+  /** Who is booking — lets membership (CatoDrive Plus) benefits apply to the price. */
+  guestId?: string;
+  /** Extending or shortening an existing trip: the cleaning fee was charged once at booking and must not repeat or be refunded. */
+  skipOneTimeFees?: boolean;
+  /** Guest asks the host to deliver the car here (adds the host's delivery fee). */
+  delivery?: DeliveryRequest;
+}
+
+export type DeliveryMode = 'airport' | 'home' | 'hotel' | 'business';
+
+export interface DeliveryRequest {
+  mode: DeliveryMode;
+  address: string;
+  lat?: number;
+  lng?: number;
+  /** Which of the host's configured delivery locations this is. */
+  locationId?: string;
+}
+
+export interface IPricingContract {
+  quote(input: QuoteInput): Promise<PriceBreakdown>;
+}

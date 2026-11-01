@@ -1,0 +1,84 @@
+import { Router } from 'express';
+import { authenticate } from '../../shared/middleware/authenticate';
+import { authorize } from '../../shared/middleware/authorize';
+import { requireAdmin } from '../../shared/middleware/require-admin';
+import { metricsAdminRoutes } from './api/metrics.admin.routes';
+import { usersAdminRoutes } from './api/users.admin.routes';
+import { hostsAdminRoutes } from './api/hosts.admin.routes';
+import { vehiclesAdminRoutes } from './api/vehicles.admin.routes';
+import { bookingsAdminRoutes } from './api/bookings.admin.routes';
+import { claimsAdminRoutes } from './api/claims.admin.routes';
+import { supportAdminRoutes } from './api/support.admin.routes';
+import { kbAdminRoutes } from './api/kb.admin.routes';
+import { couponsAdminRoutes } from './api/coupons.admin.routes';
+import { taxAdminRoutes } from './api/tax.admin.routes';
+import { violationsAdminRoutes } from './api/violations.admin.routes';
+import { memberEconomyAdminRoutes } from './api/member-economy.admin.routes';
+import { platformAdminRoutes } from './api/platform.admin.routes';
+import { staffAdminRoutes } from './api/staff.admin.routes';
+import { failuresAdminRoutes } from './api/failures.admin.routes';
+import { kycAdminRoutes } from './api/kyc.admin.routes';
+import { navAdminRoutes } from './api/nav.admin.routes';
+import { oversightAdminRoutes } from './api/oversight.admin.routes';
+import { platformConfigAdminRoutes } from '../platform-config/api/platform-config.admin.routes';
+import { growthAdminRoutes } from '../platform-config/api/growth.admin.routes';
+import { assetPartnerApplicationAdminRoutes } from '../asset-partners/api/asset-partner-application.admin.routes';
+import { assetPartnerAdminRoutes } from '../asset-partners/api/asset-partner.admin.routes';
+import { contactInquiryAdminRoutes } from '../contact/api/contact-inquiry.admin.routes';
+import { insuranceAdminRoutes } from '../insurance/api/insurance.admin.routes';
+import { insurancePartnerAdminRoutes } from '../insurance-partners/api/insurance-partner.admin.routes';
+import { tollsAdminRoutes } from '../tolls/api/tolls.admin.routes';
+
+/**
+ * Admin BFF. A single base gate (authenticated + admin:read) protects the
+ * whole surface; each mutation route additionally requires its specific
+ * permission (user:manage, host:manage, vehicle:verify, booking:manage,
+ * claim:manage, ticket:manage). Every module stays independent — admin only
+ * calls their services, never their internals.
+ */
+export function buildAdminRouter(): Router {
+  const admin = Router();
+
+  /*
+   * The base gate. Order matters:
+   *   authenticate  — token signature valid AND session live in Redis
+   *   requireAdmin  — re-verify roles/status against the DATABASE, per request,
+   *                   and rebuild req.principal from live truth
+   *   authorize     — the recomputed permissions must include admin:read
+   *
+   * Because requireAdmin overwrites req.principal.permissions from the DB, the
+   * authorize() below and every per-route authorize() decide on live roles, so
+   * a JWT that still claims admin after a demotion no longer opens anything.
+   * Auditing itself is mounted globally in app.ts, ahead of every router.
+   */
+  admin.use(authenticate, requireAdmin, authorize('admin:read'));
+
+  admin.use(navAdminRoutes);
+  admin.use(metricsAdminRoutes);
+  admin.use(usersAdminRoutes);
+  admin.use(hostsAdminRoutes);
+  admin.use(assetPartnerApplicationAdminRoutes);
+  admin.use(assetPartnerAdminRoutes);
+  admin.use(contactInquiryAdminRoutes);
+  admin.use(vehiclesAdminRoutes);
+  admin.use(insuranceAdminRoutes);
+  admin.use(insurancePartnerAdminRoutes);
+  admin.use(tollsAdminRoutes);
+  admin.use(bookingsAdminRoutes);
+  admin.use(claimsAdminRoutes);
+  admin.use(supportAdminRoutes);
+  admin.use(kbAdminRoutes);
+  admin.use(couponsAdminRoutes);
+  admin.use(taxAdminRoutes);
+  admin.use(violationsAdminRoutes);
+  admin.use(memberEconomyAdminRoutes);
+  admin.use(platformAdminRoutes);
+  admin.use(staffAdminRoutes);
+  admin.use(failuresAdminRoutes);
+  admin.use(kycAdminRoutes);
+  admin.use(platformConfigAdminRoutes);
+  admin.use(growthAdminRoutes);
+  admin.use(oversightAdminRoutes);
+
+  return admin;
+}

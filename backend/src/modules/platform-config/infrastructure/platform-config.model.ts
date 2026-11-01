@@ -1,0 +1,1054 @@
+import { Schema, model } from 'mongoose';
+
+/**
+ * Singleton platform economics document. Every rate the business runs on lives
+ * here — NOT as a constant in code — so finance can retune the marketplace
+ * without a deploy. Reads are Redis-cached and invalidated on write.
+ */
+/** One check type's frequency + validity policy. See `verification` below. */
+/**
+ * When a check is initiated — the admin-configurable timing the business asked
+ * for. "Stripe Identity once at signup", "MVR on the first booking then every
+ * 2 months" and so on are all expressed as a trigger plus the validity window
+ * (a check older than validityDays is re-run when its trigger next fires).
+ */
+export type VerificationTrigger =
+  | 'on_signup'         // once, when the account is created / first login
+  | 'on_first_booking'  // the first time the guest books
+  | 'on_every_booking'  // checked at every booking (reused if still valid)
+  | 'manual';           // only when ops requests it
+
+export interface AppReleaseConfig {
+  minVersion: string;
+  latestVersion: string;
+  androidUrl: string;
+  iosUrl: string;
+}
+
+export interface VerificationPolicy {
+  required: boolean;
+  /** When the check fires. */
+  trigger: VerificationTrigger;
+  /** Which provider runs it (stripe_identity, checkr, verisk, manual, …) —
+   *  admin-selectable so the service behind a check can change without code. */
+  provider: string;
+  maxPerPeriod: number;
+  periodDays: number;
+  validityDays: number;
+}
+
+export interface PlatformConfigDoc {
+  _id: string; // always 'platform'
+  /**
+   * Security deposit — an authorisation held against the guest's card for the
+   * trip, captured only against evidenced damage and voided otherwise.
+   */
+  deposit: {
+    enabled: boolean;
+    /** Floor, in minor units, regardless of how cheap the car is. */
+    minCents: number;
+    /** Ceiling, so a supercar doesn't authorise someone's whole limit. */
+    maxCents: number;
+    /** Deposit = dailyPrice × this ÷ 10000, clamped to the band above. */
+    multiplierBps: number;
+    /** Hours after trip end before an unclaimed deposit is auto-released. */
+    autoReleaseHours: number;
+    /** The trip cannot start until the deposit is held. */
+    requiredAtHandover: boolean;
+    /** How early before pickup a guest can place the hold themselves (card holds expire after about 7 days). */
+    selfServeWindowHours: number;
+  };
+  commission: {
+    /** Fallback take rate when no CommissionRule matches. Basis points. */
+    defaultBps: number;
+    /** Guard rails — the admin UI and API refuse rules outside this band. */
+    minBps: number;
+    maxBps: number;
+  };
+  /**
+   * Asset Partner programme terms — the DEFAULTS every partner inherits.
+   *
+   * Separate from `commission` on purpose: a partner is not a host on a
+   * different rate. The management fee is only one of three deductions, and
+   * the other two are recurring monthly costs per vehicle that a commission
+   * rate cannot express at all.
+   *
+   * Values default to the terms published on /asset-partners. A negotiated
+   * partner overrides individual fields on their own record.
+   */
+  assetPartner: {
+    /** Management fee on gross booking revenue. 2000 = the published 20%. */
+    managementFeeBps: number;
+    /** Roamly fleet insurance, per vehicle per month, in minor units. */
+    insuranceMonthlyCents: number;
+    /** Professional detailing, per vehicle per month, in minor units. */
+    detailingMonthlyCents: number;
+    /** Partner's damage exposure ceiling per incident (Addendum No. 1). */
+    deductibleCapCents: number;
+    /** Maintenance at or below this proceeds without interrupting the partner. */
+    maintenanceApprovalCents: number;
+    /** Partner payouts run monthly on this day. */
+    payoutDayOfMonth: number;
+    payoutMethod: 'check' | 'zelle';
+    /** Business days a partner has to object to an intake report before it stands as written. */
+    intakeObjectionDays: number;
+    /** Who signs partner agreements for CatoDrive; printed on every sealed document. */
+    countersignerName: string;
+    countersignerTitle: string;
+    countersignerOrganisation: string;
+    /** Days an approved partner has to sign before the offer lapses and must be sent again. */
+    agreementValidDays: number;
+    /** A reminder goes out this many days before the offer lapses. */
+    agreementReminderDays: number;
+    /** New partners verify their ID with Stripe Identity before signing. */
+    requireIdentity: boolean;
+    /** Default wait before a declined applicant may apply again; ops can change it per decision. */
+    reapplyAfterDays: number;
+    /** Notice a partner gives before their car is returned. */
+    exitNoticeDays: number;
+    /** No portal visit for this long puts a partner on the watch list. */
+    unresponsiveAfterDays: number;
+    /** Photos per car a runner must take at return. */
+    returnPhotoMin: number;
+    /** The person who approves a return cannot be the runner who did the checklist. */
+    exitSeparateApprover: boolean;
+  };
+  /**
+   * The platform's service fee, charged to the GUEST on top of the trip.
+   *
+   * Distinct from `commission`, which is taken out of what the host earns. This
+   * is the other side of the take rate: the line the guest sees on the bill.
+   * Defaults to 0 so turning it on is always a deliberate admin act.
+   */
+  serviceFee: {
+    /** Basis points of the host-side subtotal. 350 = 3.5%. */
+    bps: number;
+    /** Never charge more than this, whatever the trip costs. 0 = no cap. */
+    maxCents: number;
+    /** A fixed amount added to every new booking (not to extensions). */
+    flatCents: number;
+  };
+  tax: {
+    /** Applied to commission. US launch = 0. */
+    bps: number;
+  };
+  pricing: {
+    /** A trip starting at least this many days out earns the early-bird rate. */
+    earlyBirdMinDaysAhead: number;
+    /** A trip starting within this many hours counts as last-minute. */
+    lastMinuteMaxHoursAhead: number;
+  };
+  /** Refund rules per host cancellation policy — full refund if the guest
+   *  cancels at least `fullBeforeHours` before start, else `partialBps` of total. */
+  cancellation: {
+    flexible: { fullBeforeHours: number; partialBps: number };
+    moderate: { fullBeforeHours: number; partialBps: number };
+    strict: { fullBeforeHours: number; partialBps: number };
+  };
+  /**
+   * Rebooking protection — the promise that a host cancelling does not leave
+   * the guest paying more for the same trip.
+   *
+   * When the host strands a guest, comparable cars for those exact dates are
+   * almost always dearer (they are now last-minute). Refunding leaves the guest
+   * out of pocket for a failure that was not theirs, so the platform covers the
+   * difference, and the host who caused it carries a penalty — which is also
+   * what stops cancellations becoming free.
+   */
+  rebookingProtection: {
+    enabled: boolean;
+    /** Share of the price difference covered. 10000 = the whole gap. */
+    coverageBps: number;
+    /** Hard ceiling on what a single rebooking may cost the platform. */
+    maxCoverageCents: number;
+    /** How long after the cancellation the guarantee stands. */
+    windowHours: number;
+    hostPenalty: {
+      enabled: boolean;
+      /** Flat charge per host cancellation, in minor units. */
+      flatCents: number;
+      /** Additional share of the booking total. */
+      pctOfBookingBps: number;
+      /** Cancellations forgiven per window — genuine emergencies happen. */
+      graceCancellations: number;
+      graceWindowDays: number;
+    };
+  };
+  /**
+   * Damage-claim window — the promise that a finished trip stays finished.
+   *
+   * The loudest complaint in peer-to-peer car sharing is a damage charge that
+   * lands days after a car was handed back clean, with the guest having no way
+   * to disprove it. A hard deadline makes the trip financially closeable: after
+   * it passes, nobody can come back for money. Requiring return photos to file
+   * means a claim is always argued against evidence taken at handover, not
+   * memory.
+   */
+  claims: {
+    /** Hours after the trip ends in which a damage claim may be filed. */
+    filingWindowHours: number;
+    /** Refuse a damage claim with no photographic evidence. */
+    requireEvidence: boolean;
+    /** Hours the respondent has to dispute a claim before it may be settled. */
+    respondWindowHours: number;
+  };
+  /**
+   * Two-way reviews, written blind.
+   *
+   * Publishing a review the moment it is written lets the second party read the
+   * first and answer it — which is how a guest who disputed a charge ends up
+   * with a retaliatory rating. Neither side is shown until both have written or
+   * the window closes, so every review is an opinion of the trip rather than a
+   * reply to a review.
+   */
+  reviews: {
+    /** Days each party has to write before the other's is released anyway. */
+    blindWindowDays: number;
+  };
+  /**
+   * Traffic, toll and parking citations passed through to the guest who
+   * incurred them. The reporting window is long because notices genuinely take
+   * weeks to arrive by post — but not open-ended, or a host could produce a
+   * charge against a trip from last year.
+   */
+  violations: {
+    reportingWindowDays: number;
+    /** How long the guest has to dispute before it can be charged. */
+    disputeWindowDays: number;
+    /** What the platform charges for processing one, in minor units. */
+    adminFeeCents: number;
+    /** Refuse a citation with no photo of the notice. */
+    requireEvidence: boolean;
+  };
+  /** No-show handling once the trip start passes without a handover. */
+  noShow: {
+    /** Hours after start before a no-show can be declared. */
+    graceHours: number;
+    /** Fraction of the total the guest forfeits on a guest no-show (host keeps it). */
+    guestForfeitBps: number;
+  };
+  /**
+   * Location tracking windows.
+   *
+   * Tracking runs at the edges of a trip and is dark in the middle. These are
+   * the edges. Widening them widens surveillance of a paying customer, so they
+   * live here rather than as constants — an operator changing them should have
+   * to do it deliberately, and it should be auditable.
+   */
+  tracking: {
+    /** Minutes before handover/return that both parties start sharing. */
+    approachWindowMinutes: number;
+    /** Minutes past the return time before an overdue car may be located. */
+    overdueGraceMinutes: number;
+    /** Reminders to the guest this many minutes before the return time. */
+    returnReminderMinutes: number[];
+    /** A late car whose next booking starts within this many hours alerts the host and staff and offers the next guest a swap. */
+    nextBookingAlertHours: number;
+  };
+  /** All-Star Host (superhost) qualification bar — earned, not granted. */
+  superhost: {
+    minTrips: number;
+    minRatingAvg: number;
+    minRatingCount: number;
+    maxCancellationRatePct: number;
+  };
+  /**
+   * Guest trust engine. These thresholds decide who gets a deposit waived, who
+   * may instant-book, and who reaches priority support — pure business policy,
+   * so ops can retune it (e.g. loosen during a growth push, tighten after a
+   * fraud wave) without a deploy.
+   */
+  trust: {
+    /** Minimum score for each tier. Below `bronze` a member is 'new'. */
+    tiers: { gold: number; silver: number; bronze: number };
+    /** Points awarded for each verification step (30 available in total). */
+    verificationPoints: { email: number; phone: number; licence: number };
+    /** What each tier unlocks. */
+    perks: {
+      depositDiscountPctByTier: { new: number; bronze: number; silver: number; gold: number };
+      instantBookMinTier: 'new' | 'bronze' | 'silver' | 'gold';
+      prioritySupportMinTier: 'new' | 'bronze' | 'silver' | 'gold';
+    };
+  };
+  /** Risk engine: the score at which each enforcement band kicks in. */
+  risk: {
+    bands: { block: number; high: number; medium: number };
+  };
+  /**
+   * Legal / consent policy. `termsVersion` is the version a booking must accept;
+   * bumping it forces every guest to re-accept the next time they book.
+   * `minAgeYears` gates account setup and, by extension, booking eligibility.
+   */
+  /** Insurance cover read from Wheelbase: which dealer's listings, and which rules apply at booking. */
+  insurance: {
+    wheelbaseDealerId: string;
+    /** Only cars Wheelbase lists as insurance-approved can be booked. */
+    requireApproved: boolean;
+    /** Refuse a renter younger than the car's Wheelbase minimum renter age. */
+    enforceMinAge: boolean;
+    /** CatoDrive's share of an insurance partner's protection premium, in basis points, unless set per insurer. */
+    partnerCommissionBps: number;
+  };
+  legal: {
+    termsVersion: string;
+    termsUrl: string;
+    privacyVersion: string;
+    privacyUrl: string;
+    /** Linked from the cancellation note and cancellation emails. */
+    cancellationUrl: string;
+    minAgeYears: number;
+  };
+  /** Where public-site lead forms (Contact, Asset Partner, Investor deck
+   *  requests) notify staff — admin-editable so the destination can change
+   *  without a deploy. Every inbound lead is also a durable, admin-visible
+   *  record regardless of whether this email actually sends. */
+  contact: {
+    notifyEmail: string;
+  };
+  /**
+   * Verification / eligibility policy — admin-configurable, so CatoDrive can change
+   * how often an expensive check runs and how long a passing result is trusted
+   * WITHOUT a code change. Each check type carries the same four levers:
+   *
+   *   required      — is a valid result a booking requirement at all
+   *   maxPerPeriod  — how many times it may be run within `periodDays`
+   *   periodDays    — the rolling window that frequency is counted over
+   *   validityDays  — how long a passing result stays good before a recheck
+   *
+   * Example the business asked for: MVR at most once every two months →
+   * { maxPerPeriod: 1, periodDays: 60 }. A still-valid result is REUSED rather
+   * than re-run, so a new booking does not trigger a new paid check.
+   */
+  /** Whether a guest must confirm their email / mobile number before a trip can be paid and handed over. */
+  contactVerification: {
+    requireEmail: boolean;
+    requirePhone: boolean;
+  };
+  /** Checkout options beyond the saved card. */
+  checkout: {
+    /** Offer every payment method enabled in Stripe (Apple/Google Pay, Link, Klarna, Affirm, Afterpay, Cash App, Amazon Pay…) on Instant Book trips for verified guests. */
+    otherMethodsEnabled: boolean;
+  };
+  verification: {
+    identity: VerificationPolicy;
+    mvr: VerificationPolicy;
+    background: VerificationPolicy;
+    insurance: VerificationPolicy;
+  };
+  /** Notification routing matrix: which channels each category may use. */
+  notifications: {
+    categoryChannels: Record<'trips' | 'messages' | 'payments' | 'promotions' | 'reviews' | 'account', { push: boolean; email: boolean; sms: boolean }>;
+  };
+  /** Wallet caps by trust tier (fraud / AML) and host-reputation payout holds. */
+  wallet: {
+    maxBalanceCentsByTier: { new: number; bronze: number; silver: number; gold: number };
+  };
+  payoutTrust: {
+    /** A host with fewer than this many completed trips is treated as new. */
+    newHostTripThreshold: number;
+    /** Extra hold hours applied to a new host's payouts. */
+    newHostExtraHoldHours: number;
+  };
+  /** Toll charges read from agency statements and billed to the guest of the trip they fell in. */
+  tolls: {
+    enabled: boolean;
+    /** Flat processing fee added once per trip that has tolls, in cents (0 = none). */
+    feeCents: number;
+    /** Hours after the trip ends before tolls are charged, so late-posting tolls arrive first. */
+    reviewHours: number;
+    /** Minutes either side of the trip still counted as the trip (delivery drives). */
+    matchBufferMinutes: number;
+    /** Days after the trip ends that a toll can still be billed; later ones wait for staff. */
+    billingWindowDays: number;
+    /** Charge automatically once the review time passes; off means staff bill each trip. */
+    autoCharge: boolean;
+    /** Toll pass sold at checkout: a flat price per trip that covers tolls up to a daily amount. */
+    passEnabled: boolean;
+    passPriceCents: number;
+    /** Tolls covered by the pass per calendar day (Texas time); anything above is billed. */
+    passDailyCapCents: number;
+  };
+  /** The car's registration and insurance shown to the guest during a live trip (a police stop). */
+  tripDocuments: {
+    enabled: boolean;
+    /** Seconds the documents stay open before the viewer closes. */
+    viewSeconds: number;
+    /** Alert the host each time the guest opens them. */
+    alertHost: boolean;
+    /** Minutes between repeat host alerts for the same trip. */
+    alertCooldownMinutes: number;
+  };
+  /** Who may see a guest's ID photos, and for how long. */
+  identityViewing: {
+    /** Minutes before pickup that the host can see the guest's selfie; hidden again once the trip starts. */
+    hostMinutesBefore: number;
+    hostViewSeconds: number;
+    adminViewSeconds: number;
+  };
+  /** Post-trip incidental fee schedule (host-compensating), in minor units. */
+  incidentals: {
+    /** Charged per whole % of fuel returned below pickup level. */
+    fuelPerPercentCents: number;
+    cleaningCents: number;
+    smokingCents: number;
+    petCents: number;
+    /** Extra late-return fee per hour past the grace window. */
+    lateReturnPerHourCents: number;
+    /** Late hours billed at the hourly fee; past this the car's half-day price is added. */
+    lateHourlyMaxHours: number;
+    /** Past this many late hours, whole days are added instead of a half day. */
+    lateHalfDayMaxHours: number;
+    /**
+     * Ceiling on a single free-form incidental (toll, fine, other).
+     *
+     * Those three types accept whatever amount the host sends. Uncapped, a host
+     * can charge a guest an arbitrary sum against a card the guest already
+     * handed over — the most abusable surface in the product. Anything above
+     * this belongs in a claim, where it is evidenced and adjudicated.
+     */
+    /**
+     * Ceiling per free-form category, in cents.
+     *
+     * One blanket cap was too crude: a toll is a few dollars, a moving
+     * violation can be a few hundred, and "other" is the category with no
+     * natural bound at all — so it gets the tightest limit. Above these, it
+     * belongs in a claim, where it is evidenced and adjudicated rather than
+     * simply taken from a card the guest already handed over.
+     */
+    maxTollCents: number;
+    maxFineCents: number;
+    maxOtherCents: number;
+    /** Days after the trip ends that incidentals may still be applied. */
+    windowDays: number;
+    /**
+     * Above this, the host must attach proof.
+     *
+     * A $6 toll on trust is reasonable; a $200 one is an assertion. The
+     * threshold is where "just tell me" stops being enough.
+     */
+    evidenceRequiredAboveCents: number;
+    /** Hours a guest has to dispute a charge after it is applied. */
+    disputeWindowHours: number;
+    /** Ceiling on all incidentals combined per booking, in basis points of the booking total. */
+    maxTotalBps: number;
+    /** Most fuel percentage points a host may bill in one charge. */
+    maxFuelPercent: number;
+    /** Most late-return hours a host may bill in one charge. */
+    maxLateHours: number;
+  };
+  payout: {
+    /** Hold window before scheduled payouts are released. */
+    holdHours: number;
+    /** Instant payout fee. */
+    instantFeeBps: number;
+    instantFeeMinCents: number;
+  };
+  rewards: {
+    /** Redemption value of one point, in cents. */
+    pointValueCents: number;
+    /** Points earned per whole dollar of booking subtotal. */
+    pointsPerDollar: number;
+    /** Fewest points a member may redeem at once. */
+    minRedemptionPoints: number;
+    /**
+     * The loyalty ladder: lifetime-points threshold and earn rate per tier.
+     * Ordered lowest-first. Retuning this is how the programme is made more or
+     * less generous — previously it meant a deploy.
+     */
+    tiers: { key: string; label: string; min: number; earnMultiplierBps: number }[];
+  };
+  /**
+   * Booking lifecycle windows. How long a host has to answer, how long an
+   * unverified guest's booking is held, and how long a quoted price and a
+   * checkout hold survive — operational policy that trades conversion against
+   * inventory certainty, so ops owns it.
+   */
+  /**
+   * Condition photos: when they may be taken, how many are required, and how
+   * far from the handover point they may be. Ops tunes these without a deploy.
+   */
+  inspection: {
+    /** Pre-trip photos open this long before pickup. */
+    preWindowMinutes: number;
+    /** Post-trip photos open this long before the return time. */
+    postWindowMinutes: number;
+    /** Minimum handover photos before the trip can start; 0 = not required. */
+    minPrePhotos: number;
+    /** Minimum return photos before the trip can be completed. */
+    minReturnPhotos: number;
+    /** Hard cap per phase, so a runaway client cannot fill storage. */
+    maxPhotosPerPhase: number;
+    /** A photo must carry a GPS fix. */
+    requireLocation: boolean;
+    /** Reject a photo taken farther than this from the pickup point; 0 = do not check. */
+    maxDistanceMeters: number;
+  };
+  /** Abuse limits on actions that touch a card, so we cannot be used to test stolen card numbers. */
+  security: {
+    /** Card-touching attempts (top-up, save a card, book, pay) one member may make per hour. */
+    cardAttemptsPerHour: number;
+    /** Wrong passwords or codes one account (email/phone) may enter before it locks. */
+    loginAttemptsPerAccount: number;
+    /** Base lockout in minutes; it doubles each time the same account locks again. */
+    loginLockoutMinutes: number;
+    /** Largest photo or document upload, in megabytes. */
+    maxUploadMb: number;
+    /** Upload links one member may request per hour. */
+    uploadUrlsPerHour: number;
+    /** Seconds an already-used refresh token is still accepted, so a refresh whose reply was lost can be retried without signing the member out. */
+    refreshRetryLeewaySeconds: number;
+    /** Text messages only go to numbers starting with one of these (SMS pumping fraud sends codes to premium foreign numbers at our cost). */
+    smsAllowedPrefixes: string[];
+  };
+  /** What must happen before the keys change hands, and who may start the trip. */
+  handover: {
+    /** The person handing over must photograph the car (inspection.minPrePhotos) before the trip can start. */
+    hostInspectionRequired: boolean;
+    /** The guest's pickup code must be verified before the trip can start. */
+    pickupCodeRequired: boolean;
+    /** Wrong pickup-code entries before the code locks until the guest generates a new one. */
+    maxCodeAttempts: number;
+    /** Only the host side (owner, captain, staff) starts a trip; a guest cannot start their own. */
+    hostOnlyStart: boolean;
+    /** Damage, cleaning, smoking and pet charges need the handing-over party's pickup photos as a baseline. */
+    baselineRequiredForCharges: boolean;
+    /** Hours the host has to confirm a guest-ended return before it auto-confirms (an open dispute blocks it). */
+    returnConfirmHours: number;
+  };
+  /** Extending a trip, and what happens when the next guest is in the way. */
+  extension: {
+    enabled: boolean;
+    /** Longest single extension, in days. */
+    maxDays: number;
+    /** 'auto' moves the next guest to a comparable car; 'off' just declines the extension. */
+    swapPolicy: 'auto' | 'off';
+    /** A replacement car may price this far above or below the original (basis points). */
+    swapPriceToleranceBps: number;
+    /** The most the platform absorbs when the replacement car costs more (minor units). */
+    swapMaxAbsorbCents: number;
+    /** A guest past the return time may still extend for this many hours; the late time already passed is charged. 0 = not once late. */
+    lateExtendHours: number;
+  };
+  /** What a guest can do instead of a plain cancellation, and the guard rails on each option. */
+  tripChanges: {
+    /** Free cancellation this many minutes after booking (0 = off). */
+    undoWindowMinutes: number;
+    /** No undo window when pickup is closer than this. */
+    undoMinLeadHours: number;
+    /** Undo cancellations allowed per guest in 30 days, so cars cannot be held for free. */
+    undoPer30Days: number;
+    /** Longest free pickup shift, in hours (0 = off). */
+    pickupShiftMaxHours: number;
+    pickupShiftsPerTrip: number;
+    /** Date moves per trip at no change fee (0 = off). */
+    freeMovesPerTrip: number;
+    /** Moving dates closes this many hours before pickup. */
+    moveMinLeadHours: number;
+    switchCarEnabled: boolean;
+    /** Extra value when the guest takes CatoDrive credit instead of a card refund (bps of the refund; 0 = credit offered at par). */
+    creditBonusBps: number;
+    creditEnabled: boolean;
+    exceptionsEnabled: boolean;
+    exceptionProofRequired: boolean;
+    /** A guest may still ask for an exception this long after cancelling. */
+    exceptionFileWindowHours: number;
+    /** Exceptions by one guest in 90 days before the request is flagged for review. */
+    exceptionFlagAfter: number;
+  };
+  /** Lines that rotate above the booking calendar; edited in admin, never hardcoded in the app. */
+  /** Guest programmes that can be paused while a decision is pending. */
+  programs: {
+    rewardsEnabled: boolean;
+    referralEnabled: boolean;
+    /** CATO Plus: off stops new sign-ups and hides it; existing members keep their benefits until their period ends. */
+    membershipEnabled: boolean;
+  };
+  /** Mobile app versions: below minVersion the app blocks with "Update"; below latestVersion it shows a banner. */
+  appRelease: Record<'customer' | 'partner', AppReleaseConfig>;
+  booking: {
+    hostApprovalHours: number;
+    verificationGraceHours: number;
+    verificationCutoffHours: number;
+    /** Kept from the card hold when a request lapses because the guest never finished identity verification (minor units; 0 = free). */
+    verificationLapseFeeCents: number;
+    /** The latest a guest may book, in minutes before pickup; a car's own advance notice can only raise it. */
+    minLeadMinutes: number;
+    /** Requests a guest may have waiting (approval, verification or payment) at once, so nobody can lock a rival's car with unpaid holds. */
+    maxOpenPendingPerGuest: number;
+    verificationReminderHours: number;
+    overdueEscalationHours: number;
+    documentExpiryReleaseHours: number;
+    /** Pause a car after a trip when NHTSA lists recalls for its model year (not VIN-specific, so off by default). */
+    recallAutoHold: boolean;
+    /** Miles included per rental day on every car; applied to all listings when changed. */
+    dailyMileageMiles: number;
+    /** The one cancellation policy every car uses; hosts do not choose. Applied to all listings when changed. */
+    cancellationPolicy: 'flexible' | 'moderate' | 'strict';
+    checkoutHoldMinutes: number;
+    paymentPendingMinutes: number;
+    priceLockMinutes: number;
+    /** Master switch for new guest bookings; off while trips cannot be insured. Existing trips are unaffected. */
+    guestBookingsEnabled: boolean;
+    /** Shown to guests where the booking box would be while bookings are off. */
+    guestBookingsPausedMessage: string;
+  };
+  /**
+   * Search ranking weights. What the marketplace chooses to surface is a
+   * competitive lever, not an implementation detail — being able to retune it
+   * (favour quality vs. proximity vs. new supply) without a deploy is how a
+   * marketplace is actually run.
+   */
+  search: {
+    ranking: {
+      categoryMatch: number;
+      bodyTypeMatch: number;
+      priceProximity: number;
+      ratingWeight: number;
+      superhostBoost: number;
+      tripsWeight: number;
+      tripsCap: number;
+    };
+  };
+  referral: {
+    referrerCreditCents: number;
+    refereeCreditCents: number;
+    /** Loyalty points awarded on top of the cash credit. */
+    referrerPoints: number;
+    refereePoints: number;
+    /** The referred guest's first completed trip must total at least this before anyone is rewarded. */
+    minTripSpendCents: number;
+    /** Most referrals one member is ever rewarded for. */
+    maxRewardsPerReferrer: number;
+  };
+  protection: {
+    /** Per-day price of each protection tier, in cents. */
+    code: string;
+    label: string;
+    description: string;
+    pricePerDay: number;
+  }[];
+  support: {
+    /** Hours to first resolution, per priority. Drives SLA breach reporting. */
+    slaHours: { urgent: number; high: number; normal: number; low: number };
+  };
+  surge: {
+    /** Master switch — off means every day prices at 1.0x. */
+    enabled: boolean;
+    /** Also lift prices automatically from measured occupancy. */
+    autoEnabled: boolean;
+    /** Hard ceiling. 15000 = 1.5x. Nothing can price above this. */
+    maxMultiplierBps: number;
+    /** The auto-surge curve: at N% occupancy, apply this multiplier. */
+    occupancyThresholds: { occupancyPct: number; multiplierBps: number }[];
+  };
+  updatedBy?: string;
+  /** Monotonic version of the live economics config, bumped on every publish.
+   *  A booking stamps this so its price can be reconstructed exactly. */
+  configVersion?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const schema = new Schema<PlatformConfigDoc>(
+  {
+    _id: { type: String, default: 'platform' },
+    insurance: {
+      wheelbaseDealerId: { type: String },
+      requireApproved: { type: Boolean, default: true },
+      enforceMinAge: { type: Boolean, default: true },
+      partnerCommissionBps: { type: Number, default: 1500 },
+    },
+    legal: {
+      termsVersion: { type: String, default: '2026-09-01' },
+      termsUrl: { type: String, default: '/legal' },
+      privacyVersion: { type: String, default: '2026-09-01' },
+      privacyUrl: { type: String, default: '/legal' },
+      cancellationUrl: { type: String, default: '/legal' },
+      minAgeYears: { type: Number, default: 21 },
+    },
+    contact: {
+      notifyEmail: { type: String, default: 'shoaib@catodrive.com' },
+    },
+    contactVerification: {
+      requireEmail: { type: Boolean, default: true },
+      // SMS costs money per code; phone is confirmed when someone signs in by text, so booking asks for email only unless an admin turns this on.
+      requirePhone: { type: Boolean, default: false },
+    },
+    checkout: {
+      otherMethodsEnabled: { type: Boolean, default: true },
+    },
+    verification: {
+      identity: {
+        required: { type: Boolean, default: true },
+        trigger: { type: String, default: 'on_signup' },
+        provider: { type: String, default: 'stripe_identity' },
+        maxPerPeriod: { type: Number, default: 5 },
+        periodDays: { type: Number, default: 30 },
+        validityDays: { type: Number, default: 730 },
+      },
+      mvr: {
+        required: { type: Boolean, default: false },
+        trigger: { type: String, default: 'on_first_booking' },
+        provider: { type: String, default: 'checkr' },
+        maxPerPeriod: { type: Number, default: 1 },
+        periodDays: { type: Number, default: 60 },
+        validityDays: { type: Number, default: 365 },
+      },
+      background: {
+        required: { type: Boolean, default: false },
+        trigger: { type: String, default: 'manual' },
+        provider: { type: String, default: 'checkr' },
+        maxPerPeriod: { type: Number, default: 1 },
+        periodDays: { type: Number, default: 180 },
+        validityDays: { type: Number, default: 365 },
+      },
+      insurance: {
+        required: { type: Boolean, default: false },
+        trigger: { type: String, default: 'on_first_booking' },
+        provider: { type: String, default: 'manual' },
+        maxPerPeriod: { type: Number, default: 1 },
+        periodDays: { type: Number, default: 365 },
+        validityDays: { type: Number, default: 365 },
+      },
+    },
+    deposit: {
+      enabled: { type: Boolean, default: true },
+      minCents: { type: Number, default: 25000 },   // $250 floor
+      maxCents: { type: Number, default: 100000 },  // $1,000 ceiling
+      multiplierBps: { type: Number, default: 20000 }, // 2x the daily rate
+      autoReleaseHours: { type: Number, default: 120 },
+      requiredAtHandover: { type: Boolean, default: true },
+      selfServeWindowHours: { type: Number, default: 144 },
+    },
+    commission: {
+      defaultBps: { type: Number, default: 2000 }, // 20%
+      minBps: { type: Number, default: 0 },
+      maxBps: { type: Number, default: 4000 }, // 40% ceiling — a typo can't take 90%
+    },
+    // Defaults are the terms published on /asset-partners.
+    assetPartner: {
+      managementFeeBps: { type: Number, default: 2000 }, // 20%
+      insuranceMonthlyCents: { type: Number, default: 13_700 }, // $137 Roamly
+      detailingMonthlyCents: { type: Number, default: 5_000 }, // $50
+      deductibleCapCents: { type: Number, default: 100_000 }, // $1,000 cap
+      maintenanceApprovalCents: { type: Number, default: 50_000 }, // above $500 → ask
+      payoutDayOfMonth: { type: Number, default: 5 }, // "on the 5th"
+      payoutMethod: { type: String, default: 'check', enum: ['check', 'zelle'] },
+      intakeObjectionDays: { type: Number, default: 3 },
+      countersignerName: { type: String, default: '' },
+      countersignerTitle: { type: String, default: '' },
+      countersignerOrganisation: { type: String, default: 'CatoDrive' },
+      agreementValidDays: { type: Number, default: 25 },
+      agreementReminderDays: { type: Number, default: 5 },
+      requireIdentity: { type: Boolean, default: true },
+      reapplyAfterDays: { type: Number, default: 90 },
+      exitNoticeDays: { type: Number, default: 30 },
+      unresponsiveAfterDays: { type: Number, default: 60 },
+      returnPhotoMin: { type: Number, default: 8 },
+      exitSeparateApprover: { type: Boolean, default: true },
+    },
+    serviceFee: {
+      bps: { type: Number, default: 0 }, // off until an admin sets it
+      maxCents: { type: Number, default: 0 }, // 0 = uncapped
+      flatCents: { type: Number, default: 250 }, // $2.50 per booking
+    },
+    tax: {
+      bps: { type: Number, default: 0 },
+    },
+    pricing: {
+      earlyBirdMinDaysAhead: { type: Number, default: 30 },
+      lastMinuteMaxHoursAhead: { type: Number, default: 48 },
+    },
+    cancellation: {
+      flexible: { fullBeforeHours: { type: Number, default: 24 }, partialBps: { type: Number, default: 5000 } },
+      moderate: { fullBeforeHours: { type: Number, default: 48 }, partialBps: { type: Number, default: 5000 } },
+      strict: { fullBeforeHours: { type: Number, default: 168 }, partialBps: { type: Number, default: 0 } },
+    },
+    rebookingProtection: {
+      enabled: { type: Boolean, default: true },
+      coverageBps: { type: Number, default: 10000 },
+      maxCoverageCents: { type: Number, default: 15000 },
+      windowHours: { type: Number, default: 72 },
+      hostPenalty: {
+        enabled: { type: Boolean, default: true },
+        flatCents: { type: Number, default: 5000 },
+        pctOfBookingBps: { type: Number, default: 0 },
+        graceCancellations: { type: Number, default: 1 },
+        graceWindowDays: { type: Number, default: 365 },
+      },
+    },
+    claims: {
+      filingWindowHours: { type: Number, default: 72 },
+      requireEvidence: { type: Boolean, default: true },
+    },
+    reviews: {
+      blindWindowDays: { type: Number, default: 14 },
+    },
+    violations: {
+      reportingWindowDays: { type: Number, default: 90 },
+      disputeWindowDays: { type: Number, default: 7 },
+      adminFeeCents: { type: Number, default: 1500 },
+      requireEvidence: { type: Boolean, default: true },
+    },
+    noShow: {
+      graceHours: { type: Number, default: 2 },
+      guestForfeitBps: { type: Number, default: 5000 },
+    },
+    tracking: {
+      approachWindowMinutes: { type: Number, default: 60 },
+      overdueGraceMinutes: { type: Number, default: 60 },
+      returnReminderMinutes: { type: [Number], default: [60, 15] },
+      nextBookingAlertHours: { type: Number, default: 24 },
+    },
+    superhost: {
+      minTrips: { type: Number, default: 5 },
+      minRatingAvg: { type: Number, default: 4.8 },
+      minRatingCount: { type: Number, default: 3 },
+      maxCancellationRatePct: { type: Number, default: 5 },
+    },
+    trust: {
+      tiers: {
+        gold: { type: Number, default: 80 },
+        silver: { type: Number, default: 55 },
+        bronze: { type: Number, default: 30 },
+      },
+      verificationPoints: {
+        email: { type: Number, default: 5 },
+        phone: { type: Number, default: 10 },
+        licence: { type: Number, default: 15 },
+      },
+      perks: {
+        depositDiscountPctByTier: {
+          new: { type: Number, default: 0 },
+          bronze: { type: Number, default: 0 },
+          silver: { type: Number, default: 50 },
+          gold: { type: Number, default: 100 },
+        },
+        instantBookMinTier: { type: String, default: 'new' },
+        prioritySupportMinTier: { type: String, default: 'silver' },
+      },
+    },
+    risk: {
+      bands: {
+        block: { type: Number, default: 90 },
+        high: { type: Number, default: 60 },
+        medium: { type: Number, default: 30 },
+      },
+    },
+    notifications: {
+      categoryChannels: {
+        trips: { push: { type: Boolean, default: true }, email: { type: Boolean, default: true }, sms: { type: Boolean, default: true } },
+        messages: { push: { type: Boolean, default: true }, email: { type: Boolean, default: false }, sms: { type: Boolean, default: false } },
+        payments: { push: { type: Boolean, default: true }, email: { type: Boolean, default: true }, sms: { type: Boolean, default: false } },
+        promotions: { push: { type: Boolean, default: true }, email: { type: Boolean, default: true }, sms: { type: Boolean, default: false } },
+        reviews: { push: { type: Boolean, default: true }, email: { type: Boolean, default: true }, sms: { type: Boolean, default: false } },
+        account: { push: { type: Boolean, default: true }, email: { type: Boolean, default: true }, sms: { type: Boolean, default: true } },
+      },
+    },
+    wallet: {
+      maxBalanceCentsByTier: {
+        new: { type: Number, default: 50000 },
+        bronze: { type: Number, default: 200000 },
+        silver: { type: Number, default: 500000 },
+        gold: { type: Number, default: 1000000 },
+      },
+    },
+    payoutTrust: {
+      newHostTripThreshold: { type: Number, default: 3 },
+      newHostExtraHoldHours: { type: Number, default: 48 },
+    },
+    tolls: {
+      enabled: { type: Boolean, default: true },
+      feeCents: { type: Number, default: 0 },
+      reviewHours: { type: Number, default: 72 },
+      matchBufferMinutes: { type: Number, default: 60 },
+      billingWindowDays: { type: Number, default: 60 },
+      autoCharge: { type: Boolean, default: true },
+      passEnabled: { type: Boolean, default: true },
+      passPriceCents: { type: Number, default: 1500 },
+      passDailyCapCents: { type: Number, default: 1000 },
+    },
+    tripDocuments: {
+      enabled: { type: Boolean, default: true },
+      viewSeconds: { type: Number, default: 100 },
+      alertHost: { type: Boolean, default: true },
+      alertCooldownMinutes: { type: Number, default: 10 },
+    },
+    identityViewing: {
+      hostMinutesBefore: { type: Number, default: 60 },
+      hostViewSeconds: { type: Number, default: 100 },
+      adminViewSeconds: { type: Number, default: 300 },
+    },
+    incidentals: {
+      fuelPerPercentCents: { type: Number, default: 300 },
+      cleaningCents: { type: Number, default: 7500 },
+      smokingCents: { type: Number, default: 25000 },
+      petCents: { type: Number, default: 10000 },
+      lateReturnPerHourCents: { type: Number, default: 2500 },
+      lateHourlyMaxHours: { type: Number, default: 6 },
+      lateHalfDayMaxHours: { type: Number, default: 12 },
+      maxTollCents: { type: Number, default: 10_000 }, // $100
+      maxFineCents: { type: Number, default: 50_000 }, // $500
+      maxOtherCents: { type: Number, default: 15_000 }, // $150 — least bounded
+      windowDays: { type: Number, default: 7 },
+      evidenceRequiredAboveCents: { type: Number, default: 5_000 }, // $50
+      disputeWindowHours: { type: Number, default: 72 },
+      maxTotalBps: { type: Number, default: 3000 },
+      maxFuelPercent: { type: Number, default: 100 },
+      maxLateHours: { type: Number, default: 72 },
+    },
+    payout: {
+      holdHours: { type: Number, default: 24 },
+      instantFeeBps: { type: Number, default: 150 }, // 1.5%
+      instantFeeMinCents: { type: Number, default: 50 },
+    },
+    rewards: {
+      pointValueCents: { type: Number, default: 5 },
+      pointsPerDollar: { type: Number, default: 1 },
+      minRedemptionPoints: { type: Number, default: 100 },
+      tiers: {
+        type: [{ key: String, label: String, min: Number, earnMultiplierBps: Number }],
+        default: undefined, // absent → the service's default ladder applies
+      },
+    },
+    inspection: {
+      preWindowMinutes: { type: Number, default: 60 },
+      postWindowMinutes: { type: Number, default: 30 },
+      minPrePhotos: { type: Number, default: 4 },
+      minReturnPhotos: { type: Number, default: 2 },
+      maxPhotosPerPhase: { type: Number, default: 30 },
+      requireLocation: { type: Boolean, default: true },
+      maxDistanceMeters: { type: Number, default: 0 },
+    },
+    security: {
+      cardAttemptsPerHour: { type: Number, default: 12 },
+      loginAttemptsPerAccount: { type: Number, default: 8 },
+      loginLockoutMinutes: { type: Number, default: 15 },
+      maxUploadMb: { type: Number, default: 12 },
+      uploadUrlsPerHour: { type: Number, default: 60 },
+      refreshRetryLeewaySeconds: { type: Number, default: 60 },
+      smsAllowedPrefixes: { type: [String], default: undefined },
+    },
+    handover: {
+      hostInspectionRequired: { type: Boolean, default: true },
+      pickupCodeRequired: { type: Boolean, default: true },
+      maxCodeAttempts: { type: Number, default: 5 },
+      hostOnlyStart: { type: Boolean, default: true },
+      baselineRequiredForCharges: { type: Boolean, default: true },
+      returnConfirmHours: { type: Number, default: 12 },
+    },
+    extension: {
+      enabled: { type: Boolean, default: true },
+      maxDays: { type: Number, default: 30 },
+      swapPolicy: { type: String, enum: ['auto', 'off'], default: 'auto' },
+      swapPriceToleranceBps: { type: Number, default: 1500 },
+      swapMaxAbsorbCents: { type: Number, default: 5000 },
+      lateExtendHours: { type: Number, default: 6 },
+    },
+    tripChanges: {
+      undoWindowMinutes: { type: Number, default: 10 },
+      undoMinLeadHours: { type: Number, default: 2 },
+      undoPer30Days: { type: Number, default: 2 },
+      pickupShiftMaxHours: { type: Number, default: 3 },
+      pickupShiftsPerTrip: { type: Number, default: 1 },
+      freeMovesPerTrip: { type: Number, default: 1 },
+      moveMinLeadHours: { type: Number, default: 24 },
+      switchCarEnabled: { type: Boolean, default: true },
+      creditBonusBps: { type: Number, default: 2000 },
+      creditEnabled: { type: Boolean, default: true },
+      exceptionsEnabled: { type: Boolean, default: true },
+      exceptionProofRequired: { type: Boolean, default: true },
+      exceptionFileWindowHours: { type: Number, default: 48 },
+      exceptionFlagAfter: { type: Number, default: 2 },
+    },
+    programs: {
+      rewardsEnabled: { type: Boolean, default: false },
+      referralEnabled: { type: Boolean, default: false },
+      membershipEnabled: { type: Boolean, default: false },
+    },
+    appRelease: {
+      customer: { minVersion: String, latestVersion: String, androidUrl: String, iosUrl: String },
+      partner: { minVersion: String, latestVersion: String, androidUrl: String, iosUrl: String },
+    },
+    booking: {
+      hostApprovalHours: { type: Number, default: 24 },
+      verificationGraceHours: { type: Number, default: 72 },
+      verificationLapseFeeCents: { type: Number, default: 500 },
+      verificationCutoffHours: { type: Number, default: 5 },
+      minLeadMinutes: { type: Number, default: 60 },
+      maxOpenPendingPerGuest: { type: Number, default: 3 },
+      verificationReminderHours: { type: Number, default: 24 },
+      overdueEscalationHours: { type: Number, default: 24 },
+      documentExpiryReleaseHours: { type: Number, default: 72 },
+      recallAutoHold: { type: Boolean, default: false },
+      dailyMileageMiles: { type: Number, default: 200 },
+      cancellationPolicy: { type: String, enum: ['flexible', 'moderate', 'strict'], default: 'flexible' },
+      checkoutHoldMinutes: { type: Number, default: 15 },
+      paymentPendingMinutes: { type: Number, default: 30 },
+      priceLockMinutes: { type: Number, default: 10 },
+      guestBookingsEnabled: { type: Boolean, default: false },
+      guestBookingsPausedMessage: { type: String, default: 'We’re not taking new bookings right now. Please check back soon.' },
+    },
+    search: {
+      ranking: {
+        categoryMatch: { type: Number, default: 3 },
+        bodyTypeMatch: { type: Number, default: 2 },
+        priceProximity: { type: Number, default: 2 },
+        ratingWeight: { type: Number, default: 0.5 },
+        superhostBoost: { type: Number, default: 1 },
+        tripsWeight: { type: Number, default: 0.02 },
+        tripsCap: { type: Number, default: 20 },
+      },
+    },
+    referral: {
+      referrerCreditCents: { type: Number, default: 2000 },
+      refereeCreditCents: { type: Number, default: 1000 },
+      referrerPoints: { type: Number, default: 200 },
+      refereePoints: { type: Number, default: 100 },
+      minTripSpendCents: { type: Number, default: 5000 },
+      maxRewardsPerReferrer: { type: Number, default: 10 },
+    },
+    protection: {
+      type: [
+        {
+          _id: false,
+          code: String,
+          label: String,
+          description: String,
+          pricePerDay: Number,
+        },
+      ],
+      default: [
+        { code: 'basic', label: 'Basic', description: 'Included. Higher deductible, essential coverage.', pricePerDay: 0 },
+        { code: 'standard', label: 'Standard', description: 'Lower deductible, exterior damage protection.', pricePerDay: 1500 },
+        { code: 'premier', label: 'Premier', description: 'Zero deductible, full protection & roadside.', pricePerDay: 3000 },
+      ],
+    },
+    support: {
+      slaHours: {
+        urgent: { type: Number, default: 4 },
+        high: { type: Number, default: 12 },
+        normal: { type: Number, default: 48 },
+        low: { type: Number, default: 72 },
+      },
+    },
+    surge: {
+      enabled: { type: Boolean, default: true },
+      autoEnabled: { type: Boolean, default: true },
+      maxMultiplierBps: { type: Number, default: 15000 }, // 1.5x ceiling
+      occupancyThresholds: {
+        type: [{ _id: false, occupancyPct: Number, multiplierBps: Number }],
+        default: [
+          { occupancyPct: 70, multiplierBps: 11000 }, // 70% booked → 1.1x
+          { occupancyPct: 85, multiplierBps: 12500 }, // 85% booked → 1.25x
+          { occupancyPct: 95, multiplierBps: 14000 }, // 95% booked → 1.4x
+        ],
+      },
+    },
+    updatedBy: String,
+    configVersion: { type: Number, default: 0 },
+  },
+  { timestamps: true, _id: false, minimize: false },
+);
+
+export const PlatformConfigModel = model<PlatformConfigDoc>('PlatformConfig', schema);

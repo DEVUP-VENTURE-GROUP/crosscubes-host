@@ -1,0 +1,36 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
+import { DataTable, type Column } from '@/features/admin/components/data-table';
+import { useAdminList } from '@/features/admin/hooks/use-admin-list';
+import { adminApi } from '@/features/admin/api';
+import { PageHeader } from '@/components/ui/page-header';
+
+export default function AdminAuditPage() {
+  const [actor, setActor] = useState(() => (typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('actor') ?? ''));
+  const staff = useQuery({ queryKey: ['admin-staff'], queryFn: () => adminApi.staff() });
+  const list = useAdminList<any>('/admin/audit-logs', { actorId: actor || undefined });
+
+  const columns: Column<any>[] = [
+    { header: 'When', cell: (a) => <span className="text-xs">{new Date(a.at ?? a.createdAt).toLocaleString()}</span> },
+    { header: 'Who', cell: (a) => <div><p className="text-sm font-medium">{a.actor?.name ?? 'Unknown'}</p><p className="text-xs text-muted-foreground">{(a.actorRoles ?? []).join(', ')}</p></div> },
+    { header: 'Action', cell: (a) => <Badge tone="muted">{a.action}</Badge> },
+    { header: 'On', cell: (a) => <span className="text-xs text-muted-foreground">{a.resourceType}{a.resourceId ? `:${String(a.resourceId).slice(0, 8)}` : ''}</span> },
+    { header: 'Result', cell: (a) => <span className="text-xs">{a.status}</span> },
+    { header: 'From', cell: (a) => <span className="font-mono text-xs">{a.ip ?? ''}</span> },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <PageHeader eyebrow="Control" title="Audit log" description="What each staff member changed and when. Passwords and codes are never recorded." />
+      <Select wrapperClassName="max-w-xs" value={actor} onChange={(e) => setActor(e.target.value)}>
+        <option value="">All staff</option>
+        {staff.data?.map((u) => <option key={u._id} value={u._id}>{[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}</option>)}
+      </Select>
+      <DataTable columns={columns} rows={list.rows} isLoading={list.isLoading} isError={list.isError} onRetry={() => void list.refetch()} paging={list.paging} emptyTitle="No audit entries yet" />
+    </div>
+  );
+}

@@ -1,0 +1,180 @@
+import Stripe from 'stripe';
+import { config } from '../../../config';
+import { CardDeclinedError, ExternalServiceError } from '../../../core/errors/app-error';
+import { logger } from '../../../infrastructure/logging/logger';
+import type {
+  PaymentGateway,
+  CreateIntentInput,
+  IntentResult,
+  IntentRisk,
+} from '../domain/payment-gateway';
+
+/**
+ * Real Stripe implementation of the PaymentGateway interface. Amounts are in
+ * minor units already (Money.amount), which is exactly what Stripe expects.
+ * Selected at boot when STRIPE_SECRET_KEY is present.
+ */
+function toIntentResult(intent: Stripe.PaymentIntent): IntentResult {
+  const status: IntentResult['status'] =
+    intent.status === 'succeeded' || intent.status === 'requires_capture' || intent.status === 'requires_action'
+      ? intent.status
+      : intent.status === 'requires_payment_method'
+        ? 'requires_payment_method'
+        : intent.status === 'canceled'
+          ? 'canceled'
+          : 'requires_confirmation';
+  const pm = typeof intent.payment_method === 'string' ? intent.payment_method : intent.payment_method?.id;
+  return { intentId: intent.id, clientSecret: intent.client_secret ?? '', status, ...(pm ? { paymentMethodId: pm } : {}) };
+}
+
+/**
+ * A bank's refusal of the card, turned into what the guest can do about it. The exact decline code and the
+ * card checks go to the log for staff; the guest gets a plain reason, never Stripe's internals.
+ */
+function cardDeclined(err: unknown): CardDeclinedError | null {
+  const e = err as {
+    type?: string;
+    code?: string;
+    decline_code?: string;
+    payment_intent?: {
+      id?: string;
+      last_payment_error?: { payment_method?: { card?: { brand?: string; last4?: string; checks?: Record<string, string | null> } } };
+    };
+  };
+  if (e?.type !== 'StripeCardError') return null;
+  const reason = e.decline_code ?? e.code ?? 'card_declined';
+  const card = e.payment_intent?.last_payment_error?.payment_method?.card;
+  const checks = card?.checks ?? {};
+  logger.warn({ reason, checks, intentId: e.payment_intent?.id }, 'card declined by the bank');
+
+  // Name the card, so a guest with several saved cards knows which one the bank refused.
+  const which = card?.last4 ? `your ${card.brand ? card.brand[0].toUpperCase() + card.brand.slice(1) : 'card'} ending ${card.last4}` : 'this card';
+  const Which = which[0].toUpperCase() + which.slice(1);
+  if (checks.address_postal_code_check === 'fail' || reason === 'incorrect_zip') {
+    return new CardDeclinedError(`Your bank declined ${which} because the billing ZIP code doesn’t match. Add the card again with the ZIP code on your bank statement, or use another card.`);
+  }
+  if (reason === 'insufficient_funds') return new CardDeclinedError(`Your bank declined ${which} for insufficient funds. Please use another card.`);
+  if (reason === 'expired_card') return new CardDeclinedError(`${Which} has expired. Please use another card.`);
+  if (reason === 'incorrect_cvc' || checks.cvc_check === 'fail') {
+    return new CardDeclinedError(`The security code for ${which} didn’t match. Add the card again, or use another card.`);
+  }
+  return new CardDeclinedError();
+}
+
+export class StripeGateway implements PaymentGateway {
+  private readonly stripe: Stripe;
+
+  constructor(secretKey: string) {
+    // Pin via env/dashboard; omitting uses the account's default API version.
+    this.stripe = new Stripe(secretKey);
+  }
+
+  async createIntent(input: CreateIntentInput): Promise<IntentResult> {
+    try {
+      // With a saved card we confirm immediately and off-session: the guest
+      // gave us the card when they saved it, and being asked to re-enter it at
+      // booking is the single biggest drop-off in a checkout.
+      const offSession = !input.anyMethod && !!(input.customerId && input.paymentMethodId);
+
+      const intent = await this.stripe.paymentIntents.create(
+        {
+          amount: input.amount.amount,
+          currency: input.amount.currency.toLowerCase(),
+          capture_method: input.capture ? 'automatic' : 'manual',
+          // A saved-card charge is cards only: redirect methods (Klarna, Cash App, Amazon Pay) cannot be confirmed off-session. On-page checkout offers everything enabled in the dashboard.
+          ...(input.anyMethod
+            ? { automatic_payment_methods: { enabled: true }, ...(input.customerId ? { customer: input.customerId } : {}) }
+            : { payment_method_types: ['card'] }),
+          ...(input.saveCard ? { setup_future_usage: 'off_session' as const, ...(input.customerId ? { customer: input.customerId } : {}) } : {}),
+          metadata: { userId: input.userId, ...input.metadata },
+          ...(offSession
+            ? {
+                customer: input.customerId,
+                payment_method: input.paymentMethodId,
+                off_session: true,
+                confirm: true,
+                // Without this a 3-D Secure challenge cannot be finished by the
+                // client later, and the payment is simply stuck.
+                error_on_requires_action: false,
+              }
+            : {}),
+        },
+        { idempotencyKey: input.idempotencyKey },
+      );
+      return toIntentResult(intent);
+    } catch (err) {
+      const declined = cardDeclined(err);
+      if (declined) throw declined;
+      throw new ExternalServiceError(`Stripe createIntent failed: ${(err as Error).message}`);
+    }
+  }
+
+  /**
+   * Capture an authorisation, optionally for less than the amount held.
+   * Partial capture is what settles a damage claim against a deposit: take the
+   * assessed amount, and the remainder is released by the issuer automatically.
+   */
+  async capture(intentId: string, amountCents?: number): Promise<{ status: 'succeeded' }> {
+    await this.stripe.paymentIntents.capture(
+      intentId,
+      amountCents !== undefined ? { amount_to_capture: amountCents } : undefined,
+    );
+    return { status: 'succeeded' };
+  }
+
+  async refund(intentId: string, amount: { amount: number }, idempotencyKey: string): Promise<{ refundId: string }> {
+    const refund = await this.stripe.refunds.create(
+      { payment_intent: intentId, amount: amount.amount },
+      { idempotencyKey },
+    );
+    return { refundId: refund.id };
+  }
+
+  async cancel(intentId: string): Promise<{ status: 'cancelled' }> {
+    await this.stripe.paymentIntents.cancel(intentId);
+    return { status: 'cancelled' };
+  }
+
+  async retrieveIntent(intentId: string): Promise<IntentResult> {
+    try {
+      return toIntentResult(await this.stripe.paymentIntents.retrieve(intentId));
+    } catch (err) {
+      throw new ExternalServiceError(`Stripe retrieveIntent failed: ${(err as Error).message}`);
+    }
+  }
+
+  async confirmIntent(intentId: string, input: { customerId: string; paymentMethodId: string }): Promise<IntentResult> {
+    try {
+      return toIntentResult(
+        await this.stripe.paymentIntents.confirm(intentId, {
+          payment_method: input.paymentMethodId,
+          off_session: true,
+        }),
+      );
+    } catch (err) {
+      throw new ExternalServiceError(`Stripe confirmIntent failed: ${(err as Error).message}`);
+    }
+  }
+
+  async getIntentRisk(intentId: string): Promise<IntentRisk | null> {
+    const intent = await this.stripe.paymentIntents.retrieve(intentId, {
+      expand: ['latest_charge'],
+    });
+    const charge = intent.latest_charge;
+    if (!charge || typeof charge === 'string') return null;
+
+    const card = charge.payment_method_details?.card;
+    return {
+      riskLevel: (charge.outcome?.risk_level as IntentRisk['riskLevel']) ?? 'unknown',
+      riskScore: charge.outcome?.risk_score ?? undefined,
+      cvcCheck: (card?.checks?.cvc_check as IntentRisk['cvcCheck']) ?? undefined,
+      addressCheck: (card?.checks?.address_line1_check as IntentRisk['addressCheck']) ?? undefined,
+    };
+  }
+
+  /** Verify + parse a Stripe webhook (raw body + signature). */
+  constructEvent(rawBody: Buffer, signature: string): Stripe.Event {
+    if (!config.stripe.webhookSecret) throw new ExternalServiceError('Stripe webhook secret not configured');
+    return this.stripe.webhooks.constructEvent(rawBody, signature, config.stripe.webhookSecret);
+  }
+}

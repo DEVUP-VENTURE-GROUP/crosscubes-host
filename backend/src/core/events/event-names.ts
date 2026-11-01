@@ -1,0 +1,112 @@
+/**
+ * Central registry of every domain event name. Modules emit these and
+ * subscribe to them; no module imports another's internals. Today the bus
+ * is in-process; the same names back a real broker (Kafka/Rabbit) later.
+ */
+export const EVENTS = {
+  USER_REGISTERED: 'user.registered',
+
+  HOST_ONBOARDED: 'host.onboarded',
+
+  KYC_SUBMITTED: 'kyc.submitted',
+  KYC_APPROVED: 'kyc.approved',
+  CONTACT_VERIFIED: 'user.contact_verified',
+  DEPOSIT_MISSING: 'deposit.missing',
+  KYC_REJECTED: 'kyc.rejected',
+  // An automatic check that did not finish or did not pass; the guest can try again, so nothing is cancelled.
+  KYC_ATTEMPT_FAILED: 'kyc.attempt_failed',
+  VEHICLE_RECALL_FOUND: 'vehicle.recall_found',
+  INSURANCE_STATUS_CHANGED: 'insurance.status_changed',
+
+  USER_LOGGED_IN: 'user.logged_in',
+
+  VEHICLE_LISTED: 'vehicle.listed',
+  VEHICLE_VERIFIED: 'vehicle.verified',
+  VEHICLE_PRICE_DROPPED: 'vehicle.price_dropped',
+  /** Operational lifecycle moved (idle→on_trip→…→idle). */
+  VEHICLE_STATE_CHANGED: 'vehicle.state_changed',
+  /** Car entered a state where it cannot take new bookings (maintenance/repair/
+   *  blocked/awaiting_approval) — ops should notice. */
+  VEHICLE_DOWN: 'vehicle.down',
+  /** Car returned to service after being down. */
+  VEHICLE_REACTIVATED: 'vehicle.reactivated',
+
+  BOOKING_CREATED: 'booking.created',
+  BOOKING_CONFIRMED: 'booking.confirmed',
+  BOOKING_DECLINED: 'booking.declined',
+  BOOKING_CANCELLED: 'booking.cancelled',
+  BOOKING_EXPIRED: 'booking.expired',
+  OPS_REQUEST_FAILED: 'ops.request_failed',
+  BOOKING_COMPLETED: 'booking.completed',
+  BOOKING_REMINDER: 'booking.reminder',
+  BOOKING_EXTENDED: 'booking.extended',
+  BOOKING_SHORTENED: 'booking.shortened',
+  BOOKING_PICKUP_SHIFTED: 'booking.pickup_shifted',
+  BOOKING_MOVED: 'booking.moved',
+  TRIP_EXCEPTION_REQUESTED: 'booking.exception_requested',
+  TRIP_EXCEPTION_DECIDED: 'booking.exception_decided',
+  /** A booking was moved to a comparable car to make room for another guest's extension. */
+  BOOKING_SWAPPED: 'booking.swapped',
+  /** A swap left something half-done that staff must reconcile. */
+  BOOKING_SWAP_FAILED: 'booking.swap_failed',
+  BOOKING_GUEST_NO_SHOW: 'booking.guest_no_show',
+  BOOKING_HOST_NO_SHOW: 'booking.host_no_show',
+  BOOKING_REBOOKING_NEEDED: 'booking.rebooking_needed',
+
+  TRIP_STARTED: 'trip.started',
+  TRIP_COMPLETED: 'trip.completed',
+  TRIP_RETURN_WINDOW_OPEN: 'trip.return_window.open',
+  PICKUP_CODE_LOCKED: 'booking.pickup_code_locked',
+
+  PAYMENT_SUCCEEDED: 'payment.succeeded',
+  PAYMENT_REFUNDED: 'payment.refunded',
+  /** A card failed asynchronously, after the booking was already made. */
+  PAYMENT_FAILED: 'payment.failed',
+  /** The cardholder's bank is pulling the money back. */
+  PAYMENT_DISPUTED: 'payment.disputed',
+  PAYMENT_DISPUTE_CLOSED: 'payment.dispute.closed',
+  /** A refund was issued from the Stripe dashboard and reconciled into our books. */
+  PAYMENT_REFUNDED_EXTERNALLY: 'payment.refunded.externally',
+  /** A bank pulled back a wallet top-up. */
+  WALLET_TOPUP_DISPUTED: 'wallet.topup.disputed',
+  BOOKING_CHARGE_COLLECTED: 'booking.charge.collected',
+  BOOKING_CHARGE_FAILED: 'booking.charge.failed',
+  BOOKING_OVERDUE: 'booking.overdue',
+  VEHICLE_UNAVAILABLE: 'vehicle.unavailable',
+  VERIFICATION_CHECK_PASSED: 'verification.check_passed',
+  VERIFICATION_CHECK_FAILED: 'verification.check_failed',
+  WALLET_TOPPED_UP: 'wallet.topped_up',
+  ASSET_PARTNER_TERMS_SIGNED: 'asset_partner.terms_signed',
+  ASSET_PARTNER_TERMS_DECLINED: 'asset_partner.terms_declined',
+  PLATFORM_CONFIG_UPDATED: 'platform.config_updated',
+
+  PAYOUT_SCHEDULED: 'payout.scheduled',
+
+  REVIEW_POSTED: 'review.posted',
+
+  CHAT_MESSAGE_SENT: 'chat.message.sent',
+  INQUIRY_MESSAGE_SENT: 'inquiry.message.sent',
+  TRIP_LOCATION_UPDATED: 'trip.location.updated',
+  TRIP_SOS: 'trip.sos',
+  TRIP_INCIDENT_RAISED: 'trip.incident.raised',
+  TRIP_INCIDENT_RESOLVED: 'trip.incident.resolved',
+  TRIP_DAMAGE_REPORTED: 'trip.damage.reported',
+  TRIP_CHECKED_IN: 'trip.checked_in',
+  TRIP_DOCUMENTS_OPENED: 'trip.documents.opened',
+  TRIP_DOCUMENTS_REQUESTED: 'trip.documents.requested',
+  TRIP_DOCUMENTS_READY: 'trip.documents.ready',
+  GUEST_IDENTITY_MISMATCH: 'trip.identity.mismatch',
+  TRIP_RETURN_REMINDER: 'trip.return.reminder',
+  NEXT_BOOKING_AT_RISK: 'booking.next_at_risk',
+  NEXT_BOOKING_CLEARED: 'booking.next_cleared',
+} as const;
+
+export type EventName = (typeof EVENTS)[keyof typeof EVENTS];
+
+export interface DomainEvent<T = unknown> {
+  name: EventName;
+  aggregateId: string;
+  occurredAt: Date;
+  correlationId?: string;
+  payload: T;
+}

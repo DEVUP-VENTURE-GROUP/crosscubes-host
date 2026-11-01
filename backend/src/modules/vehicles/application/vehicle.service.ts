@@ -1,0 +1,717 @@
+import { VehicleModel, type VehicleDoc, type DeliveryLocation } from '../infrastructure/vehicle.model';
+import { uuid } from '../../../shared/utils/uuid';
+import { hostService } from '../../hosts/application/host.service';
+import { userRepository } from '../../users/infrastructure/user.repository';
+import { NotFoundError, ForbiddenError, ConflictError } from '../../../core/errors/app-error';
+import { emit } from '../../../shared/events/event-bus';
+import { EVENTS } from '../../../core/events/event-names';
+import type {
+  IVehicleContract,
+  VehicleForBooking,
+} from '../../../core/contracts/vehicle.contract';
+import type { CreateVehicleDto } from '../dto/vehicle.schemas';
+import { vinDecodeService } from './vin-decode.service';
+import { toPublicVehicle } from './vehicle-public';
+import { platformConfigService } from '../../platform-config/application/platform-config.service';
+import { buildDefaultDeliveryLocations, isDallasArea } from './default-delivery';
+
+const KM_PER_MILE = 1.609344;
+
+/** Every car's daily allowance in stored km, from the admin's miles-per-day setting. */
+export async function platformDailyKm(): Promise<number> {
+  return Math.round((await platformConfigService.get()).booking.dailyMileageMiles * KM_PER_MILE);
+}
+
+/** Extras CatoDrive does not provide; never saved on a car, and removed from any that has them. */
+export const UNOFFERED_ADDONS = new Set(['additional_driver']);
+/** The toll pass is set by the platform on every car; hosts never add, remove or price it. */
+export const TOLL_PASS = 'toll_pass';
+const offeredAddOns = <T extends { code: string }>(list?: T[]) => (list ?? []).filter((a) => !UNOFFERED_ADDONS.has(a.code) && a.code !== TOLL_PASS);
+
+/** The toll pass as a checkout extra, or null while it is switched off. */
+export async function tollPassAddOn(): Promise<{ code: string; label: string; priceType: 'per_trip'; amount: number } | null> {
+  const t = (await platformConfigService.get()).tolls;
+  if (!t.enabled || !t.passEnabled) return null;
+  const cap = `$${(t.passDailyCapCents / 100).toFixed(t.passDailyCapCents % 100 ? 2 : 0)}`;
+  return { code: TOLL_PASS, label: `Toll pass: tolls covered up to ${cap} a day`, priceType: 'per_trip', amount: t.passPriceCents };
+}
+
+/** The one cancellation policy every car uses; hosts do not choose it. */
+export async function platformCancellationPolicy(): Promise<'flexible' | 'moderate' | 'strict'> {
+  return (await platformConfigService.get()).booking.cancellationPolicy;
+}
+
+/** Puts every car on the platform's daily allowance and cancellation policy; idempotent, run at boot and on change. */
+export async function syncDailyMileage(): Promise<number> {
+  const [km, policy, pass] = await Promise.all([platformDailyKm(), platformCancellationPolicy(), tollPassAddOn()]);
+  // A stale toll pass (switched off, or repriced) comes off first; the current one goes back on every car without it.
+  const stale = await VehicleModel.updateMany(
+    pass
+      ? { addOns: { $elemMatch: { code: TOLL_PASS, $or: [{ amount: { $ne: pass.amount } }, { label: { $ne: pass.label } }] } } }
+      : { 'addOns.code': TOLL_PASS },
+    { $pull: { addOns: { code: TOLL_PASS } } },
+  );
+  const added = pass
+    ? await VehicleModel.updateMany({ deletedAt: null, 'addOns.code': { $ne: TOLL_PASS } }, { $push: { addOns: pass } })
+    : { modifiedCount: 0 };
+  const [a, b, c] = await Promise.all([
+    VehicleModel.updateMany({ deletedAt: null, 'mileageLimit.perDayKm': { $ne: km } }, { $set: { 'mileageLimit.perDayKm': km } }),
+    VehicleModel.updateMany({ deletedAt: null, 'listing.cancellationPolicy': { $ne: policy } }, { $set: { 'listing.cancellationPolicy': policy } }),
+    // CatoDrive does not offer additional drivers, so the extra is taken off any car still carrying it.
+    VehicleModel.updateMany({ 'addOns.code': { $in: [...UNOFFERED_ADDONS] } }, { $pull: { addOns: { code: { $in: [...UNOFFERED_ADDONS] } } } }),
+  ]);
+  return a.modifiedCount + b.modifiedCount + c.modifiedCount + stale.modifiedCount + added.modifiedCount;
+}
+
+/**
+ * Minimum photos before a listing can be submitted for verification. Turo
+ * requires a comparable set; below this, ops cannot judge condition and guests
+ * will not book. Enforced on submit and on photo removal for live listings.
+ */
+export const MIN_LISTING_PHOTOS = 4;
+
+type DeliveryLocationInput = Omit<DeliveryLocation, 'id'> & { id?: string };
+
+/**
+ * Give every location a stable id, keeping the one it already had.
+ *
+ * Bookings store the id of the location they were delivered to, so reusing an
+ * id for a different place (or minting a new one on every save) would re-point
+ * historic bookings at the wrong handover.
+ */
+function normaliseDeliveryLocations(
+  input: DeliveryLocationInput[],
+  existing?: DeliveryLocation[],
+): DeliveryLocation[] {
+  const known = new Set((existing ?? []).map((l) => l.id));
+  return input.map((l) => ({
+    ...l,
+    id: l.id && known.has(l.id) ? l.id : uuid(),
+  }));
+}
+
+/**
+ * Mirror the location list onto the legacy boolean/fee block.
+ *
+ * Search indexes and filters on `listing.delivery.*`, and old bookings price
+ * from `delivery.fee`; keeping both in step means neither has to know the other
+ * exists. The legacy fee becomes the cheapest offered location, which is the
+ * "from" price a filter should match on.
+ */
+function legacyDeliveryFrom(
+  locations: DeliveryLocation[],
+  previous?: VehicleDoc['listing']['delivery'],
+): VehicleDoc['listing']['delivery'] {
+  const live = locations.filter((l) => l.enabled);
+  const fees = live.map((l) => l.fee);
+  return {
+    airport: live.some((l) => l.kind === 'airport'),
+    hotel: live.some((l) => l.kind === 'hotel'),
+    business: live.some((l) => l.kind === 'business'),
+    home: live.some((l) => l.kind === 'custom'),
+    radiusKm: previous?.radiusKm ?? 0,
+    fee: fees.length ? Math.min(...fees) : 0,
+  };
+}
+
+export class VehicleService implements IVehicleContract {
+  async create(userId: string, dto: CreateVehicleDto): Promise<VehicleDoc> {
+    const host = await hostService.requireHostForUser(userId);
+    // Onboarding gate: a host must be reviewed and APPROVED by an admin (which
+    // is where their identity/documents are checked) before they can list a
+    // car. Without this, an unverified account could put a vehicle in front of
+    // guests — an insurance and trust hole. The car still goes through its own
+    // verification afterwards; this is the gate on the person behind it.
+    if (host.verificationStatus !== 'verified') {
+      throw new ForbiddenError(
+        host.verificationStatus === 'rejected'
+          ? 'Your host application was not approved, so you can’t list a vehicle. Contact support.'
+          : 'Your host account is pending approval. You can list a vehicle once an admin has verified your identity.',
+      );
+    }
+
+    // A VIN entered at creation was already decoded and matched client-side
+    // (the wizard's Decode step) — but a client's word is not verification.
+    // Re-decode here, server-side, the same way verifyVin() does, so a
+    // listing created with a VIN doesn't come out the other end still
+    // "unverified" and ask the host to prove the same thing twice.
+    const vinVerified = dto.vin ? await this.vinMatches(dto.vin, dto.make, dto.model, dto.year) : false;
+
+    const fleetOwned = !!(await userRepository.findById(userId))?.roles?.includes('house_fleet');
+    // A Dallas-area car with no delivery spots gets the standard ones, so guests pick a priced spot, never type one in.
+    const deliveryLocations =
+      dto.listing.deliveryLocations ?? (isDallasArea(dto.location.lng, dto.location.lat) ? await buildDefaultDeliveryLocations() : undefined);
+    const listing = { ...dto.listing, cancellationPolicy: await platformCancellationPolicy() };
+
+    const vehicle = await VehicleModel.create({
+      hostId: host._id,
+      fleetOwned,
+      make: dto.make,
+      model: dto.model,
+      year: dto.year,
+      bodyType: dto.bodyType,
+      category: dto.category,
+      transmission: dto.transmission,
+      fuelType: dto.fuelType,
+      seats: dto.seats,
+      vin: dto.vin,
+      vinVerified,
+      pickup: dto.pickup,
+      registrationNumber: dto.registrationNumber,
+      specs: dto.specs ?? {},
+      features: dto.features,
+      photos: dto.photos,
+      addOns: await (async () => {
+        const pass = await tollPassAddOn();
+        return [...offeredAddOns(dto.addOns), ...(pass ? [pass] : [])];
+      })(),
+      tripRules: dto.tripRules ?? [],
+      // The daily allowance is the platform's; the host sets only the overage fee.
+      mileageLimit: { perDayKm: await platformDailyKm(), overageFeePerKm: dto.mileageLimit?.overageFeePerKm ?? 0 },
+      location: {
+        type: 'Point',
+        coordinates: [dto.location.lng, dto.location.lat],
+        address: dto.location.address,
+        city: dto.location.city,
+      },
+      listing: deliveryLocations
+        ? (() => {
+            const locations = normaliseDeliveryLocations(deliveryLocations);
+            return { ...listing, deliveryLocations: locations, delivery: legacyDeliveryFrom(locations) };
+          })()
+        : listing,
+      pricing: dto.pricing,
+    });
+    return vehicle.toObject();
+  }
+
+  /** Gives each Dallas-area car that has no delivery spots the standard priced ones; idempotent, run at boot. */
+  async backfillDefaultDelivery(): Promise<number> {
+    const cars = await VehicleModel.find({
+      deletedAt: null,
+      $or: [{ 'listing.deliveryLocations': { $exists: false } }, { 'listing.deliveryLocations': { $size: 0 } }],
+    })
+      .select('location listing.delivery')
+      .lean<Pick<VehicleDoc, '_id' | 'location' | 'listing'>[]>();
+    const due = cars.filter((c) => isDallasArea(c.location?.coordinates?.[0], c.location?.coordinates?.[1]));
+    if (!due.length) return 0;
+    const template = await buildDefaultDeliveryLocations();
+    for (const c of due) {
+      const locations = normaliseDeliveryLocations(template);
+      await VehicleModel.updateOne(
+        { _id: c._id },
+        { $set: { 'listing.deliveryLocations': locations, 'listing.delivery': legacyDeliveryFrom(locations, c.listing?.delivery) } },
+      );
+    }
+    return due.length;
+  }
+
+  async getById(vehicleId: string): Promise<VehicleDoc> {
+    const v = await VehicleModel.findOne({ _id: vehicleId, deletedAt: null }).lean<VehicleDoc>();
+    if (!v) throw new NotFoundError('Vehicle');
+    return v;
+  }
+
+  /** The full document for the owning host; everyone else gets the public projection. */
+  async getForViewer(viewerId: string | undefined, vehicleId: string): Promise<VehicleDoc> {
+    const v = await this.getById(vehicleId);
+    if (viewerId) {
+      const host = await hostService.getByUserId(viewerId);
+      if (host && host._id === v.hostId) return v;
+    }
+    return toPublicVehicle(v);
+  }
+
+  /** Batch resolve (avoids N+1 for favorites / recently-viewed hydration). */
+  async getByIds(ids: string[]): Promise<VehicleDoc[]> {
+    if (ids.length === 0) return [];
+    return VehicleModel.find({ _id: { $in: ids }, deletedAt: null }).lean<VehicleDoc[]>();
+  }
+
+  async listByUser(userId: string): Promise<VehicleDoc[]> {
+    const host = await hostService.requireHostForUser(userId);
+    return VehicleModel.find({ hostId: host._id, deletedAt: null })
+      .sort({ createdAt: -1 })
+      .lean<VehicleDoc[]>();
+  }
+
+  async update(userId: string, vehicleId: string, patch: Partial<CreateVehicleDto>): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+
+    const update: Record<string, unknown> = {};
+
+    if (patch.listing) {
+      // `delivery` is a nested object: a shallow spread would replace the whole
+      // block, so toggling one delivery mode would clear the others.
+      const { delivery, deliveryLocations, ...listingRest } = patch.listing;
+      const locations = deliveryLocations
+        ? normaliseDeliveryLocations(deliveryLocations, vehicle.listing?.deliveryLocations)
+        : undefined;
+      update.listing = {
+        ...vehicle.listing,
+        ...listingRest,
+        // Hosts do not choose the cancellation policy: every car carries the platform's one rule.
+        cancellationPolicy: await platformCancellationPolicy(),
+        ...(delivery ? { delivery: { ...vehicle.listing?.delivery, ...delivery } } : {}),
+        ...(locations
+          ? { deliveryLocations: locations, delivery: legacyDeliveryFrom(locations, vehicle.listing?.delivery) }
+          : {}),
+      };
+    }
+    if (patch.pricing) update.pricing = { ...vehicle.pricing, ...patch.pricing };
+    // Merged, not replaced: a host editing the instructions must not wipe the
+    // access code they set last week.
+    if (patch.pickup) update.pickup = { ...vehicle.pickup, ...patch.pickup };
+    if (patch.features) update.features = patch.features;
+    if (patch.tripRules) update.tripRules = patch.tripRules;
+    if (patch.mileageLimit) {
+      update.mileageLimit = { ...vehicle.mileageLimit, ...patch.mileageLimit, perDayKm: await platformDailyKm() };
+    }
+    if (patch.location) {
+      // Coordinates arrive as a pair or not at all (enforced by the schema);
+      // keep the stored point when the patch only renames the address.
+      const hasPoint = patch.location.lng !== undefined && patch.location.lat !== undefined;
+      update.location = {
+        type: 'Point',
+        coordinates: hasPoint
+          ? [patch.location.lng, patch.location.lat]
+          : vehicle.location.coordinates,
+        address: patch.location.address ?? vehicle.location.address,
+        city: patch.location.city ?? vehicle.location.city,
+      };
+    }
+
+    // Plain scalars the host can correct on an existing listing.
+    for (const k of ['make', 'model', 'year', 'bodyType', 'category', 'transmission', 'fuelType', 'seats', 'registrationNumber'] as const) {
+      if (patch[k] !== undefined) update[k] = patch[k];
+    }
+    if (patch.specs) update.specs = { ...vehicle.specs, ...patch.specs };
+
+    // Changing what the car IS or where it is voids the approval it was given, so it goes back to the admin queue.
+    const needsReview = vehicle.verificationStatus === 'verified' && this.identityChanged(vehicle, update);
+    if (needsReview) {
+      update.status = 'pending_verification';
+      update.verificationStatus = 'pending';
+      if (['make', 'model', 'year'].some((k) => update[k] !== undefined && update[k] !== vehicle[k as 'make'])) update.vinVerified = false;
+    }
+    await VehicleModel.updateOne({ _id: vehicleId }, update);
+    if (needsReview) {
+      const { notificationService } = await import('../../notifications/application/notification.service');
+      await notificationService
+        .send({
+          userId,
+          priority: 'high',
+          templateKey: 'vehicle.re_review',
+          title: 'Your car is paused for a quick review',
+          body: `You changed the details of your ${vehicle.make} ${vehicle.model}, so it is hidden from search until our team approves the change. Existing trips are not affected.`,
+          deepLink: `/host/listings/${vehicleId}`,
+          data: { vehicleId },
+        })
+        .catch(() => undefined);
+    }
+    return this.getById(vehicleId);
+  }
+
+  /** True when the pending update alters make, model, year, plate or the pin/address of the car. */
+  private identityChanged(vehicle: VehicleDoc, update: Record<string, unknown>): boolean {
+    if (['make', 'model', 'year', 'registrationNumber'].some((k) => update[k] !== undefined && update[k] !== vehicle[k as 'make'])) return true;
+    const loc = update.location as VehicleDoc['location'] | undefined;
+    if (!loc) return false;
+    const [lng, lat] = loc.coordinates;
+    const [oldLng, oldLat] = vehicle.location.coordinates;
+    return loc.address !== vehicle.location.address || lng !== oldLng || lat !== oldLat;
+  }
+
+  /** Update pricing engine settings (manual/dynamic/seasonal/discounts/promo). */
+  async updatePricing(
+    userId: string,
+    vehicleId: string,
+    patch: Record<string, unknown>,
+  ): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+    const oldPrice = vehicle.pricing.dailyPrice;
+    const merged = { ...vehicle.pricing, ...patch };
+    await VehicleModel.updateOne({ _id: vehicleId }, { pricing: merged });
+    // Price-drop alert for wishlisters.
+    if (typeof merged.dailyPrice === 'number' && merged.dailyPrice < oldPrice) {
+      emit(EVENTS.VEHICLE_PRICE_DROPPED, vehicleId, {
+        vehicleId,
+        oldPrice,
+        newPrice: merged.dailyPrice,
+        title: `${vehicle.make} ${vehicle.model}`,
+        currency: vehicle.pricing.currency,
+      });
+    }
+    return this.getById(vehicleId);
+  }
+
+  /** Append photos (typically after S3 upload). First photo becomes cover. */
+  async addPhotos(
+    userId: string,
+    vehicleId: string,
+    photos: { url: string; key?: string; isCover?: boolean }[],
+  ): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+    const existing = vehicle.photos ?? [];
+    const merged = [...existing, ...photos];
+    if (!merged.some((p) => p.isCover) && merged[0]) merged[0].isCover = true;
+    await VehicleModel.updateOne({ _id: vehicleId }, { photos: merged });
+    return this.getById(vehicleId);
+  }
+
+  /**
+   * Remove one photo. A live listing may not drop below the minimum — that
+   * would leave a bookable car the guest cannot see.
+   */
+  async removePhoto(userId: string, vehicleId: string, key: string): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+
+    const photos = vehicle.photos ?? [];
+    const target = photos.find((p) => p.key === key);
+    if (!target) throw new NotFoundError('Photo not found on this listing');
+
+    const remaining = photos.filter((p) => p.key !== key);
+    if (vehicle.status === 'listed' && remaining.length < MIN_LISTING_PHOTOS) {
+      throw new ConflictError(
+        `A listed car must keep at least ${MIN_LISTING_PHOTOS} photos. Unlist it first, or add another photo.`,
+        'PHOTOS_REQUIRED',
+      );
+    }
+    // Deleting the cover promotes the next photo, so a listing is never
+    // left with photos but no cover to render.
+    if (target.isCover && remaining[0]) remaining[0].isCover = true;
+
+    await VehicleModel.updateOne({ _id: vehicleId }, { photos: remaining });
+    return this.getById(vehicleId);
+  }
+
+  /** Promote one photo to cover — the image every search result renders. */
+  async setCoverPhoto(userId: string, vehicleId: string, key: string): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+
+    const photos = vehicle.photos ?? [];
+    if (!photos.some((p) => p.key === key)) {
+      throw new NotFoundError('Photo not found on this listing');
+    }
+    const next = photos.map((p) => ({ ...p, isCover: p.key === key }));
+    await VehicleModel.updateOne({ _id: vehicleId }, { photos: next });
+    return this.getById(vehicleId);
+  }
+
+  /**
+   * VIN verification.
+   *
+   * This used to be a regex. It checked that the string looked like a VIN and
+   * then set `vinVerified: true` — so seventeen random valid characters earned
+   * a verification badge that guests are shown as a trust signal. The badge
+   * asserted something nobody had checked.
+   *
+   * It now decodes the VIN against NHTSA and compares the result to what the
+   * host listed. Two different failures, kept separate because the answers are
+   * different: a VIN that does not resolve is a typo, and a VIN that resolves
+   * to a DIFFERENT car is either a mistake or someone listing a vehicle they do
+   * not have.
+   */
+  async verifyVin(userId: string, vehicleId: string, vin: string): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+
+    const clean = vin.trim().toUpperCase();
+    const { matched, decoded } = await this.decodeAndMatch(clean, vehicle.make, vehicle.model, vehicle.year);
+
+    if (!decoded) {
+      throw new ConflictError('We could not look that VIN up. Check it against the dashboard or door frame.', 'VIN_NOT_FOUND');
+    }
+    if (!matched) {
+      throw new ConflictError(
+        `That VIN is a ${decoded.year} ${decoded.make} ${decoded.model}, but this listing says ` +
+          `${vehicle.year} ${vehicle.make} ${vehicle.model}. Fix whichever is wrong.`,
+        'VIN_MISMATCH',
+      );
+    }
+
+    await VehicleModel.updateOne({ _id: vehicleId }, { vin: clean, vinVerified: true });
+    return this.getById(vehicleId);
+  }
+
+  /** Best-effort — a decode outage at creation must never block listing a car. */
+  private async vinMatches(vin: string, make: string, model: string, year: number): Promise<boolean> {
+    try {
+      return (await this.decodeAndMatch(vin, make, model, year)).matched;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * The one place a VIN is checked against a vehicle's stated make/model/year.
+   * Shared by creation (best-effort) and verifyVin (authoritative — throws on
+   * a mismatch instead of just reporting one).
+   */
+  private async decodeAndMatch(
+    vin: string,
+    make: string,
+    model: string,
+    year: number,
+  ): Promise<{ matched: boolean; decoded: import('./vin-decode.service').DecodedVin | undefined }> {
+    const clean = vin.trim().toUpperCase();
+    if (!/^[A-HJ-NPR-Z0-9]{11,17}$/.test(clean)) return { matched: false, decoded: undefined };
+
+    const [decoded] = await vinDecodeService.decodeBatch([clean]);
+    if (!decoded?.ok) return { matched: false, decoded: undefined };
+
+    // The decode is authoritative about what the car IS. A mismatch means the
+    // listing and the VIN describe different vehicles.
+    const sameMake = decoded.make?.toLowerCase() === make?.toLowerCase();
+    const sameYear = decoded.year === year;
+    // Model names vary in punctuation and trim ("F-150" vs "F150 XLT"), so a
+    // containment test either way is the honest comparison.
+    const a = (decoded.model ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const b = (model ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sameModel = !!a && !!b && (a.includes(b) || b.includes(a));
+
+    return { matched: sameMake && sameYear && sameModel, decoded };
+  }
+
+  /** Host submits a draft for verification. */
+  async submit(userId: string, vehicleId: string): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+    if (vehicle.status !== 'draft') {
+      throw new ConflictError('Only drafts can be submitted', 'INVALID_STATE');
+    }
+
+    // Photos are not optional. A listing with no photos cannot be verified by
+    // ops and would never book, so it must not be able to enter the queue.
+    const photos = vehicle.photos?.length ?? 0;
+    if (photos < MIN_LISTING_PHOTOS) {
+      throw new ConflictError(
+        `Add at least ${MIN_LISTING_PHOTOS} photos before submitting (you have ${photos}).`,
+        'PHOTOS_REQUIRED',
+      );
+    }
+    await VehicleModel.updateOne(
+      { _id: vehicleId },
+      { status: 'pending_verification', verificationStatus: 'pending' },
+    );
+    return this.getById(vehicleId);
+  }
+
+  /** Ops verifies → vehicle becomes listed & bookable. */
+  async verify(vehicleId: string): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await VehicleModel.updateOne(
+      { _id: vehicleId },
+      { status: 'listed', verificationStatus: 'verified' },
+    );
+    emit(EVENTS.VEHICLE_VERIFIED, vehicleId, { vehicleId, hostId: vehicle.hostId });
+    emit(EVENTS.VEHICLE_LISTED, vehicleId, { vehicleId, hostId: vehicle.hostId });
+    return this.getById(vehicleId);
+  }
+
+  async delist(userId: string, vehicleId: string): Promise<void> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+    await this.retireFromMarketplace(vehicleId);
+  }
+
+  /** Trips a guest still holds on this car (booked, paying or on the road). */
+  async upcomingTrips(vehicleId: string): Promise<number> {
+    const { BookingModel } = await import('../../bookings/infrastructure/booking.model');
+    return BookingModel.countDocuments({
+      vehicleId,
+      status: { $in: ['pending_verification', 'pending_approval', 'pending_payment', 'confirmed', 'paid', 'in_progress'] },
+      'period.end': { $gt: new Date() },
+    });
+  }
+
+  /** Takes a car off the marketplace once no guest holds a trip on it; callers authorise first. */
+  async retireFromMarketplace(vehicleId: string): Promise<void> {
+    // Guests hold trips on this car: pulling it would strand them with no refund path and no penalty on the host.
+    const upcoming = await this.upcomingTrips(vehicleId);
+    if (upcoming > 0) {
+      throw new ConflictError(
+        `This car has ${upcoming} active or upcoming trip${upcoming === 1 ? '' : 's'}. Complete or cancel them before removing the listing.`,
+        'HAS_ACTIVE_BOOKINGS',
+      );
+    }
+    await VehicleModel.updateOne({ _id: vehicleId }, { status: 'delisted' });
+  }
+
+  /**
+   * Self-serve pause/relist for a car that has ALREADY cleared admin
+   * verification once — never the initial draft→listed path, which stays
+   * gated behind submit() + photos + admin review. Never overrides a
+   * recall/compliance hold; those clear only through their own release path.
+   */
+  async hostSetStatus(
+    userId: string,
+    vehicleId: string,
+    input: { status?: 'listed' | 'paused'; maintenanceRisk?: boolean },
+  ): Promise<VehicleDoc> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+
+    const update: Record<string, unknown> = {};
+    if (input.status === 'listed') {
+      if (vehicle.verificationStatus !== 'verified') {
+        throw new ConflictError('This car has not been verified yet — submit it for review first.', 'NOT_VERIFIED');
+      }
+      if (vehicle.recallHold) {
+        throw new ConflictError('This car is on recall hold until a verified repair receipt clears it.', 'RECALL_HOLD');
+      }
+      if (vehicle.complianceHold) {
+        throw new ConflictError('This car is held for an expired document — renew it to relist.', 'COMPLIANCE_HOLD');
+      }
+      const photos = vehicle.photos?.length ?? 0;
+      if (photos < MIN_LISTING_PHOTOS) {
+        throw new ConflictError(`Add at least ${MIN_LISTING_PHOTOS} photos before listing.`, 'PHOTOS_REQUIRED');
+      }
+      update.status = 'listed';
+    } else if (input.status === 'paused') {
+      if (vehicle.status !== 'listed') {
+        throw new ConflictError('Only a listed car can be paused.', 'INVALID_STATE');
+      }
+      update.status = 'paused';
+    }
+    if (input.maintenanceRisk !== undefined) update.maintenanceRisk = input.maintenanceRisk;
+
+    if (Object.keys(update).length) await VehicleModel.updateOne({ _id: vehicleId }, update);
+    return this.getById(vehicleId);
+  }
+
+  // ── Admin ──────────────────────────────────────────────────────────
+  /** Admin approve (list), suspend (pause), or reject a vehicle. */
+  async adminSetStatus(
+    vehicleId: string,
+    action: 'approve' | 'suspend' | 'reject',
+  ): Promise<VehicleDoc> {
+    await this.getById(vehicleId);
+    const update =
+      action === 'approve'
+        ? { status: 'listed', verificationStatus: 'verified' }
+        : action === 'suspend'
+          ? { status: 'paused' }
+          : { status: 'draft', verificationStatus: 'rejected' };
+    await VehicleModel.updateOne({ _id: vehicleId }, update);
+    return this.getById(vehicleId);
+  }
+
+  /** Record (or clear, with null) the rating a car earned elsewhere; shown with its source, never mixed into CatoDrive's own rating. */
+  async adminSetExternalRating(vehicleId: string, value: { source: string; rating: number; trips: number } | null): Promise<VehicleDoc> {
+    await this.getById(vehicleId);
+    await VehicleModel.updateOne({ _id: vehicleId }, value ? { $set: { externalRating: value } } : { $unset: { externalRating: 1 } });
+    return this.getById(vehicleId);
+  }
+
+  async adminList(opts: {
+    q?: string;
+    status?: string;
+    verification?: string;
+    limit?: number;
+    skip?: number;
+  }): Promise<{ items: VehicleDoc[]; total: number }> {
+    const limit = Math.min(opts.limit ?? 20, 50);
+    const filter: Record<string, unknown> = { deletedAt: null };
+    if (opts.status) filter.status = opts.status;
+    if (opts.verification) filter.verificationStatus = opts.verification;
+    if (opts.q) {
+      const rx = new RegExp(opts.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [{ make: rx }, { model: rx }, { 'listing.title': rx }, { registrationNumber: rx }];
+    }
+    const [items, total] = await Promise.all([
+      VehicleModel.find(filter).sort({ createdAt: -1 }).skip(opts.skip ?? 0).limit(limit).lean<VehicleDoc[]>(),
+      VehicleModel.countDocuments(filter),
+    ]);
+    return { items, total };
+  }
+
+  async count(filter: Record<string, unknown> = {}): Promise<number> {
+    return VehicleModel.countDocuments({ deletedAt: null, ...filter });
+  }
+
+  /**
+   * Smart Price AI: suggest a daily price from live local comparables
+   * (same category, listed & verified, within radius). Returns the market
+   * median plus a competitive band and a demand signal.
+   */
+  async priceSuggestion(input: {
+    lng: number; lat: number; category: string; fuelType?: string; radiusKm?: number;
+  }): Promise<{
+    suggested: number; median: number; p25: number; p75: number; sampleSize: number;
+    demand: 'low' | 'balanced' | 'high'; currency: string;
+  }> {
+    const radiusMeters = (input.radiusKm ?? 25) * 1000;
+    const filter: Record<string, unknown> = {
+      status: 'listed', verificationStatus: 'verified', deletedAt: null,
+      category: input.category,
+      location: { $near: { $geometry: { type: 'Point', coordinates: [input.lng, input.lat] }, $maxDistance: radiusMeters } },
+    };
+    if (input.fuelType) filter.fuelType = input.fuelType;
+    const comps = await VehicleModel.find(filter).limit(100).select('pricing.dailyPrice totalTrips').lean();
+
+    const prices = comps.map((c) => c.pricing.dailyPrice).filter((p) => p > 0).sort((a, b) => a - b);
+    const CATEGORY_FALLBACK: Record<string, number> = {
+      economy: 4500, suv: 8000, luxury: 15000, van: 9000, sports: 20000, ev: 9500,
+    };
+    if (prices.length < 3) {
+      const base = CATEGORY_FALLBACK[input.category] ?? 6000;
+      return { suggested: base, median: base, p25: base, p75: base, sampleSize: prices.length, demand: 'balanced', currency: 'USD' };
+    }
+    const at = (q: number) => prices[Math.min(prices.length - 1, Math.floor(q * prices.length))];
+    const median = at(0.5);
+    const p25 = at(0.25);
+    const p75 = at(0.75);
+    // Demand signal from average trips of comps.
+    const avgTrips = comps.reduce((s, c) => s + (c.totalTrips ?? 0), 0) / comps.length;
+    const demand = avgTrips > 8 ? 'high' : avgTrips < 2 ? 'low' : 'balanced';
+    // Suggest slightly under median to win bookings, nudged by demand.
+    const factor = demand === 'high' ? 1.05 : demand === 'low' ? 0.92 : 0.98;
+    return {
+      suggested: Math.round(median * factor),
+      median, p25, p75, sampleSize: prices.length, demand, currency: 'USD',
+    };
+  }
+
+  // ── Contract implementation ──────────────────────────────────────────
+  async getForBooking(vehicleId: string): Promise<VehicleForBooking> {
+    const v = await this.getById(vehicleId);
+    return {
+      id: v._id,
+      hostId: v.hostId,
+      instantBook: v.listing.instantBook,
+      cancellationPolicy: v.listing.cancellationPolicy,
+      minTripHours: v.listing.minTripHours,
+      maxTripHours: v.listing.maxTripHours,
+      advanceNoticeHours: v.listing.advanceNoticeHours ?? 0,
+      currency: v.pricing.currency,
+      dailyPrice: v.pricing.dailyPrice, // deposit is sized off this
+      bookable: v.status === 'listed' && v.verificationStatus === 'verified',
+    };
+  }
+
+  async isBookable(vehicleId: string): Promise<boolean> {
+    const v = await VehicleModel.findOne({ _id: vehicleId, deletedAt: null }).lean<VehicleDoc>();
+    return !!v && v.status === 'listed' && v.verificationStatus === 'verified';
+  }
+
+  /** Public ownership assertion by id (used by availability routes). */
+  async assertOwnerById(userId: string, vehicleId: string): Promise<void> {
+    const vehicle = await this.getById(vehicleId);
+    await this.assertOwner(userId, vehicle);
+  }
+
+  private async assertOwner(userId: string, vehicle: VehicleDoc): Promise<void> {
+    const host = await hostService.getByUserId(userId);
+    if (!host || host._id !== vehicle.hostId) {
+      throw new ForbiddenError('You do not own this vehicle');
+    }
+  }
+}
+
+export const vehicleService = new VehicleService();

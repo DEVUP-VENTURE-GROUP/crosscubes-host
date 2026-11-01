@@ -1,0 +1,145 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { storageGateway } from '../../../infrastructure/storage/storage.provider';
+import { config } from '../../../config';
+import {
+  UPLOAD_CATEGORIES,
+  ALLOWED_CONTENT_TYPES,
+  isPrivateCategory,
+  parseKey,
+  PRIVATE_CATEGORY_PERMISSION,
+} from '../../../infrastructure/storage/storage.gateway';
+import { asyncHandler } from '../../../shared/middleware/async-handler';
+import { authenticate } from '../../../shared/middleware/authenticate';
+import { validate } from '../../../shared/middleware/validate';
+import { messageService } from '../../messaging/application/message.service';
+import { uploadLimiter } from '../../../shared/middleware/upload-rate-limit';
+import { platformConfigService } from '../../platform-config/application/platform-config.service';
+import { ForbiddenError, ValidationError } from '../../../core/errors/app-error';
+import { sendSuccess } from '../../../shared/http/api-response';
+
+const router = Router();
+
+// Categories and content types come from the storage contract — so adding a new
+// upload surface can't silently 400 because two lists drifted apart.
+const uploadUrlSchema = z.object({
+  category: z.enum(UPLOAD_CATEGORIES),
+  contentType: z.enum(ALLOWED_CONTENT_TYPES).default('image/jpeg'),
+  // The exact byte size of each file: it is signed into the link, so storage refuses anything bigger.
+  sizes: z.array(z.number().int().min(1)).min(1).max(20),
+});
+
+/** Categories anyone may view unauthenticated; chat photos are participant-only and go through /download. */
+const PUBLIC_VIEW_CATEGORIES = ['vehicle_photo', 'trip_photo', 'avatar'];
+
+/**
+ * Returns presigned upload targets. The client PUTs bytes directly to
+ * `uploadUrl` (keeping large files off the API), then persists `publicUrl`.
+ */
+router.post(
+  '/upload-urls',
+  authenticate,
+  uploadLimiter,
+  validate({ body: uploadUrlSchema }),
+  asyncHandler(async (req, res) => {
+    const { maxUploadMb } = (await platformConfigService.get()).security;
+    const sizes = req.body.sizes as number[];
+    if (sizes.some((s) => s > maxUploadMb * 1024 * 1024)) {
+      throw new ValidationError(`Each file must be ${maxUploadMb} MB or smaller`);
+    }
+    const targets = await storageGateway.createUploadTargets({
+      ownerId: req.principal!.userId,
+      category: req.body.category,
+      contentType: req.body.contentType,
+      sizes,
+    });
+    sendSuccess(res, targets);
+  }),
+);
+
+/**
+ * Authorized read for a PRIVATE object (KYC, licence, insurance, claim). Returns
+ * a short-lived presigned GET — never a durable public URL — and only to the
+ * document's owner or to staff with the category's review permission. This is
+ * what keeps a driver's licence from being reachable by anyone with the link
+ * once the bucket sits behind a public CDN.
+ */
+router.get(
+  '/download',
+  authenticate,
+  validate({ query: z.object({ key: z.string().min(3).max(512) }) }),
+  asyncHandler(async (req, res) => {
+    const key = String(req.query.key);
+    const parsed = parseKey(key);
+    if (!parsed) throw new ValidationError('Malformed object key');
+
+    // Public categories don't need this endpoint — but if asked, only gate that
+    // it's a real key; the CDN already serves them.
+    if (isPrivateCategory(parsed.category)) {
+      const isOwner = parsed.ownerId === req.principal!.userId;
+      const needed = PRIVATE_CATEGORY_PERMISSION[parsed.category];
+      const isStaff =
+        req.principal!.permissions.includes('*') ||
+        (!!needed && req.principal!.permissions.includes(needed));
+      if (!isOwner && !isStaff) {
+        throw new ForbiddenError('You are not allowed to view this document');
+      }
+    }
+
+    if (parsed.category === 'message' && parsed.ownerId !== req.principal!.userId) {
+      await messageService.assertAttachmentAccess(req.principal!.userId, key);
+    }
+
+    const url = await storageGateway.createDownloadUrl(key);
+    sendSuccess(res, { url, expiresInSeconds: 120 });
+  }),
+);
+
+/**
+ * Public read for PUBLIC media (listing photos, avatars, trip photos).
+ *
+ * Deliberately unauthenticated — these are marketplace content, shown to logged
+ * out shoppers. It exists so the bucket can keep Block Public Access ON and
+ * still serve images: we sign the read here and redirect. Private categories are
+ * refused outright; they must go through /media/download, which checks identity.
+ *
+ * Once a CDN is configured, upload targets point straight at it and this route
+ * stops being hit for new media.
+ */
+router.get(
+  '/view',
+  validate({ query: z.object({ key: z.string().min(3).max(512) }) }),
+  asyncHandler(async (req, res) => {
+    const key = String(req.query.key);
+    const parsed = parseKey(key);
+    if (!parsed) throw new ValidationError('Malformed object key');
+    if (!PUBLIC_VIEW_CATEGORIES.includes(parsed.category)) {
+      throw new ForbiddenError('This file is not public');
+    }
+
+    const url = await storageGateway.createDownloadUrl(key, { publicStable: true });
+    // The link is the same all day and valid for at least six more days, so a six-hour cache can never outlive it.
+    res.set('Cache-Control', 'public, max-age=21600');
+    // helmet defaults every response to `same-origin`, which makes the browser
+    // refuse to paint this image into the web app (it is served from the API
+    // origin, not the site's). These objects are public marketplace content and
+    // are meant to be embedded, so relax it for this route only — the global
+    // default stays strict for everything else.
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.redirect(302, url);
+  }),
+);
+
+/**
+ * Dev-only sink for the mock storage gateway's presigned PUT. It accepts the
+ * bytes and throws them away — its whole job is to let the client run the exact
+ * same upload path locally as it will against S3. Never mounted when real AWS
+ * credentials are configured.
+ */
+if (!config.aws.enabled) {
+  router.put('/mock-upload/*', (_req, res) => {
+    res.status(200).end();
+  });
+}
+
+export const mediaRoutes = router;

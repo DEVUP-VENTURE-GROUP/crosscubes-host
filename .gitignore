@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Env / secrets — NEVER commit
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Build output
+dist/
+**/dist/
+.next/
+**/.next/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Caches / coverage
+coverage/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# The India model — local-only, lives on the india-local branch, never on
+# get-ride-in or main. This entry is a structural guard: even if the folder
+# is ever present in this working tree by accident, it can never be staged.
+get-your-ride/

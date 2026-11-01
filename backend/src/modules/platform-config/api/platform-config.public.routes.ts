@@ -1,0 +1,82 @@
+import { Router } from 'express';
+import { platformConfigService } from '../application/platform-config.service';
+import { config } from '../../../config';
+import { asyncHandler } from '../../../shared/middleware/async-handler';
+import { sendSuccess } from '../../../shared/http/api-response';
+
+const router = Router();
+
+/**
+ * Guest-safe slice of platform economics — the values the marketplace UI needs
+ * to explain terms accurately (cancellation windows, deposit band, early-bird /
+ * last-minute windows) so nothing is hardcoded in the client. Deliberately
+ * excludes internal rates (tax, payout fees).
+ *
+ * Two values here are published rather than hidden, on purpose:
+ *
+ * `protection` — a guest is charged for a protection tier during checkout, so
+ * the tiers and their prices have to be explainable before checkout too.
+ *
+ * `hostTakeRateBps` — the platform's cut. A host deciding whether to list is
+ * entitled to know it before they spend an hour on a listing, and every
+ * serious competitor publishes theirs. This is the default rate; an individual
+ * host's effective rate can be lower if a CommissionRule matches them, so the
+ * calculator that reads this shows a floor, never an overstatement of earnings.
+ */
+router.get(
+  '/config',
+  asyncHandler(async (_req, res) => {
+    const cfg = await platformConfigService.get();
+    // Same for every visitor; admin changes still reach browsers within a minute.
+    res.set('Cache-Control', 'public, max-age=60');
+    sendSuccess(res, {
+      cancellation: cfg.cancellation,
+      deposit: {
+        enabled: cfg.deposit.enabled,
+        minCents: cfg.deposit.minCents,
+        maxCents: cfg.deposit.maxCents,
+        multiplierBps: cfg.deposit.multiplierBps,
+      },
+      pricing: cfg.pricing,
+      inspection: cfg.inspection,
+      handover: cfg.handover,
+      booking: {
+        minLeadMinutes: cfg.booking.minLeadMinutes,
+        dailyMileageMiles: cfg.booking.dailyMileageMiles,
+        cancellationPolicy: cfg.booking.cancellationPolicy,
+        guestBookingsEnabled: cfg.booking.guestBookingsEnabled !== false,
+        guestBookingsPausedMessage: cfg.booking.guestBookingsPausedMessage,
+      },
+      programs: { rewardsEnabled: cfg.programs.rewardsEnabled, referralEnabled: cfg.programs.referralEnabled, membershipEnabled: cfg.programs.membershipEnabled },
+      checkout: { otherMethodsEnabled: cfg.checkout.otherMethodsEnabled },
+      // Sign-in by text code is only offered when a text provider is actually configured.
+      auth: { phoneSignIn: config.notifications.smsEnabled },
+      // Public by design; a pk_ key identifies the account to Stripe.js and can charge nothing.
+      stripe: { publishableKey: config.stripe.publishableKey ?? null },
+      protection: cfg.protection,
+      hostTakeRateBps: cfg.commission.defaultBps,
+      // The client needs the current Terms version to display + submit on
+      // booking, plus the min age to gate account setup. Nothing hardcoded.
+      legal: {
+        termsVersion: cfg.legal.termsVersion,
+        termsUrl: cfg.legal.termsUrl,
+        privacyVersion: cfg.legal.privacyVersion,
+        privacyUrl: cfg.legal.privacyUrl,
+        cancellationUrl: cfg.legal.cancellationUrl,
+        minAgeYears: cfg.legal.minAgeYears,
+      },
+    });
+  }),
+);
+
+/** What the mobile apps check at start-up: block below minVersion, suggest an update below latestVersion. */
+router.get(
+  '/app-release/:app(customer|partner)',
+  asyncHandler(async (req, res) => {
+    const cfg = await platformConfigService.get();
+    res.set('Cache-Control', 'public, max-age=60');
+    sendSuccess(res, cfg.appRelease[req.params.app as 'customer' | 'partner']);
+  }),
+);
+
+export const platformConfigPublicRoutes = router;

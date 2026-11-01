@@ -1,0 +1,166 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { config } from '@/lib/config';
+import {
+  Car, LogOut, Wallet, Gift, User, LifeBuoy, Building2, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Sparkles } from 'lucide-react';
+import { useAuthStore } from '@/features/auth/store';
+import { useUnreadMessages } from '@/features/messaging/hooks';
+import { useLogout } from '@/features/auth/hooks';
+import { useIsAssetPartner } from '@/features/asset-partners/hooks';
+import { cn } from '@/lib/utils/cn';
+import { SiteLink } from './site-link';
+import { usePrograms } from '@/features/platform/config';
+
+
+/**
+ * Avatar dropdown. Collapses what used to be nine flat nav buttons into a
+ * single grouped menu - the pattern every consumer marketplace uses.
+ */
+export function UserMenu() {
+  const { user } = useAuthStore();
+  const isAssetPartner = useIsAssetPartner();
+  const logout = useLogout();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click / Escape.
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const name = user?.email?.split('@')[0] ?? 'Account';
+  const initial = name.slice(0, 1).toUpperCase();
+  const unread = useUnreadMessages(!!user).data?.count ?? 0;
+
+  // `inFooter` items are already in the phone tab bar, so the drawer hides them
+  // on mobile to avoid showing everything twice. Desktop has no footer bar, so
+  // there they stay visible.
+  const programs = usePrograms();
+  const items = [
+    { href: '/bookings', label: 'My trips', icon: Car, inFooter: true },
+    { href: '/messages', label: 'Messages', icon: MessageSquare, inFooter: true },
+    { href: '/wishlist', label: 'Saved cars', icon: Heart, inFooter: true },
+    { href: '/saved-searches', label: 'Saved searches', icon: Search, inFooter: false },
+    { href: '/wallet', label: 'Wallet', icon: Wallet, inFooter: false },
+    { href: '/citations', label: 'Tickets & tolls', icon: FileWarning, inFooter: false },
+    ...(programs.membership ? [{ href: '/membership', label: 'Membership', icon: Sparkles, inFooter: false }] : []),
+    ...(programs.rewards ? [{ href: '/rewards', label: 'Rewards', icon: Gift, inFooter: false }] : []),
+    { href: '/account', label: 'Account', icon: User, inFooter: true },
+    { href: '/help', label: 'Help centre', icon: BookOpen, inFooter: false },
+    { href: '/support', label: 'Support', icon: LifeBuoy, inFooter: false },
+  ];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={unread > 0 ? `Account - ${unread} unread messages` : 'Account'}
+        className={cn(
+          'relative flex items-center gap-2 rounded-full border border-border bg-card py-1 ps-1 pe-2.5',
+          ' transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        )}
+      >
+        <span className="relative grid h-7 w-7 place-items-center rounded-full brand-gradient text-xs font-bold text-white">
+          {initial}
+          {unread > 0 && (
+            <span className="absolute -end-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-primary" />
+          )}
+        </span>
+        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute end-0 z-50 mt-2 w-60 origin-top-right animate-scale-in overflow-hidden rounded-xl border border-border bg-card shadow-float"
+        >
+          <div className="border-b border-border px-4 py-3">
+            <p className="truncate text-sm font-semibold">{name}</p>
+            <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+          </div>
+
+          <div className="py-1">
+            {items.map((it) => (
+              <Link
+                key={it.href}
+                href={it.href}
+                onClick={() => setOpen(false)}
+                role="menuitem"
+                className={cn(
+                  'items-center gap-3 px-4 py-2 text-sm transition-colors hover:bg-accent',
+                  // In the phone footer already → show only from lg up.
+                  it.inFooter ? 'hidden lg:flex' : 'flex',
+                )}
+              >
+                <it.icon className="h-4 w-4 text-muted-foreground" /> {it.label}
+                {it.href === '/messages' && unread > 0 && (
+                  <span className="ms-auto grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          <div className="border-t border-border py-1">
+            {/* Asset-Partners-only launch - see config.assetPartnersOnly.
+                Both links show unconditionally to every signed-in user (there
+                is no isHost/isCorporate gate here), so they read as an
+                invitation to self-onboard, not just a shortcut for someone
+                already in that program.
+
+                !isAssetPartner on top of that: every partner also carries a
+                verified Host record as marketplace plumbing (see the note on
+                the same check in navbar.tsx), so this would otherwise offer
+                self-serve host tools to someone CatoDrive runs 100% of
+                operations for. */}
+            {isAssetPartner && (
+              <SiteLink path="/asset-partners/dashboard" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
+                <Car className="h-4 w-4 text-primary" /> Partner dashboard
+              </SiteLink>
+            )}
+            {!config.assetPartnersOnly && !isAssetPartner && !user?.roles?.includes('house_fleet') && (
+              <>
+                <SiteLink path="/host" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
+                  <Car className="h-4 w-4 text-primary" /> Host dashboard
+                </SiteLink>
+                {config.corporate && (
+                  <Link href="/corporate" onClick={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm transition-colors hover:bg-accent">
+                    <Building2 className="h-4 w-4 text-muted-foreground" /> Corporate
+                  </Link>
+                )}
+              </>
+            )}
+            {/* No admin link here. The console is a separate application on
+                its own hostname behind Cloudflare Access; the public app neither
+                serves it nor advertises its URL. Staff go there directly. */}
+          </div>
+
+          <div className="border-t border-border py-1">
+            <button
+              role="menuitem"
+              onClick={() => logout.mutate()}
+              className="flex w-full items-center gap-3 px-4 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

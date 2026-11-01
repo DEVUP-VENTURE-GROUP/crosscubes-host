@@ -1,0 +1,532 @@
+import { BookingModel } from '../infrastructure/booking.model';
+import { ledgerService } from '../../payments/application/ledger.service';
+import { Account } from '../../payments/domain/ledger.accounts';
+import { platformConfigService } from '../../platform-config/application/platform-config.service';
+import { lateFeeCents, dayPriceCents } from '../domain/late-fee';
+import { notificationService } from '../../notifications/application/notification.service';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../core/errors/app-error';
+import { logger } from '../../../infrastructure/logging/logger';
+import { auditService } from '../../audit/application/audit.service';
+import { uuid } from '../../../shared/utils/uuid';
+import { paymentService } from '../../payments/application/payment.service';
+import { depositService } from '../../payments/application/deposit.service';
+import { emit } from '../../../shared/events/event-bus';
+import { PayoutModel } from '../../payouts/infrastructure/payout.model';
+import { EVENTS } from '../../../core/events/event-names';
+import { parseKey } from '../../../infrastructure/storage/storage.gateway';
+import { inspectionService } from '../../trips/application/inspection.service';
+
+export type IncidentalType = 'fuel' | 'cleaning' | 'smoking' | 'pet' | 'late_return' | 'toll' | 'fine' | 'other';
+
+/** Billed outside the shared post-trip ceiling (each has its own limit). */
+const UNCAPPED_TYPES: IncidentalType[] = ['late_return'];
+
+/** Charges about the car's condition, which need a pickup baseline. */
+const BASELINE_TYPES: IncidentalType[] = ['cleaning', 'smoking', 'pet', 'fuel'];
+
+export interface IncidentalItem {
+  type: IncidentalType;
+  /** Explicit amount (minor units) for toll/fine/other; ignored for priced types. */
+  amount?: number;
+  /** Fuel: whole % returned below pickup. Late: hours past grace. */
+  qty?: number;
+  note?: string;
+  /** Receipt, citation, or a photo of the car. Required above a config
+   *  threshold — a large charge on trust alone is an assertion. */
+  evidenceUrl?: string;
+}
+
+/**
+ * Post-trip incidentals — fuel, cleaning, smoking, pet, late return, tolls and
+ * fines. Priced from an admin-configurable schedule, charged to the guest and
+ * credited to the host through the same balanced posting the mileage overage
+ * uses (credit clearing / debit host payable), and recorded on the booking so
+ * support can reconstruct any charge months later. Tolls/fines can be applied
+ * long after the trip (they arrive late), so this is booking-scoped, not gated
+ * on a live trip.
+ */
+/** The slice of platform config this service reads. */
+interface IncidentalConfig {
+  fuelPerPercentCents: number;
+  cleaningCents: number;
+  smokingCents: number;
+  petCents: number;
+  lateReturnPerHourCents: number;
+  lateHourlyMaxHours?: number;
+  lateHalfDayMaxHours?: number;
+  maxTollCents?: number;
+  maxFineCents?: number;
+  maxOtherCents?: number;
+  windowDays?: number;
+  evidenceRequiredAboveCents?: number;
+  disputeWindowHours?: number;
+  maxTotalBps?: number;
+  maxFuelPercent?: number;
+  maxLateHours?: number;
+}
+
+/** Evidence must be one of our own uploads: a trip photo or claim file (owned by the caller unless staff). */
+export function assertEvidenceUrl(url: string, ownerId?: string): void {
+  let raw: string;
+  try {
+    const u = new URL(url);
+    raw = decodeURIComponent(u.searchParams.get('key') ?? u.pathname);
+  } catch {
+    throw new ValidationError('Evidence must be a valid link to an uploaded file');
+  }
+  const parts = raw.split('/').filter(Boolean);
+  const at = parts.findIndex((seg) => seg === 'trip_photo' || seg === 'claim');
+  const parsed = at >= 0 ? parseKey(parts.slice(at).join('/')) : null;
+  if (!parsed || (ownerId && parsed.ownerId !== ownerId)) {
+    throw new ValidationError('Evidence must be a photo or file you uploaded through the app');
+  }
+}
+
+export class IncidentalsService {
+  private priceFor(type: IncidentalType, cfg: IncidentalConfig, it: IncidentalItem, dayCents = 0): number {
+    switch (type) {
+      case 'cleaning': return cfg.cleaningCents;
+      case 'smoking': return cfg.smokingCents;
+      case 'pet': return cfg.petCents;
+      case 'fuel': return Math.max(0, Math.round((it.qty ?? 0) * cfg.fuelPerPercentCents));
+      case 'late_return':
+        return lateFeeCents(it.qty ?? 0, { perHourCents: cfg.lateReturnPerHourCents, hourlyMaxHours: cfg.lateHourlyMaxHours ?? 6, halfDayMaxHours: cfg.lateHalfDayMaxHours ?? 12, dayCents });
+      case 'toll':
+      case 'fine':
+      case 'other': return Math.max(0, Math.round(it.amount ?? 0));
+      default: return 0;
+    }
+  }
+
+  /** Ceiling for a free-form category. Rated types are priced by config. */
+  private capFor(type: IncidentalType, cfg: IncidentalConfig): number | null {
+    if (type === 'toll') return cfg.maxTollCents ?? 10_000;
+    if (type === 'fine') return cfg.maxFineCents ?? 50_000;
+    if (type === 'other') return cfg.maxOtherCents ?? 15_000;
+    return null; // rated — the host does not choose the amount
+  }
+
+  /**
+   * Take the money for one charge: the guest's card first, then whatever the
+   * security deposit covers. Books the ledger only for money actually taken,
+   * and tells the payout pipeline to pay the host their share.
+   */
+  async collect(
+    booking: { _id: string; guestId: string; hostId: string },
+    amount: number,
+    currency: string,
+    key: string,
+    label: string,
+    /** Take it from the security deposit first (its hold is about to be released), then the card. */
+    preferDeposit = false,
+  ): Promise<'card' | 'deposit' | null> {
+    let via: 'card' | 'deposit' | null = null;
+    let collected = 0;
+
+    if (preferDeposit) {
+      const taken = await depositService.capture(booking._id, { amount, currency }, label, booking.hostId).catch(() => null);
+      if (taken && taken.amount > 0) {
+        emit(EVENTS.BOOKING_CHARGE_COLLECTED, booking._id, { bookingId: booking._id, hostId: booking.hostId, amount: taken.amount, currency, key });
+        // A deposit smaller than the charge leaves the rest for the card.
+        if (taken.amount >= amount) return 'deposit';
+        return (await this.collect(booking, amount - taken.amount, currency, `${key}_rest`, label)) ?? 'deposit';
+      }
+    }
+
+    if (await paymentService.chargeGuest({ bookingId: booking._id, guestId: booking.guestId, amount, currency, idempotencyKey: `charge_${key}` })) {
+      via = 'card';
+      collected = amount;
+      await ledgerService.post({
+        txnId: `charge_${key}`,
+        refType: 'incidental',
+        refId: booking._id,
+        currency,
+        description: label,
+        legs: [
+          { account: Account.gatewayClearing(), direction: 'credit', amount },
+          { account: Account.hostPayable(booking.hostId), direction: 'debit', amount },
+        ],
+      });
+    } else {
+      try {
+        const taken = await depositService.capture(booking._id, { amount, currency }, label, booking.hostId);
+        via = 'deposit';
+        collected = taken.amount;
+      } catch {
+        via = null;
+      }
+    }
+
+    if (via) {
+      emit(EVENTS.BOOKING_CHARGE_COLLECTED, booking._id, { bookingId: booking._id, hostId: booking.hostId, amount: collected, currency, key });
+    } else {
+      emit(EVENTS.BOOKING_CHARGE_FAILED, booking._id, { bookingId: booking._id, guestId: booking.guestId, hostId: booking.hostId, amount, label });
+    }
+    return via;
+  }
+
+  async charge(
+    bookingId: string,
+    items: IncidentalItem[],
+    byUserId: string,
+    /** notify false: the caller sends its own, more detailed message. preferDeposit: take it from the deposit first. */
+    opts: { notify?: boolean; preferDeposit?: boolean } = {},
+  ): Promise<{ total: number; items: { id: string; type: string; amount: number; note?: string; collected: boolean }[] }> {
+    const booking = await BookingModel.findOne({ _id: bookingId }).lean();
+    if (!booking) throw new NotFoundError('Booking');
+    const cfg = (await platformConfigService.get()).incidentals as IncidentalConfig;
+    const currency = booking.priceBreakdown.currency;
+    const existing = booking.incidentals ?? [];
+
+    // Host-applied charges wait for the trip to finish; the system's own trip-completion charges are exempt.
+    if (byUserId !== 'system' && booking.status !== 'completed') {
+      throw new ConflictError('Post-trip charges can only be applied once the trip is completed.', 'TRIP_NOT_COMPLETED');
+    }
+
+    /*
+     * Every rule is enforced here rather than in the form, because the form is
+     * not the only way to reach this. All of it charges a card the guest
+     * already handed over, with nobody standing between the host and that card.
+     */
+
+    // 1. WINDOW — without one, a host can bill a trip from six months ago, long
+    //    after the guest could possibly evidence otherwise.
+    // The system's own charges (tolls posting late, fuel and late return at completion) follow their own windows.
+    const tripEnd = booking.period?.end ? new Date(booking.period.end) : null;
+    if (tripEnd && byUserId !== 'system') {
+      const closesAt = new Date(tripEnd.getTime() + (cfg.windowDays ?? 7) * 86_400_000);
+      if (Date.now() > closesAt.getTime()) {
+        throw new ValidationError(
+          `Incidentals can only be applied within ${cfg.windowDays ?? 7} days of the trip ending. ` +
+            'Open a claim instead.',
+        );
+      }
+    }
+
+    // 1b. BASELINE — a condition charge needs the pickup photos to be judged against.
+    const conditional = items.find((it) => BASELINE_TYPES.includes(it.type));
+    if (conditional && byUserId !== 'system') {
+      await inspectionService.assertBaseline(booking, `a ${conditional.type.replace('_', ' ')} charge`);
+    }
+
+    // Running totals across earlier charges AND this request, so splitting one big charge into small ones still hits the ceiling.
+    const live = existing.filter((e) => e.status !== 'refunded');
+    const bookingTotal = booking.priceBreakdown.total.amount;
+    const totalCap = Math.round((bookingTotal * (cfg.maxTotalBps ?? 3000)) / 10000);
+    // A late return is billed by the hour up to its own maximum, outside the shared ceiling, so lateness never eats the room left for fuel or cleaning.
+    const capped = (type: string) => !UNCAPPED_TYPES.includes(type as IncidentalType);
+    let runningTotal = live.filter((e) => capped(e.type)).reduce((s, e) => s + e.amount, 0);
+    const runningByType = new Map<string, number>();
+    for (const e of live) runningByType.set(e.type, (runningByType.get(e.type) ?? 0) + e.amount);
+
+    for (const it of items) {
+      const cap = this.capFor(it.type, cfg);
+      const amount = this.priceFor(it.type, cfg, it, dayPriceCents(booking.priceBreakdown));
+
+      if (byUserId !== 'system') {
+        if (it.type === 'fuel' && (it.qty ?? 0) > (cfg.maxFuelPercent ?? 100)) {
+          throw new ValidationError(`Fuel can be billed for at most ${cfg.maxFuelPercent ?? 100} percentage points.`);
+        }
+        if (it.type === 'late_return' && (it.qty ?? 0) > (cfg.maxLateHours ?? 72)) {
+          throw new ValidationError(`Late return can be billed for at most ${cfg.maxLateHours ?? 72} hours.`);
+        }
+        if (capped(it.type) && runningTotal + amount > totalCap) {
+          throw new ConflictError(
+            `Post-trip charges on this booking cannot exceed ${(totalCap / 100).toFixed(2)} ${currency} in total. File a damage claim for anything larger.`,
+            'INCIDENTAL_CAP',
+          );
+        }
+        if (cap !== null && (runningByType.get(it.type) ?? 0) + amount > cap) {
+          throw new ConflictError(
+            `${it.type} charges on this booking cannot exceed ${(cap / 100).toFixed(2)} ${currency} in total.`,
+            'INCIDENTAL_CAP',
+          );
+        }
+      }
+      if (capped(it.type)) runningTotal += amount;
+      runningByType.set(it.type, (runningByType.get(it.type) ?? 0) + amount);
+
+      if (cap !== null) {
+        // 2. CEILING — per category, because a toll is a few dollars and a
+        //    moving violation can be a few hundred.
+        if ((it.amount ?? 0) > cap) {
+          throw new ValidationError(
+            `A single ${it.type} charge cannot exceed ${(cap / 100).toFixed(0)} ${currency}. ` +
+              'File a damage claim for anything larger.',
+          );
+        }
+
+        // 3. EXPLANATION — a charge the guest cannot understand is one they
+        //    dispute, and one we could not defend.
+        if (!it.note || it.note.trim().length < 10) {
+          throw new ValidationError(
+            `Say what the ${it.type} charge is for — the guest sees this, and an unexplained charge gets disputed.`,
+          );
+        }
+      }
+
+      // 4. EVIDENCE above a threshold. A $6 toll on trust is reasonable; a $200
+      //    one is an assertion. Applies to rated types too — a large fuel
+      //    shortfall should be photographed.
+      const needsEvidence = amount > (cfg.evidenceRequiredAboveCents ?? 5_000);
+      if (needsEvidence && !it.evidenceUrl && byUserId !== 'system') {
+        throw new ValidationError(
+          `A ${it.type} charge over ${((cfg.evidenceRequiredAboveCents ?? 5_000) / 100).toFixed(0)} ${currency} ` +
+            'needs a photo — the receipt, the citation, or the state of the car.',
+        );
+      }
+
+      // 5. NO DUPLICATES. A host re-submitting the form, or trying twice, must
+      //    not bill the same thing again. Same category at the same amount on
+      //    one booking is a duplicate; a genuinely separate second toll will
+      //    differ in amount or can be raised as one line with a clear note.
+      const dupe = existing.find(
+        (e) => e.type === it.type && e.amount === amount && e.status !== 'refunded',
+      );
+      if (dupe && byUserId !== 'system') {
+        throw new ConflictError(
+          `A ${it.type} charge of ${(amount / 100).toFixed(2)} ${currency} is already on this booking.`,
+          'DUPLICATE_INCIDENTAL',
+        );
+      }
+    }
+
+    const now = new Date();
+    const priced = items
+      .map((it) => ({
+        _id: uuid(),
+        type: it.type,
+        amount: this.priceFor(it.type, cfg, it, dayPriceCents(booking.priceBreakdown)),
+        qty: it.qty,
+        note: it.note,
+        evidenceUrl: it.evidenceUrl,
+        status: 'charged' as const,
+        at: now,
+        by: byUserId,
+      }))
+      .filter((p) => p.amount > 0);
+
+    const total = priced.reduce((s, p) => s + p.amount, 0);
+    if (total <= 0) throw new ValidationError('No chargeable incidental in this request');
+
+    const uncollected: string[] = [];
+    for (const p of priced) {
+      const via = await this.collect(booking, p.amount, currency, p._id, `Incidental: ${p.type}`, opts.preferDeposit);
+      if (via) (p as { collectedVia?: 'card' | 'deposit' }).collectedVia = via;
+      else uncollected.push(p.type);
+    }
+    await BookingModel.updateOne({ _id: bookingId }, { $push: { incidentals: { $each: priced } } });
+
+    // Every charge is written down with who applied it and what it was for.
+    await auditService
+      .record({
+        actorId: byUserId,
+        actorRoles: ['host'],
+        action: 'incidental.charged',
+        resourceType: 'booking',
+        resourceId: bookingId,
+        after: { total, items: priced.map((p) => ({ id: p._id, type: p.type, amount: p.amount })) },
+        status: 200,
+      })
+      .catch(() => undefined);
+
+    if (opts.notify !== false) await notificationService
+      .send({
+        userId: booking.guestId,
+        priority: 'high',
+        deepLink: `/bookings/${bookingId}`,
+        templateKey: 'booking.incidental_charged',
+        title: uncollected.length ? 'A post-trip charge needs your attention' : 'A post-trip charge was applied',
+        body:
+          `${priced.map((p) => p.type.replace('_', ' ')).join(', ')} — ${(total / 100).toFixed(2)} ${currency}. ` +
+          (uncollected.length ? 'We could not charge your card — please update your payment method. ' : '') +
+          `If this is wrong you have ${cfg.disputeWindowHours ?? 72} hours to dispute it.`,
+        data: { bookingId },
+      })
+      .catch(() => undefined);
+
+    logger.info({ bookingId, total, types: priced.map((p) => p.type) }, 'incidentals charged');
+    return {
+      total,
+      items: priced.map((p) => ({ id: p._id, type: p.type, amount: p.amount, note: p.note, collected: !uncollected.includes(p.type) })),
+    };
+  }
+
+  /**
+   * The guest's answer.
+   *
+   * Disputing does not reverse the money — staff rule on it — but it marks the
+   * charge and stops it being treated as settled. A charge nobody can contest
+   * is not a charge, it is a taking.
+   */
+  async dispute(bookingId: string, incidentalId: string, userId: string, reason: string) {
+    const booking = await BookingModel.findOne({ _id: bookingId }).lean();
+    if (!booking) throw new NotFoundError('Booking');
+    if (booking.guestId !== userId) throw new ForbiddenError('Only the guest can dispute a charge');
+
+    const item = (booking.incidentals ?? []).find((i) => i._id === incidentalId);
+    if (!item) throw new NotFoundError('Charge');
+    if (item.status !== 'charged') {
+      throw new ConflictError(`That charge is already ${item.status}`, 'NOT_DISPUTABLE');
+    }
+
+    const cfg = (await platformConfigService.get()).incidentals as IncidentalConfig;
+    const closesAt = new Date(new Date(item.at).getTime() + (cfg.disputeWindowHours ?? 72) * 3_600_000);
+    if (Date.now() > closesAt.getTime()) {
+      throw new ValidationError(
+        `Charges can be disputed for ${cfg.disputeWindowHours ?? 72} hours, and that time has passed for this one. Contact support.`,
+      );
+    }
+
+    await BookingModel.updateOne(
+      { _id: bookingId, 'incidentals._id': incidentalId },
+      {
+        $set: {
+          'incidentals.$.status': 'disputed',
+          'incidentals.$.disputeReason': reason,
+          'incidentals.$.disputedAt': new Date(),
+        },
+      },
+    );
+
+    await auditService
+      .record({
+        actorId: userId,
+        actorRoles: ['guest'],
+        action: 'incidental.disputed',
+        resourceType: 'booking',
+        resourceId: bookingId,
+        reason,
+        after: { incidentalId, type: item.type, amount: item.amount },
+        status: 200,
+      })
+      .catch(() => undefined);
+
+    // The host hears it from us, not from a chargeback weeks later.
+    await notificationService
+      .send({
+        userId: booking.hostId,
+        priority: 'high',
+        templateKey: 'booking.incidental_disputed',
+        title: 'A guest disputed a charge',
+        body: `Your ${item.type.replace('_', ' ')} charge is being reviewed. We will be in touch.`,
+        deepLink: `/host/trips/${bookingId}`,
+        data: { bookingId, incidentalId },
+      })
+      .catch(() => undefined);
+
+    logger.info({ bookingId, incidentalId, type: item.type }, 'incidental disputed');
+    return { disputed: true };
+  }
+
+  /**
+   * Staff ruling on a dispute.
+   *
+   * Refunding posts a compensating ledger entry rather than editing the
+   * original: the first posting is a fact that happened, and a double-entry
+   * ledger that can be rewritten is not one.
+   */
+  async resolveDispute(
+    bookingId: string,
+    incidentalId: string,
+    staffUserId: string,
+    outcome: 'refund' | 'uphold',
+    note: string,
+  ) {
+    const booking = await BookingModel.findOne({ _id: bookingId }).lean();
+    if (!booking) throw new NotFoundError('Booking');
+
+    const item = (booking.incidentals ?? []).find((i) => i._id === incidentalId);
+    if (!item) throw new NotFoundError('Charge');
+    if (item.status !== 'disputed') {
+      throw new ConflictError('That charge is not under dispute', 'NOT_DISPUTED');
+    }
+
+    let collectedVia = item.collectedVia;
+    if (outcome === 'refund' && collectedVia) {
+      // Real money was taken, so real money goes back — and the host's share stops.
+      await paymentService.refundCharge(bookingId, incidentalId, collectedVia, item.amount);
+      await PayoutModel.updateOne(
+        { tag: `charge_${incidentalId}`, status: { $in: ['scheduled', 'held'] } },
+        { status: 'failed', lastError: 'Charge refunded after dispute' },
+      );
+      await ledgerService.post({
+        txnId: `incidental_refund_${incidentalId}`,
+        refType: 'incidental_refund',
+        refId: `${bookingId}:${incidentalId}`,
+        currency: booking.priceBreakdown.currency,
+        description: `Incidental refunded after dispute: ${item.type}`,
+        legs: [
+          { account: Account.hostPayable(booking.hostId), direction: 'credit', amount: item.amount },
+          { account: Account.gatewayClearing(), direction: 'debit', amount: item.amount },
+        ],
+      });
+    } else if (outcome === 'uphold' && !collectedVia) {
+      // Upheld but never collected: try again now that the guest has had their say.
+      collectedVia =
+        (await this.collect(booking, item.amount, booking.priceBreakdown.currency, incidentalId, `Incidental: ${item.type}`)) ??
+        undefined;
+    }
+
+    await BookingModel.updateOne(
+      { _id: bookingId, 'incidentals._id': incidentalId },
+      {
+        $set: {
+          'incidentals.$.status': outcome === 'refund' ? 'refunded' : 'upheld',
+          ...(collectedVia ? { 'incidentals.$.collectedVia': collectedVia } : {}),
+          'incidentals.$.resolvedAt': new Date(),
+          'incidentals.$.resolvedBy': staffUserId,
+          'incidentals.$.resolutionNote': note,
+        },
+      },
+    );
+
+    await auditService
+      .record({
+        actorId: staffUserId,
+        actorRoles: ['staff'],
+        action: `incidental.${outcome}`,
+        resourceType: 'booking',
+        resourceId: bookingId,
+        reason: note,
+        after: { incidentalId, type: item.type, amount: item.amount },
+        status: 200,
+      })
+      .catch(() => undefined);
+
+    for (const userId of [booking.guestId, booking.hostId]) {
+      await notificationService
+        .send({
+          userId,
+          priority: 'normal',
+          templateKey: 'booking.incidental_resolved',
+          title: outcome === 'refund' ? 'A disputed charge was refunded' : 'A disputed charge stands',
+          body: note,
+          deepLink: userId === booking.guestId ? `/bookings/${bookingId}` : `/host/trips/${bookingId}`,
+          data: { bookingId, incidentalId },
+        })
+        .catch(() => undefined);
+    }
+
+    logger.info({ bookingId, incidentalId, outcome }, 'incidental dispute resolved');
+    return { outcome };
+  }
+
+  async chargeFuelShortfall(bookingId: string, fuelStart?: number, fuelEnd?: number): Promise<number> {
+    if (fuelStart == null || fuelEnd == null) return 0;
+    const short = fuelStart - fuelEnd;
+    if (short <= 0) return 0;
+    const { total } = await this.charge(bookingId, [{ type: 'fuel', qty: short }], 'system');
+    return total;
+  }
+
+  /** Auto late-return fee — hours past the return grace window. */
+  async chargeLateReturn(bookingId: string, hoursLate: number, note?: string): Promise<number> {
+    if (hoursLate <= 0) return 0;
+    const maxHours = (await platformConfigService.get()).incidentals.maxLateHours ?? 72;
+    const { total } = await this.charge(bookingId, [{ type: 'late_return', qty: Math.min(hoursLate, maxHours), note }], 'system');
+    return total;
+  }
+}
+
+export const incidentalsService = new IncidentalsService();

@@ -1,0 +1,548 @@
+import { lookupLimiter } from '../../../shared/middleware/auth-rate-limit';
+import { cardLimiter } from '../../../shared/middleware/card-rate-limit';
+import { Router } from 'express';
+import { z } from 'zod';
+import { bookingService } from '../application/booking.service';
+import { eligibilityService } from '../application/eligibility.service';
+import { incidentalsService, assertEvidenceUrl } from '../application/incidentals.service';
+import { riskService } from '../../risk/application/risk.service';
+import { asyncHandler } from '../../../shared/middleware/async-handler';
+import { authenticate, authenticateOptional } from '../../../shared/middleware/authenticate';
+import { authorize } from '../../../shared/middleware/authorize';
+import { validate } from '../../../shared/middleware/validate';
+import { sendCreated, sendSuccess } from '../../../shared/http/api-response';
+import { quoteSchema, createBookingSchema, cancelSchema, extendSchema, shiftPickupSchema, moveDatesSchema, switchCarSchema, exceptionSchema } from '../dto/booking.schemas';
+import { tripChangeService } from '../application/trip-change.service';
+import { listProtectionPlans } from '../../pricing/domain/protection-plans';
+import { approachService } from '../../trips/application/approach.service';
+import { trackingNoticeService } from '../../trips/application/tracking-notice.service';
+import { ForbiddenError, ConflictError } from '../../../core/errors/app-error';
+import { depositService } from '../../payments/application/deposit.service';
+import { vehicleService } from '../../vehicles/application/vehicle.service';
+import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
+
+const router = Router();
+
+// Public: protection plans shown on the vehicle page and at checkout; with a car, insurance partners' plans for it are included.
+router.get(
+  '/protection-plans',
+  validate({ query: z.object({ vehicleId: z.string().trim().min(1).max(64).optional() }) }),
+  asyncHandler(async (req, res) => {
+    const vehicleId = (req.query as { vehicleId?: string }).vehicleId;
+    const vehicle = vehicleId ? await VehicleModel.findById(vehicleId).select('location.state category').lean() : null;
+    sendSuccess(res, await listProtectionPlans(vehicle ?? undefined));
+  }),
+);
+
+// Public receipt verification for the QR code — keyed by the unguessable UUID,
+// returns no PII. No auth: anyone holding the receipt can verify it.
+router.get(
+  '/verify/:id',
+  lookupLimiter,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.publicVerify(req.params.id));
+  }),
+);
+
+router.post(
+  '/quote',
+  // Optional: a signed-in guest gets membership pricing and a price lock; a
+  // visitor still gets a price. Making this compulsory meant a logged-out
+  // browser saw "Missing bearer token" where the price should have been.
+  authenticateOptional,
+  validate({ body: quoteSchema }),
+  asyncHandler(async (req, res) => {
+    // Pass the caller so CatoDrive Plus benefits are reflected in the quoted price.
+    // The lock is a signed promise that this is the price they will be charged:
+    // without it, a surge rule activating between "see price" and "confirm"
+    // silently charges more than the screen showed.
+    const { breakdown, priceLock } = await bookingService.quoteWithLock(
+      req.body,
+      req.principal?.userId,
+    );
+    sendSuccess(res, {
+      ...breakdown,
+      priceLock,
+      lockExpiresAt: priceLock ? new Date(priceLock.expiresAt) : undefined,
+    });
+  }),
+);
+
+/**
+ * What (if anything) stands between this guest and a car. Drives the booking
+ * screen's checklist, so a guest learns they need a licence before they pick
+ * dates rather than after they have committed.
+ */
+router.get(
+  '/eligibility',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const tripEnd = req.query.end ? new Date(String(req.query.end)) : undefined;
+    // Register the device here too. The booking call is far too late to start
+    // learning which accounts share a handset — by then the ring has already
+    // been built and only the last account looks suspicious.
+    void riskService.touchDevice({
+      userId: req.principal!.userId,
+      context: 'login',
+      deviceFingerprint: req.device?.fingerprint,
+      ip: req.device?.ip,
+      userAgent: req.device?.userAgent,
+      platform: req.device?.platform,
+      emulator: req.device?.emulator,
+      rooted: req.device?.rooted,
+    });
+
+    const result = await eligibilityService.evaluate(
+      req.principal!.userId,
+      tripEnd && !Number.isNaN(tripEnd.getTime()) ? tripEnd : undefined,
+    );
+    sendSuccess(res, {
+      ...result,
+      messages: eligibilityService.describe(result.blockers),
+    });
+  }),
+);
+
+router.post(
+  '/',
+  authenticate,
+  cardLimiter,
+  authorize('booking:create'),
+  validate({ body: createBookingSchema }),
+  asyncHandler(async (req, res) => {
+    const idempotencyKey = req.header('idempotency-key');
+    const booking = await bookingService.create(
+      req.principal!.userId,
+      req.body,
+      idempotencyKey,
+      undefined,
+      { ...req.device, deviceFingerprint: req.device?.fingerprint },
+    );
+    sendCreated(res, booking);
+  }),
+);
+
+router.get(
+  '/',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const role = (req.query.role as string) ?? 'guest';
+    const cursor = req.query.cursor as string | undefined;
+    const page =
+      role === 'host'
+        ? await bookingService.listForHost(req.principal!.userId, cursor)
+        : await bookingService.listForGuest(req.principal!.userId, cursor);
+    sendSuccess(res, page.items, 200, { pagination: { nextCursor: page.nextCursor, hasMore: page.hasMore } });
+  }),
+);
+
+router.get(
+  '/:id',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.get(req.principal!, req.params.id);
+    sendSuccess(res, booking);
+  }),
+);
+
+/** The original receipt plus one per extension, for the guest, the host or an admin. */
+router.get(
+  '/:id/receipts',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.receipts(req.principal!, req.params.id));
+  }),
+);
+
+router.post(
+  '/:id/confirm',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.confirm(req.principal!.userId, req.params.id);
+    sendSuccess(res, booking);
+  }),
+);
+
+router.post(
+  '/:id/decline',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.decline(req.principal!.userId, req.params.id);
+    sendSuccess(res, booking);
+  }),
+);
+
+/**
+ * The exact refund a cancellation would produce right now — shown before the
+ * guest commits, the way Turo does. Read-only; changes nothing.
+ */
+router.get(
+  '/:id/cancellation-preview',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.cancellationPreview(req.principal!, req.params.id));
+  }),
+);
+
+/** The exact added cost of extending to a date, before charging. */
+router.get(
+  '/:id/extension-preview',
+  authenticate,
+  validate({ query: z.object({ newEnd: z.string() }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(
+      res,
+      await bookingService.extensionPreview(
+        req.principal!.userId,
+        req.params.id,
+        String(req.query.newEnd),
+      ),
+    );
+  }),
+);
+
+router.post(
+  '/:id/cancel',
+  authenticate,
+  authorize('booking:cancel:own'),
+  validate({ body: cancelSchema }),
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.cancel(req.principal!, req.params.id, req.body.reason, {
+      reasonCode: req.body.reasonCode,
+      choice: req.body.choice,
+    });
+    sendSuccess(res, booking);
+  }),
+);
+
+/** Every option on the "Cancel or change trip" screen, worked out by the server for this moment. */
+router.get(
+  '/:id/change-options',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await tripChangeService.options(req.principal!, req.params.id));
+  }),
+);
+
+router.post(
+  '/:id/shift-pickup',
+  authenticate,
+  authorize('booking:cancel:own'),
+  validate({ body: shiftPickupSchema }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.shiftPickup(req.principal!.userId, req.params.id, req.body.start));
+  }),
+);
+
+router.get(
+  '/:id/move-preview',
+  authenticate,
+  validate({ query: moveDatesSchema }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.movePreview(req.principal!.userId, req.params.id, String(req.query.start), String(req.query.end)));
+  }),
+);
+
+router.post(
+  '/:id/move',
+  authenticate,
+  authorize('booking:cancel:own'),
+  cardLimiter,
+  validate({ body: moveDatesSchema }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.moveDates(req.principal!.userId, req.params.id, req.body.start, req.body.end));
+  }),
+);
+
+router.get(
+  '/:id/switch-options',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.switchOptions(req.principal!.userId, req.params.id));
+  }),
+);
+
+router.post(
+  '/:id/switch',
+  authenticate,
+  authorize('booking:cancel:own'),
+  validate({ body: switchCarSchema }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.switchCar(req.principal!.userId, req.params.id, req.body.vehicleId));
+  }),
+);
+
+/** After a late cancellation: ask us to review it (flight cancelled, weather, health) with proof. */
+router.post(
+  '/:id/exception',
+  authenticate,
+  validate({ body: exceptionSchema }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await tripChangeService.fileException(req.principal!.userId, req.params.id, req.body));
+  }),
+);
+
+/** Declare a no-show — host reports a guest no-show, guest reports a host one. */
+router.post(
+  '/:id/no-show',
+  authenticate,
+  validate({ body: z.object({ party: z.enum(['guest', 'host']) }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.noShow(req.principal!, req.params.id, req.body.party));
+  }),
+);
+
+/** The booked car is late back: the guest takes the similar car offered, or keeps their booking. */
+router.post(
+  '/:id/swap-offer/accept',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.acceptSwapOffer(req.principal!.userId, req.params.id));
+  }),
+);
+
+router.post(
+  '/:id/swap-offer/decline',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.declineSwapOffer(req.principal!.userId, req.params.id));
+  }),
+);
+
+/** The guest places (or checks) the security deposit hold themselves, with a card, Apple Pay or Google Pay. */
+router.post(
+  '/:id/deposit-session',
+  authenticate,
+  cardLimiter,
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.getDoc(req.params.id);
+    if (booking.guestId !== req.principal!.userId) throw new ForbiddenError('Only the guest places the deposit');
+    if (!['paid', 'confirmed'].includes(booking.status)) throw new ConflictError('The deposit is placed once the trip is confirmed and before it starts', 'INVALID_STATE');
+    const vehicle = await vehicleService.getForBooking(booking.vehicleId);
+    sendSuccess(res, await depositService.selfServe({
+      bookingId: booking._id, userId: booking.guestId, tripStart: new Date(booking.period.start),
+      dailyPrice: vehicle.dailyPrice, currency: booking.priceBreakdown.total.currency,
+    }));
+  }),
+);
+
+/** Guest finishes an unfinished payment (3-D Secure or a missing card). */
+router.post(
+  '/:id/payment-session',
+  authenticate,
+  cardLimiter,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.resumePayment(req.principal!, req.params.id));
+  }),
+);
+
+/** Guest fetches (or rotates) their pickup code for the handover handshake. */
+router.post(
+  '/:id/pickup-code',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.issuePickupCode(req.principal!, req.params.id));
+  }),
+);
+
+/** Rebooking protection: similar cars free for the same dates when a host bailed. */
+router.get(
+  '/:id/rebooking-options',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await bookingService.rebookingOptions(req.principal!, req.params.id));
+  }),
+);
+
+router.post(
+  '/:id/rebook',
+  authenticate,
+  validate({ body: z.object({ vehicleId: z.string().min(1) }) }),
+  asyncHandler(async (req, res) => {
+    sendCreated(res, await bookingService.rebook(req.principal!, req.params.id, req.body.vehicleId));
+  }),
+);
+
+/** Host (or ops) applies post-trip incidentals — cleaning, smoking, tolls, etc. */
+router.post(
+  '/:id/incidentals',
+  authenticate,
+  validate({
+    body: z.object({
+      items: z
+        .array(
+          z.object({
+            type: z.enum(['fuel', 'cleaning', 'smoking', 'pet', 'late_return', 'toll', 'fine', 'other']),
+            amount: z.number().int().min(0).optional(),
+            qty: z.number().min(0).optional(),
+            note: z.string().max(300).optional(),
+            evidenceUrl: z.string().url().max(600).optional(),
+          }),
+        )
+        .min(1),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.getDoc(req.params.id);
+    const isHost = await bookingService.isHostOwner(req.principal!.userId, booking.hostId);
+    const isAdmin = req.principal!.permissions.includes('*') || req.principal!.permissions.includes('booking:read:any');
+    if (!isHost && !isAdmin) throw new ForbiddenError('Only the host can apply incidentals');
+    for (const it of req.body.items as { evidenceUrl?: string }[]) {
+      if (it.evidenceUrl) assertEvidenceUrl(it.evidenceUrl, isAdmin ? undefined : req.principal!.userId);
+    }
+    sendSuccess(res, await incidentalsService.charge(req.params.id, req.body.items, req.principal!.userId));
+  }),
+);
+
+router.post(
+  '/:id/extend',
+  authenticate,
+  cardLimiter,
+  validate({ body: extendSchema }),
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.requestExtension(
+      req.principal!.userId,
+      req.params.id,
+      new Date(req.body.newEnd).toISOString(),
+    );
+    sendSuccess(res, booking);
+  }),
+);
+
+/** The exact refund for ending a confirmed trip earlier, before committing. */
+router.get(
+  '/:id/shorten-preview',
+  authenticate,
+  validate({ query: z.object({ newEnd: z.string() }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(
+      res,
+      await bookingService.shortenPreview(req.principal!.userId, req.params.id, String(req.query.newEnd)),
+    );
+  }),
+);
+
+router.post(
+  '/:id/shorten',
+  authenticate,
+  validate({ body: extendSchema }),
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.requestShorten(
+      req.principal!.userId,
+      req.params.id,
+      new Date(req.body.newEnd).toISOString(),
+    );
+    sendSuccess(res, booking);
+  }),
+);
+
+/** Add an approved additional driver to the trip (must be before it ends). */
+router.post(
+  '/:id/drivers',
+  authenticate,
+  validate({
+    body: z.object({ name: z.string().min(2).max(80), licenseNumber: z.string().max(40).optional() }),
+  }),
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.addDriver(req.principal!.userId, req.params.id, req.body);
+    sendSuccess(res, booking);
+  }),
+);
+
+router.delete(
+  '/:id/drivers/:name',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const booking = await bookingService.removeDriver(
+      req.principal!.userId,
+      req.params.id,
+      decodeURIComponent(req.params.name),
+    );
+    sendSuccess(res, booking);
+  }),
+);
+
+/**
+ * The approach — who has set off, who has arrived, ETAs, and how to find the
+ * car. Keyed on the booking because the trip does not exist until handover,
+ * which is after the window this covers.
+ */
+router.get(
+  '/:id/approach',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await approachService.state(req.params.id, req.principal!.userId));
+  }),
+);
+
+/** One tap. The other party is notified and the map goes live. */
+router.post(
+  '/:id/on-my-way',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await approachService.setOnWay(req.params.id, req.principal!.userId));
+  }),
+);
+
+/** Whether location sharing is open for this booking, and why. */
+router.get(
+  '/:id/tracking',
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const b = await bookingService.getDoc(req.params.id);
+    const uid = req.principal!.userId;
+    if (b.guestId !== uid && !(await bookingService.isHostOwner(uid, b.hostId))) throw new ForbiddenError('Not your booking');
+    sendSuccess(res, await trackingNoticeService.resolveAndAnnounce(req.params.id));
+  }),
+);
+
+/**
+ * The guest's answer to a post-trip charge.
+ *
+ * A charge nobody can contest is not a charge, it is a taking. Disputing does
+ * not reverse the money on its own — staff rule on it — but it marks the charge
+ * and stops it being treated as settled.
+ */
+router.post(
+  '/:id/incidentals/:incidentalId/dispute',
+  authenticate,
+  validate({ body: z.object({ reason: z.string().min(10).max(1000) }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(
+      res,
+      await incidentalsService.dispute(
+        req.params.id,
+        req.params.incidentalId,
+        req.principal!.userId,
+        req.body.reason,
+      ),
+    );
+  }),
+);
+
+/** Staff ruling. Refunding posts a compensating entry, never edits the original. */
+router.post(
+  '/:id/incidentals/:incidentalId/resolve',
+  authenticate,
+  authorize('claim:manage'),
+  validate({
+    body: z.object({
+      outcome: z.enum(['refund', 'uphold']),
+      note: z.string().min(10).max(1000),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(
+      res,
+      await incidentalsService.resolveDispute(
+        req.params.id,
+        req.params.incidentalId,
+        req.principal!.userId,
+        req.body.outcome,
+        req.body.note,
+      ),
+    );
+  }),
+);
+
+export const bookingsRoutes = router;

@@ -1,0 +1,171 @@
+import { emit } from '../../../shared/events/event-bus';
+import { EVENTS } from '../../../core/events/event-names';
+import { DocumentModel } from '../infrastructure/document.model';
+import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
+import { notificationService } from '../../notifications/application/notification.service';
+import { hostService } from '../../hosts/application/host.service';
+import { logger } from '../../../infrastructure/logging/logger';
+import { platformConfigService } from '../../platform-config/application/platform-config.service';
+
+/** Documents a car must have valid to legally carry a paying guest. */
+const MANDATORY = ['registration', 'insurance'] as const;
+
+/**
+ * Keeps the marketplace legal. A car whose insurance or registration has lapsed
+ * must not carry a paying trip — that is the single worst event a P2P mobility
+ * platform can have. This pauses such cars automatically and relists them the
+ * moment the host renews, with no ops or host action required.
+ */
+export class DocumentComplianceService {
+  /** Vehicle ids that currently have an expired mandatory document. */
+  private async expiredVehicleIds(now = new Date()): Promise<Set<string>> {
+    const docs = await DocumentModel.find(
+      { category: { $in: MANDATORY as unknown as string[] }, expiresAt: { $lt: now }, deletedAt: null },
+      { vehicleId: 1, ownerId: 1 },
+    ).lean();
+    const ids = new Set<string>();
+    for (const d of docs) {
+      if (d.vehicleId && (await this.isHostsOwnDoc(d.vehicleId, d.ownerId))) ids.add(d.vehicleId);
+    }
+    return ids;
+  }
+
+  /** A document counts only when uploaded by the vehicle's own host, so a stranger cannot pause a rival's car. */
+  private async isHostsOwnDoc(vehicleId: string, ownerId: string): Promise<boolean> {
+    const v = await VehicleModel.findOne({ _id: vehicleId }, { hostId: 1 }).lean();
+    if (!v) return false;
+    const host = await hostService.getById(v.hostId).catch(() => null);
+    return !!host && host.userId === ownerId;
+  }
+
+  /** Booking-time guard — belt-and-suspenders for the gap between sweeps. */
+  async hasExpiredMandatoryDoc(vehicleId: string): Promise<boolean> {
+    const docs = await DocumentModel.find({
+      vehicleId,
+      category: { $in: MANDATORY as unknown as string[] },
+      expiresAt: { $lt: new Date() },
+      deletedAt: null,
+    }).lean();
+    for (const d of docs) if (await this.isHostsOwnDoc(vehicleId, d.ownerId)) return true;
+    return false;
+  }
+
+  private async notifyHost(hostId: string, vehicleId: string, kind: 'paused' | 'restored'): Promise<void> {
+    try {
+      const host = await hostService.getById(hostId);
+      await notificationService.send({
+        userId: host.userId,
+        priority: kind === 'paused' ? 'high' : 'normal',
+        templateKey: `vehicle.compliance_${kind}`,
+        title: kind === 'paused' ? 'A car was paused — document expired' : 'Your car is live again',
+        body:
+          kind === 'paused'
+            ? 'One of your cars was paused because its insurance or registration has expired. Upload a valid document to relist it.'
+            : 'Your renewed document was accepted and the car is bookable again.',
+        deepLink: `/host/listings/${vehicleId}`,
+      });
+    } catch (err) {
+      logger.warn({ err, vehicleId }, 'compliance notify failed');
+    }
+  }
+
+  /**
+   * Sweep: pause listed cars with a lapsed mandatory doc; relist compliance-held
+   * cars whose docs are all valid again. Deliberately only touches cars that
+   * actually HAVE an expired doc — a car that never uploaded insurance is an
+   * onboarding matter, not something this job silently takes down.
+   */
+  /**
+   * Warn a host BEFORE their car is pulled.
+   *
+   * The sweep pauses a listing the moment a mandatory document lapses, which is
+   * correct and also brutal if the first a host hears of it is the car going
+   * offline. Renewing insurance or registration takes days, so the warning has
+   * to arrive with enough time to act on it.
+   *
+   * Fired at 30 days and again at 7. `expiryNoticeSentFor` records which
+   * milestone has been sent, so a daily sweep warns twice in total rather than
+   * thirty times — and a host who ignores the first still gets the urgent one.
+   */
+  async remindExpiring(now = new Date()): Promise<{ warned30: number; warned7: number }> {
+    const out = { warned30: 0, warned7: 0 };
+
+    for (const days of [30, 7] as const) {
+      const horizon = new Date(now.getTime() + days * 86_400_000);
+      // Documents lapsing inside the horizon that have not had THIS notice yet.
+      const docs = await DocumentModel.find({
+        category: { $in: MANDATORY as unknown as string[] },
+        deletedAt: null,
+        expiresAt: { $gt: now, $lte: horizon },
+        expiryNoticeSentFor: { $ne: days },
+      }).lean<{ _id: string; vehicleId?: string; category: string; expiresAt?: Date }[]>();
+
+      for (const d of docs) {
+        if (!d.vehicleId) continue;
+        const v = await VehicleModel.findOne({ _id: d.vehicleId }, { hostId: 1, make: 1, model: 1 }).lean();
+        if (!v) continue;
+        try {
+          const host = await hostService.getById(v.hostId);
+          await notificationService.send({
+            userId: host.userId,
+            priority: days === 7 ? 'high' : 'normal',
+            templateKey: 'vehicle.document_expiring',
+            title:
+              days === 7
+                ? `Your ${v.make} ${v.model} comes offline in a week`
+                : `${v.make} ${v.model}: ${d.category} expires soon`,
+            body:
+              `The ${d.category} on your ${v.make} ${v.model} expires on ` +
+              `${d.expiresAt ? new Date(d.expiresAt).toLocaleDateString('en-US', { dateStyle: 'medium', timeZone: 'UTC' }) : 'soon'}. ` +
+              `Upload the renewal before then and the car keeps taking bookings — after it lapses we have to pause the listing.`,
+            deepLink: `/host/listings/${d.vehicleId}`,
+            data: { vehicleId: d.vehicleId, category: d.category, days },
+          });
+          // Marked only after the notice actually went out, so a send failure
+          // is retried on the next sweep rather than silently swallowed.
+          await DocumentModel.updateOne({ _id: d._id }, { $set: { expiryNoticeSentFor: days } });
+          if (days === 30) out.warned30 += 1;
+          else out.warned7 += 1;
+        } catch (err) {
+          logger.warn(
+            { documentId: d._id, err: (err as Error).message },
+            'document expiry reminder failed — will retry next sweep',
+          );
+        }
+      }
+    }
+    return out;
+  }
+
+  async sweep(): Promise<{ paused: number; restored: number }> {
+    const expired = await this.expiredVehicleIds();
+    let paused = 0;
+    let restored = 0;
+
+    // Pause: a currently-listed car with an expired mandatory doc.
+    for (const vehicleId of expired) {
+      const v = await VehicleModel.findOne({ _id: vehicleId }, { status: 1, hostId: 1 }).lean();
+      if (v && v.status === 'listed') {
+        await VehicleModel.updateOne({ _id: vehicleId }, { status: 'paused', complianceHold: true });
+        await this.notifyHost(v.hostId, vehicleId, 'paused');
+        emit(EVENTS.VEHICLE_UNAVAILABLE, vehicleId, { vehicleId, reason: 'an expired mandatory document', withinHours: (await platformConfigService.get()).booking.documentExpiryReleaseHours });
+        paused += 1;
+      }
+    }
+
+    // Restore: a compliance-held car whose docs are all valid again. Only cars
+    // this job paused (status 'paused' + flag) — never a host's own pause/delist.
+    const held = await VehicleModel.find({ complianceHold: true, status: 'paused' }, { hostId: 1 }).lean();
+    for (const v of held) {
+      if (!expired.has(v._id)) {
+        await VehicleModel.updateOne({ _id: v._id }, { status: 'listed', complianceHold: false });
+        await this.notifyHost(v.hostId, v._id, 'restored');
+        restored += 1;
+      }
+    }
+
+    return { paused, restored };
+  }
+}
+
+export const documentComplianceService = new DocumentComplianceService();
