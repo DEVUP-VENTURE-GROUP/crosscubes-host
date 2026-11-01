@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 /** Money CatoDrive actually sent a partner for one month's statement. */
 export interface AssetPartnerPayoutDoc {
@@ -38,5 +39,7 @@ const schema = new Schema<AssetPartnerPayoutDoc>(
 // One payout per partner per month, so a double click can't pay twice.
 schema.index({ partnerId: 1, period: 1 }, { unique: true });
 schema.index({ period: 1 });
+
+schema.plugin(hubScoped);
 
 export const AssetPartnerPayoutModel = model<AssetPartnerPayoutDoc>('AssetPartnerPayout', schema);

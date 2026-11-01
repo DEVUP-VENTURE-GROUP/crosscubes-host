@@ -1,6 +1,7 @@
 import { api } from '@/lib/api/client';
 import type { Insurer, InsurerPayout, InsurerPlan, InsurerSummary } from '@/features/insurers/api';
 import type { Booking } from '@/features/bookings/types';
+import type { Hub, HubDetail, HubInput, HubLicenceInput, HubStatus, NetworkOverview } from '@/features/hubs/types';
 
 export interface AdminMetrics {
   users: { total: number; active: number; suspended: number; newThisWeek: number };
@@ -541,6 +542,15 @@ export const adminApi = {
     api.post(`/admin/claims/${id}/resolve`, { decision, note, amountApproved }),
   claim: (id: string) => api.get<any>(`/admin/claims/${id}`),
   linkClaim: (id: string, code: string) => api.post<any>(`/admin/claims/${id}/link`, { code }),
+
+  hubOverview: (q: { from?: string; to?: string } = {}) => api.get<NetworkOverview>('/admin/hubs/overview', q),
+  hub: (id: string) => api.get<HubDetail>(`/admin/hubs/${id}`),
+  createHub: (body: HubInput) => api.post<Hub>('/admin/hubs', body),
+  updateHub: (id: string, body: Partial<HubInput>) => api.patch<Hub>(`/admin/hubs/${id}`, body),
+  setHubStatus: (id: string, status: HubStatus, note?: string) => api.post<Hub>(`/admin/hubs/${id}/status`, { status, note }),
+  createHubLogin: (id: string, body: { name: string; email: string }) => api.post<{ username: string; password?: string }>(`/admin/hubs/${id}/operator`, body),
+  addHubLicence: (id: string, body: HubLicenceInput) => api.post<Hub>(`/admin/hubs/${id}/licences`, body),
+  removeHubLicence: (id: string, licenceId: string) => api.delete<Hub>(`/admin/hubs/${id}/licences/${licenceId}`),
 
   tickets: (q: Q = {}) => api.get<any[]>('/admin/tickets', q),
   ticket: (id: string) => api.get<any>(`/admin/tickets/${id}`),

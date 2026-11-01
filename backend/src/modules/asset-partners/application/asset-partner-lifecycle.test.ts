@@ -22,6 +22,7 @@ import { TollAccountModel } from '../../tolls/infrastructure/toll.model';
 import { HostStaffModel } from '../../hosts/infrastructure/host-staff.model';
 import { notificationService } from '../../notifications/application/notification.service';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { PortalApplicationDto } from '../dto/asset-partner-application.schemas';
 
 beforeAll(connectTestDb);
@@ -41,7 +42,7 @@ const CONTACT = { name: 'Ana Ramirez', phone: '(214) 555-0199', relation: 'Siste
 
 function dto(): PortalApplicationDto {
   return {
-    fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+    fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin: '1HGCM82633A004352', plate: 'ABC-1234' },
     ownership: 'owned', accident: 'no', smokeFree: 'yes', petFree: 'yes',
     insurance: { carrier: 'State Farm', policyNumber: 'SF-123', coverageType: 'full' }, availability: 'fulltime',
@@ -93,6 +94,7 @@ async function completeChecklist(exitId: string, userId: string, vehicleId: stri
   });
 }
 
+beforeEach(seedTestHub);
 describe('profile and emergency contacts', () => {
   it('needs one to three contacts with real numbers, never the partner’s own, and a visa end date for visa holders', async () => {
     const { userId } = await approved();

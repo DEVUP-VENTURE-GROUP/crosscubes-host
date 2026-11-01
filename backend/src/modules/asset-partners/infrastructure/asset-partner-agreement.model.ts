@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 /** One published version of the Asset Partner agreement; versions are never edited, only superseded. */
 export type AgreementKind = 'agreement' | 'nda' | 'amendment';
@@ -30,5 +31,7 @@ const schema = new Schema<AssetPartnerAgreementDoc>(
   },
   { timestamps: true, _id: false },
 );
+
+schema.plugin(hubScoped);
 
 export const AssetPartnerAgreementModel = model<AssetPartnerAgreementDoc>('AssetPartnerAgreement', schema);

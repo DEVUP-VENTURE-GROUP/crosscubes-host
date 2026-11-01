@@ -16,6 +16,7 @@ import { trustScoreService } from '../../risk/application/trust-score.service';
 import type { VehicleDoc } from '../../vehicles/infrastructure/vehicle.model';
 import { verifyPriceLock, issuePriceLock, type PriceLock } from '../../pricing/domain/price-lock';
 import { vehicleService } from '../../vehicles/application/vehicle.service';
+import { hubService } from '../../hubs/application/hub.service';
 import { availabilityService, dayKeys, dayAfter, type BlockingRow } from '../../availability/application/availability.service';
 import { eligibilityService } from './eligibility.service';
 import { riskService } from '../../risk/application/risk.service';
@@ -243,6 +244,9 @@ export class BookingService {
     const { start, end } = this.parsePeriod(dto.start, dto.end);
     const vehicle = await vehicleService.getForBooking(dto.vehicleId);
     if (!vehicle.bookable) throw new ConflictError('Vehicle is not bookable', 'NOT_BOOKABLE');
+    if (!vehicle.hubId || !(await hubService.isLive(vehicle.hubId))) {
+      throw new ConflictError('We’re not taking bookings in this area yet.', 'HUB_NOT_LIVE');
+    }
 
     // Legal gate: never let a paying trip start on a car whose insurance or
     // registration has lapsed. The hourly compliance sweep pauses such cars, but
@@ -456,6 +460,7 @@ export class BookingService {
         code: this.generateCode(),
         guestId,
         hostId: vehicle.hostId,
+        hubId: vehicle.hubId,
         vehicleId: dto.vehicleId,
         period: { start, end },
         priceBreakdown: breakdown,

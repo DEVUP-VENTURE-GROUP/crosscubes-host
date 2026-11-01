@@ -5,6 +5,8 @@ export interface Principal {
   roles: string[];
   permissions: string[];
   sessionId: string;
+  /** Set only inside the hub portal: the franchisee's own hub. */
+  hubId?: string;
 }
 
 export interface PaginationParams {

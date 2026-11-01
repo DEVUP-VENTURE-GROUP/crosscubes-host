@@ -1,5 +1,6 @@
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
 import { HostModel } from '../../hosts/infrastructure/host.model';
+import { hubService } from '../../hubs/application/hub.service';
 
 export interface CityFacet {
   city: string;
@@ -29,8 +30,8 @@ export interface MarketplaceFacets {
   };
 }
 
-/** Only bookable supply counts — an unverified or unlisted car isn't a facet. */
-const BOOKABLE = { status: 'listed', verificationStatus: 'verified' } as const;
+/** Only bookable supply counts — an unverified or unlisted car, or one outside a live hub, isn't a facet. */
+const bookable = async () => ({ status: 'listed', verificationStatus: 'verified', hubId: { $in: await hubService.liveHubIds() } });
 
 /**
  * The real shape of the marketplace: which cities and categories actually have
@@ -55,7 +56,7 @@ export class FacetsService {
     const rows = await VehicleModel.aggregate<{
       _id: string; vehicles: number; lng: number; lat: number; fromPrice: number;
     }>([
-      { $match: { ...BOOKABLE, 'location.city': { $nin: ['', null] } } },
+      { $match: { ...(await bookable()), 'location.city': { $nin: ['', null] } } },
       {
         $group: {
           _id: '$location.city',
@@ -79,7 +80,7 @@ export class FacetsService {
   }
 
   private async categories(city?: string): Promise<CategoryFacet[]> {
-    const match: Record<string, unknown> = { ...BOOKABLE };
+    const match: Record<string, unknown> = { ...(await bookable()) };
     if (city) match['location.city'] = city;
 
     const rows = await VehicleModel.aggregate<{ _id: string; vehicles: number; fromPrice: number }>([
@@ -105,7 +106,7 @@ export class FacetsService {
     const [agg] = await VehicleModel.aggregate<{
       vehicles: number; instantBook: number; ratingSum: number; ratingCount: number;
     }>([
-      { $match: BOOKABLE },
+      { $match: await bookable() },
       {
         $group: {
           _id: null,

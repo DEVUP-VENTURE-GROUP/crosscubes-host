@@ -28,6 +28,7 @@ import { contactInquiryAdminRoutes } from '../contact/api/contact-inquiry.admin.
 import { insuranceAdminRoutes } from '../insurance/api/insurance.admin.routes';
 import { insurancePartnerAdminRoutes } from '../insurance-partners/api/insurance-partner.admin.routes';
 import { tollsAdminRoutes } from '../tolls/api/tolls.admin.routes';
+import { hubsAdminRoutes } from '../hubs/api/hubs.admin.routes';
 
 /**
  * Admin BFF. A single base gate (authenticated + admin:read) protects the
@@ -54,6 +55,7 @@ export function buildAdminRouter(): Router {
   admin.use(authenticate, requireAdmin, authorize('admin:read'));
 
   admin.use(navAdminRoutes);
+  admin.use(hubsAdminRoutes);
   admin.use(metricsAdminRoutes);
   admin.use(usersAdminRoutes);
   admin.use(hostsAdminRoutes);

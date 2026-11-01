@@ -22,6 +22,8 @@ export interface CreateAssetPartnerApplicationInput {
   city: string;
   state: string;
   zip: string;
+  /** The hub (city) the car will run from. */
+  hubId: string;
   referral?: string;
   vehicle: AssetPartnerVehicle;
   ownership: 'owned' | 'financed' | 'leased';
@@ -246,6 +248,7 @@ export interface PartnerApplication {
 
 /** Everything an application holds, as the applicant entered it. */
 export interface PartnerApplicationDetail extends PartnerApplication {
+  hubId?: string;
   partnerType: 'individual' | 'business' | 'fleet';
   address: string;
   city: string;

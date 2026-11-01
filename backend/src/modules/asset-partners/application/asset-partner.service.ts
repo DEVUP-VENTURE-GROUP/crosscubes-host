@@ -8,6 +8,8 @@ import {
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
 import { userRepository } from '../../users/infrastructure/user.repository';
 import { hostService } from '../../hosts/application/host.service';
+import { HostModel } from '../../hosts/infrastructure/host.model';
+import { currentHubId } from '../../../shared/tenancy/hub-context';
 import { AppError, NotFoundError, ConflictError, ForbiddenError } from '../../../core/errors/app-error';
 import { logger } from '../../../infrastructure/logging/logger';
 import { AssetPartnerApplicationModel } from '../infrastructure/asset-partner-application.model';
@@ -72,6 +74,7 @@ export class AssetPartnerService {
     userId: string;
     hostId: string;
     applicationId?: string;
+    hubId?: string;
     partnerType: PartnerType;
     displayName: string;
     businessName?: string;
@@ -129,8 +132,10 @@ export class AssetPartnerService {
     phone?: string;
     partnerType: PartnerType;
     applicationId?: string;
+    hubId?: string;
     agreementRequired?: boolean;
   }): Promise<{ partner: AssetPartnerDoc; userId: string; accountCreated: boolean }> {
+    const hubId = input.hubId ?? currentHubId();
     const email = input.email.toLowerCase().trim();
     const displayName = input.businessName || input.fullName;
 
@@ -157,11 +162,14 @@ export class AssetPartnerService {
       // This is the flag vehicle.service checks before allowing a listing.
       await hostService.setVerification(host._id, 'verified');
     }
+    // The partner's cars belong to the hub that admitted them, wherever they are parked.
+    if (hubId) await HostModel.updateOne({ _id: host._id }, { $set: { hubId } });
 
     const partner = await this.enrol({
       userId: user._id,
       hostId: host._id,
       applicationId: input.applicationId,
+      hubId,
       partnerType: input.partnerType,
       displayName,
       businessName: input.businessName,

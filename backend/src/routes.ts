@@ -42,6 +42,7 @@ import { rewardsRoutes } from './modules/rewards/api/rewards.routes';
 import { referralRoutes } from './modules/referral/api/referral.routes';
 import { assetPartnerApplicationRoutes } from './modules/asset-partners/api/asset-partner-application.routes';
 import { assetPartnerIocRoutes } from './modules/asset-partners/api/asset-partner.ioc.routes';
+import { hubsRoutes } from './modules/hubs/api/hubs.routes';
 import { requireFleetOwner } from './shared/middleware/require-fleet-owner';
 import { authenticate } from './shared/middleware/authenticate';
 import { insurancePartnerRoutes } from './modules/insurance-partners/api/insurance-partner.routes';
@@ -66,6 +67,7 @@ export function buildApiRouter(): Router {
   api.use('/hosts', tollsHostRoutes);
   api.use('/vehicles', vehiclesRoutes);
   api.use('/search', searchRoutes);
+  api.use('/hubs', hubsRoutes);
   api.use('/bookings', bookingsRoutes);
   api.use('/trips', tripsRoutes);
   api.use('/wallet', walletRoutes);

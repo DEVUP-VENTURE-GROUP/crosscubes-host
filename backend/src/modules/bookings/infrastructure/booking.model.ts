@@ -1,6 +1,7 @@
 import { CANCEL_REASONS, EXCEPTION_REASONS, type CancelReasonCode, type ExceptionReasonCode } from '../domain/trip-change-rules';
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 import type { BookingStatus } from '../domain/booking-status';
 
 interface MoneyField {
@@ -76,6 +77,8 @@ export interface TripException {
 
 export interface BookingDoc {
   _id: string;
+  /** The franchise hub this belongs to. */
+  hubId?: string;
   code: string;
   guestId: string;
   hostId: string;
@@ -528,5 +531,7 @@ schema.index({ status: 1, approvalDeadline: 1 });
 schema.index({ 'exception.status': 1, 'exception.requestedAt': 1 }, { sparse: true });
 schema.index({ guestId: 1, 'cancellation.at': -1 }, { sparse: true });
 schema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
+
+schema.plugin(hubScoped);
 
 export const BookingModel = model<BookingDoc>('Booking', schema);

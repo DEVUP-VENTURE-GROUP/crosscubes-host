@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 import type { OperationalState } from '../domain/vehicle-lifecycle';
 
 export type VehicleStatus = 'draft' | 'pending_verification' | 'listed' | 'paused' | 'delisted';
@@ -75,6 +76,8 @@ export interface PhotoMatch {
 
 export interface VehicleDoc {
   _id: string;
+  /** The franchise hub this belongs to. */
+  hubId?: string;
   hostId: string;
   /**
    * Set when this car is in the managed Asset Partner programme.
@@ -416,5 +419,7 @@ schema.index({ operationalState: 1 });
 schema.index({ fleetId: 1 });
 schema.index({ 'location.city': 1, category: 1 });
 schema.index({ purposes: 1 });
+
+schema.plugin(hubScoped);
 
 export const VehicleModel = model<VehicleDoc>('Vehicle', schema);

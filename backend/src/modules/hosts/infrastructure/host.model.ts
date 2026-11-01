@@ -3,6 +3,8 @@ import { uuid } from '../../../shared/utils/uuid';
 
 export interface HostDoc {
   _id: string;
+  /** The franchise hub this belongs to. */
+  hubId?: string;
   userId: string;
   displayName: string;
   bio?: string;
@@ -77,6 +79,7 @@ const schema = new Schema<HostDoc>(
       stripeConnectedAccountId: String,
       verified: { type: Boolean, default: false },
     },
+    hubId: { type: String, index: true },
     verificationStatus: {
       type: String,
       default: 'pending',

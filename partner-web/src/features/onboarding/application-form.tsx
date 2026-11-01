@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { uploadFiles } from '@/features/media/upload';
 import { assetPartnerApi, type PartnerApplicationDetail, type PortalApplicationInput, type VinLookup } from '@/features/asset-partners/api';
+import { useLiveHubs } from '@/features/hubs/api';
 import { US_STATES } from '@/lib/data/us-states';
 import { ApiError } from '@/lib/api/types';
 import { cn } from '@/lib/utils/cn';
@@ -24,7 +25,7 @@ type Availability = 'fulltime' | 'parttime' | 'seasonal';
 type Photo = { url: string; key?: string };
 
 interface Draft {
-  fullName: string; phone: string; partnerType: PartnerType | ''; businessName: string;
+  fullName: string; phone: string; partnerType: PartnerType | ''; businessName: string; hubId: string;
   address: string; city: string; state: string; zip: string;
   vin: string; year: string; make: string; model: string; trim: string; mileage: string; plate: string;
   ownership: Ownership | ''; lienholder: string; photos: Record<string, Photo>;
@@ -34,7 +35,7 @@ interface Draft {
 }
 
 const BLANK: Draft = {
-  fullName: '', phone: '', partnerType: '', businessName: '', address: '', city: '', state: 'TX', zip: '',
+  fullName: '', phone: '', partnerType: '', businessName: '', hubId: '', address: '', city: '', state: 'TX', zip: '',
   vin: '', year: '', make: '', model: '', trim: '', mileage: '', plate: '', ownership: '', lienholder: '', photos: {},
   accident: '', accidentDetail: '', smokeFree: '', petFree: '', carrier: '', policyNumber: '', coverage: '',
   availability: '', notes: '', confirmed: false,
@@ -54,7 +55,7 @@ function fromApplication(a: PartnerApplicationDetail, withCar: boolean): Draft {
   const yn = (b?: boolean): YN => (b === undefined ? '' : b ? 'yes' : 'no');
   const person = {
     ...BLANK,
-    fullName: a.fullName, phone: a.phone ?? '', partnerType: a.partnerType, businessName: a.businessName ?? '',
+    fullName: a.fullName, phone: a.phone ?? '', partnerType: a.partnerType, businessName: a.businessName ?? '', hubId: a.hubId ?? '',
     address: a.address, city: a.city, state: a.state, zip: a.zip,
   };
   if (!withCar) return person;
@@ -77,6 +78,7 @@ function toInput(d: Draft): PortalApplicationInput {
     partnerType: d.partnerType as PartnerType,
     phone: d.phone,
     address: d.address.trim(), city: d.city.trim(), state: d.state, zip: d.zip.trim(),
+    hubId: d.hubId,
     vehicle: { year: d.year.trim(), make: d.make.trim(), model: d.model.trim(), trim: opt(d.trim), mileage: Number(d.mileage), vin: d.vin.trim().toUpperCase(), plate: d.plate.trim().toUpperCase() },
     ownership: d.ownership as Ownership,
     lienholder: d.ownership === 'owned' ? undefined : opt(d.lienholder),
@@ -105,6 +107,7 @@ function errorsFor(step: Step, d: Draft): Record<string, string> {
     if (d.partnerType && d.partnerType !== 'individual') need('businessName');
     need('address'); need('city'); need('state');
     if (!/^\d{5}(-\d{4})?$/.test(d.zip.trim())) e.zip = 'Enter a 5-digit ZIP';
+    need('hubId', 'Pick the city your car will be in');
   }
   if (step === 'car') {
     if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(d.vin.trim())) e.vin = 'Enter the 17-character VIN';
@@ -166,6 +169,7 @@ export function ApplicationForm({ mode, initial, reviewNote, draftKey, submitLab
     return seeded;
   });
   const [stepIdx, setStepIdx] = useState(0);
+  const hubs = useLiveHubs();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [vin, setVin] = useState<{ state: 'idle' | 'loading' | 'done' | 'failed'; result?: VinLookup }>({ state: 'idle' });
@@ -278,6 +282,12 @@ export function ApplicationForm({ mode, initial, reviewNote, draftKey, submitLab
               {d.partnerType && d.partnerType !== 'individual' && (
                 <Field label="Business name" htmlFor="businessName" error={errors.businessName}><Input id="businessName" autoComplete="organization" value={d.businessName} onChange={(e) => set('businessName', e.target.value)} /></Field>
               )}
+              <Field label="Which city will your car be in?" htmlFor="hubId" error={errors.hubId} hint={hubs.isError ? 'We couldn’t load our cities. Refresh to try again.' : undefined}>
+                <Select id="hubId" value={d.hubId} onChange={(e) => set('hubId', e.target.value)} disabled={!hubs.data}>
+                  <option value="">{hubs.isLoading ? 'Loading cities…' : 'Choose a city'}</option>
+                  {(hubs.data ?? []).map((h) => <option key={h.id} value={h.id}>{h.name}, {h.state}</option>)}
+                </Select>
+              </Field>
               <Field label="Street address" htmlFor="address" error={errors.address}><Input id="address" autoComplete="street-address" value={d.address} onChange={(e) => set('address', e.target.value)} /></Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_8rem_8rem]">
                 <Field label="City" htmlFor="city" error={errors.city}><Input id="city" autoComplete="address-level2" value={d.city} onChange={(e) => set('city', e.target.value)} /></Field>

@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 /**
  * A submitted Asset Partner Vehicle Intake — the lead for CatoDrive's primary
@@ -43,6 +44,8 @@ export type RejectionReason = (typeof REJECTION_REASONS)[number];
 
 export interface AssetPartnerApplicationDoc {
   _id: string;
+  /** The franchise hub this belongs to. */
+  hubId?: string;
   /** Server-generated, e.g. "CD-AP-482913" — shown to the applicant and used
    *  for support lookups. Never client-supplied. */
   reference: string;
@@ -216,6 +219,8 @@ schema.index({ status: 1, createdAt: -1 });
 schema.index({ email: 1 });
 schema.index({ submittedByUserId: 1, createdAt: -1 });
 schema.index({ 'vehicle.vin': 1 });
+
+schema.plugin(hubScoped);
 
 export const AssetPartnerApplicationModel = model<AssetPartnerApplicationDoc>(
   'AssetPartnerApplication',

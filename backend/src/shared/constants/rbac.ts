@@ -52,6 +52,8 @@ export const PERMISSIONS = {
   PAYOUT_MANAGE: 'payout:manage',
   /** Moderate guest & host reviews. */
   REVIEW_MODERATE: 'review:moderate',
+  /** Create franchise hubs, change their status, territory, money terms and franchisee login. */
+  HUB_MANAGE: 'hub:manage',
   ALL: '*',
 } as const;
 

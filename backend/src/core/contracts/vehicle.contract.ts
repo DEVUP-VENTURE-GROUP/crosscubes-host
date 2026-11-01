@@ -2,6 +2,8 @@
 export interface VehicleForBooking {
   id: string;
   hostId: string;
+  /** The franchise hub the car belongs to; only cars in a live hub take bookings. */
+  hubId?: string;
   instantBook: boolean;
   cancellationPolicy: 'flexible' | 'moderate' | 'strict';
   minTripHours: number;

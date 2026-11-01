@@ -13,7 +13,8 @@ import {
   assetPartnerStatementService,
   type PartnerStatement,
 } from './asset-partner-statement.service';
-import type { AssetPartnerDoc } from '../infrastructure/asset-partner.model';
+import { AssetPartnerModel, type AssetPartnerDoc } from '../infrastructure/asset-partner.model';
+import { hubService } from '../../hubs/application/hub.service';
 import { AppError, NotFoundError, ConflictError, ValidationError } from '../../../core/errors/app-error';
 import { assetPartnerAgreementService } from './asset-partner-agreement.service';
 import { notificationService } from '../../notifications/application/notification.service';
@@ -214,6 +215,10 @@ export class AssetPartnerApplicationService {
     ctx: { userId?: string; ip?: string; userAgent?: string },
     extra: { kind: ApplicationKind; partnerId?: string; email: string },
   ): Promise<AssetPartnerApplicationDoc> {
+    // Another car from an existing partner stays in that partner's hub.
+    const hubId = extra.partnerId ? (await AssetPartnerModel.findById(extra.partnerId).select('hubId').lean<{ hubId?: string }>())?.hubId : dto.hubId;
+    if (!hubId || !(await hubService.isLive(hubId))) throw new ValidationError('Pick a city we operate in.');
+
     let reference = generateReference();
     if (await AssetPartnerApplicationModel.exists({ reference })) reference = generateReference();
 
@@ -222,6 +227,7 @@ export class AssetPartnerApplicationService {
       status: 'submitted',
       ...fieldsFrom(dto),
       ...extra,
+      hubId,
       submittedByUserId: ctx.userId,
       ip: ctx.ip,
       userAgent: ctx.userAgent,
@@ -448,6 +454,7 @@ export class AssetPartnerApplicationService {
         phone: app.phone,
         partnerType: app.partnerType,
         applicationId: app._id,
+        hubId: app.hubId,
         // Every approved applicant signs the agreement in the portal before the dashboard opens.
         agreementRequired: true,
       });

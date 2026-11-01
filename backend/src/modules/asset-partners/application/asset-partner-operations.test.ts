@@ -28,6 +28,7 @@ import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
 import { notificationService } from '../../notifications/application/notification.service';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 
 beforeAll(connectTestDb);
 afterAll(disconnectTestDb);
@@ -45,7 +46,7 @@ async function partner() {
 async function approvedApplication(partnerId: string, over: Record<string, unknown> = {}) {
   return AssetPartnerApplicationModel.create({
     reference: `CD-AP-${Math.floor(Math.random() * 1e6)}`, status: 'approved', kind: 'vehicle', partnerId, submittedByUserId: 'partner-user',
-    fullName: 'Jordan Ramirez', partnerType: 'individual', email: 'jordan@example.com', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+    fullName: 'Jordan Ramirez', partnerType: 'individual', email: 'jordan@example.com', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18_400, vin: 'WBA53BJ09RWX12345', plate: 'LUX7' },
     ownership: 'owned', hadAccident: false, smokeFree: true, petFree: true,
     photos: [{ url: 'https://cdn.example.com/front.jpg', key: 'vehicle_photo/2026/10/u/front.jpg', label: 'Front' }],
@@ -55,6 +56,7 @@ async function approvedApplication(partnerId: string, over: Record<string, unkno
   });
 }
 
+beforeEach(seedTestHub);
 describe('approved car to listing', () => {
   it('creates a draft on the fleet tagged to the partner, once', async () => {
     const p = await partner();

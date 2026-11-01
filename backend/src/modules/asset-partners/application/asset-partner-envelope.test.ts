@@ -18,6 +18,7 @@ import { KycModel } from '../../kyc/infrastructure/kyc.model';
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
 import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { PortalApplicationDto } from '../dto/asset-partner-application.schemas';
 
 beforeAll(connectTestDb);
@@ -33,7 +34,7 @@ const SIGN: SignInput = {
 
 function dto(): PortalApplicationDto {
   return {
-    fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+    fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin: '1HGCM82633A004352', plate: 'ABC-1234' },
     ownership: 'owned', accident: 'no', smokeFree: 'yes', petFree: 'yes',
     insurance: { carrier: 'State Farm', policyNumber: 'SF-123', coverageType: 'full' }, availability: 'fulltime',
@@ -64,6 +65,7 @@ async function signed(): Promise<AssetPartnerDoc> {
   return assetPartnerAgreementService.sign(partner, SIGN, ctx);
 }
 
+beforeEach(seedTestHub);
 describe('sealing at signing', () => {
   it('gives the signing an envelope with its own document IDs, the partner’s own rate in the text, and the history', async () => {
     const partner = await signed();

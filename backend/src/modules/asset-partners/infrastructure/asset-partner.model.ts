@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 /**
  * An Asset Partner — a vehicle owner in CatoDrive's managed programme.
@@ -124,6 +125,8 @@ export interface PartnerTermsOverride {
 
 export interface AssetPartnerDoc {
   _id: string;
+  /** The franchise hub this belongs to. */
+  hubId?: string;
   /** The CatoDrive account this partner signs in with. */
   userId: string;
   /** Marketplace seller identity their vehicles hang off. */
@@ -277,5 +280,7 @@ schema.index({ hostId: 1 });
 schema.index({ status: 1, createdAt: -1 });
 schema.index({ 'profile.emergencyContacts.confirmation.tokenHash': 1 }, { sparse: true });
 schema.index({ 'profile.representative.confirmation.tokenHash': 1 }, { sparse: true });
+
+schema.plugin(hubScoped);
 
 export const AssetPartnerModel = model<AssetPartnerDoc>('AssetPartner', schema);

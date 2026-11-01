@@ -1,6 +1,8 @@
 import { VehicleModel, type VehicleDoc, type DeliveryLocation } from '../infrastructure/vehicle.model';
 import { uuid } from '../../../shared/utils/uuid';
 import { hostService } from '../../hosts/application/host.service';
+import { HostModel } from '../../hosts/infrastructure/host.model';
+import { hubService } from '../../hubs/application/hub.service';
 import { userRepository } from '../../users/infrastructure/user.repository';
 import { NotFoundError, ForbiddenError, ConflictError } from '../../../core/errors/app-error';
 import { emit } from '../../../shared/events/event-bus';
@@ -145,6 +147,7 @@ export class VehicleService implements IVehicleContract {
 
     const vehicle = await VehicleModel.create({
       hostId: host._id,
+      hubId: await hubService.hubForCar(host.hubId, dto.location.lng, dto.location.lat),
       fleetOwned,
       make: dto.make,
       model: dto.model,
@@ -280,6 +283,10 @@ export class VehicleService implements IVehicleContract {
         address: patch.location.address ?? vehicle.location.address,
         city: patch.location.city ?? vehicle.location.city,
       };
+      if (hasPoint) {
+        const owner = await HostModel.findById(vehicle.hostId).select('hubId').lean<{ hubId?: string }>();
+        update.hubId = (await hubService.hubForCar(owner?.hubId, patch.location.lng!, patch.location.lat!)) ?? null;
+      }
     }
 
     // Plain scalars the host can correct on an existing listing.
@@ -684,6 +691,7 @@ export class VehicleService implements IVehicleContract {
     return {
       id: v._id,
       hostId: v.hostId,
+      hubId: v.hubId,
       instantBook: v.listing.instantBook,
       cancellationPolicy: v.listing.cancellationPolicy,
       minTripHours: v.listing.minTripHours,

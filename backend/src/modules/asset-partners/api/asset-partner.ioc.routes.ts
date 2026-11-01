@@ -29,8 +29,31 @@ import { asyncHandler } from '../../../shared/middleware/async-handler';
 import { authorize } from '../../../shared/middleware/authorize';
 import { validate } from '../../../shared/middleware/validate';
 import { sendCreated, sendSuccess } from '../../../shared/http/api-response';
+import { hubService } from '../../hubs/application/hub.service';
 
 const router = Router();
+
+// The franchisee's own hub: what they run, what they pay HQ, and what is still missing or expiring.
+router.get(
+  '/hub',
+  asyncHandler(async (req, res) => {
+    const hub = await hubService.get(req.principal!.hubId!);
+    res.set('Cache-Control', 'private, no-store');
+    sendSuccess(res, {
+      id: hub._id,
+      code: hub.code,
+      name: hub.name,
+      city: hub.city,
+      state: hub.state,
+      status: hub.status,
+      launchedAt: hub.launchedAt,
+      economics: hub.economics,
+      licences: hub.licences.map((l) => ({ id: l._id, kind: l.kind, label: l.label, expiresAt: l.expiresAt })),
+      launchBlockers: hub.status === 'setup' ? hubService.launchBlockers(hub) : [],
+      pauseReason: hub.status === 'paused' ? [...hub.timeline].reverse().find((t) => t.event === 'paused')?.note : undefined,
+    });
+  }),
+);
 
 // The operations panel manages Asset Partners with the same endpoints the admin console has always used.
 router.use(assetPartnerApplicationAdminRoutes);

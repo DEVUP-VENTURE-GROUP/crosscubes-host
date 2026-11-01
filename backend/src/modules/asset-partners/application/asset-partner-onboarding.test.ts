@@ -14,6 +14,7 @@ import { UserModel } from '../../users/infrastructure/user.model';
 import { KycModel } from '../../kyc/infrastructure/kyc.model';
 import { assetPartnerProfileService } from './asset-partner-profile.service';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { PortalApplicationDto } from '../dto/asset-partner-application.schemas';
 import { notificationService } from '../../notifications/application/notification.service';
 
@@ -37,7 +38,7 @@ function dto(vin = '1HGCM82633A004352'): PortalApplicationDto {
     address: '1 Main St',
     city: 'Dallas',
     state: 'TX',
-    zip: '75201',
+    zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin, plate: 'ABC-1234' },
     ownership: 'owned',
     accident: 'no',
@@ -65,6 +66,7 @@ async function approvedApplicant() {
   return userId;
 }
 
+beforeEach(seedTestHub);
 describe('getting started on the partner portal', () => {
   it('asks for the email code before anything else', async () => {
     const userId = await account(false);

@@ -12,6 +12,7 @@ import { AssetPartnerModel } from '../infrastructure/asset-partner.model';
 import { UserModel } from '../../users/infrastructure/user.model';
 import { HostModel } from '../../hosts/infrastructure/host.model';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { CreateApplicationDto } from '../dto/asset-partner-application.schemas';
 
 beforeAll(connectTestDb);
@@ -29,7 +30,7 @@ function baseDto(overrides: Partial<CreateApplicationDto> = {}): CreateApplicati
     address: '1 Main St',
     city: 'Dallas',
     state: 'TX',
-    zip: '75201',
+    zip: '75201', hubId: TEST_HUB_ID,
     vehicle: {
       year: '2024',
       make: 'BMW',
@@ -53,11 +54,22 @@ function baseDto(overrides: Partial<CreateApplicationDto> = {}): CreateApplicati
   } as CreateApplicationDto;
 }
 
+beforeEach(seedTestHub);
 describe('asset partner application', () => {
   it('creates a submission with a server-generated reference, not client input', async () => {
     const app = await assetPartnerApplicationService.create(baseDto(), {});
     expect(app.reference).toMatch(/^CD-AP-\d{6}$/);
     expect(app.status).toBe('submitted');
+  });
+
+  it('files the application, and later the partner and their host account, under the city they picked', async () => {
+    await expect(assetPartnerApplicationService.create(baseDto({ hubId: 'nowhere' }), {})).rejects.toThrow('Pick a city');
+    const app = await assetPartnerApplicationService.create(baseDto(), {});
+    expect(app.hubId).toBe(TEST_HUB_ID);
+    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+    const partner = await AssetPartnerModel.findOne({ email: 'jordan@example.com' }).lean();
+    expect(partner?.hubId).toBe(TEST_HUB_ID);
+    expect((await HostModel.findById(partner!.hostId).lean())?.hubId).toBe(TEST_HUB_ID);
   });
 
   it('approval verifies the applicant as a host when their account exists', async () => {

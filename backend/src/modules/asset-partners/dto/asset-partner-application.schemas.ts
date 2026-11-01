@@ -14,6 +14,8 @@ export const createApplicationSchema = z.object({
   city: z.string().trim().min(1).max(100),
   state: z.string().trim().min(2).max(2),
   zip: z.string().trim().min(3).max(10),
+  /** The franchise hub (city) the car will be run from. */
+  hubId: z.string().trim().min(1).max(64),
   referral: z.string().trim().max(80).optional(),
 
   // Step 2

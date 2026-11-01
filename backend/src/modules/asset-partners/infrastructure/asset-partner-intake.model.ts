@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 export type FuelLevel = 'full' | 'three_quarters' | 'half' | 'quarter';
 
@@ -64,5 +65,7 @@ const schema = new Schema<AssetPartnerIntakeDoc>(
 );
 
 schema.index({ partnerId: 1, createdAt: -1 });
+
+schema.plugin(hubScoped);
 
 export const AssetPartnerIntakeModel = model<AssetPartnerIntakeDoc>('AssetPartnerIntake', schema);

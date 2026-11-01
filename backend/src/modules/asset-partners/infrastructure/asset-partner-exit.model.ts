@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 import type { PartnerContact } from './asset-partner.model';
 
 /** Why a partner's cars are coming back: they asked, they can't be reached, or they passed away. */
@@ -199,5 +200,7 @@ schema.index({ partnerId: 1, createdAt: -1 });
 schema.index({ status: 1, createdAt: -1 });
 schema.index({ 'runner.userId': 1, status: 1 });
 schema.index({ 'cars.vehicleId': 1, status: 1 });
+
+schema.plugin(hubScoped);
 
 export const AssetPartnerExitModel = model<AssetPartnerExitDoc>('AssetPartnerExit', schema);

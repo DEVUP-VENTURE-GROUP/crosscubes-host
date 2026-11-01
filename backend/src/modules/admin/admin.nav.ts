@@ -27,6 +27,7 @@ const A = (sub?: string) => (sub ? `${config.adminPanel.basePath}/${sub}` : conf
 
 export const ADMIN_SECTIONS: AdminSection[] = [
   { slug: 'dashboard', path: A(), apiPath: '/admin/metrics', label: 'Dashboard', group: 'Overview', permission: 'admin:read' },
+  { slug: 'hubs', path: A('hubs'), apiPath: '/admin/hubs/overview', label: 'Hubs', group: 'Overview', permission: 'analytics:read' },
   { slug: 'reports', path: A('reports'), apiPath: '/admin/finance', label: 'Reports', group: 'Overview', permission: 'analytics:read' },
   { slug: 'visitors', path: A('visitors'), apiPath: '/admin/analytics/live-traffic', label: 'Visitors', group: 'Overview', permission: 'analytics:read' },
 

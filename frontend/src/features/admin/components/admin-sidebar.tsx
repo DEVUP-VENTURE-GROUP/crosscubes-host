@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, BadgeCheck, Car, CalendarCheck, ShieldAlert, LifeBuoy,
   ScanFace, Flag, ScrollText, LayoutGrid, Shield, Percent, SlidersHorizontal, TrendingUp, Star, Layers, Building2, Banknote, Route,
   Handshake, Receipt, PieChart, Radio, Gift, Umbrella, Milestone,
-  Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles,
+  Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles, Network,
 } from 'lucide-react';
 import { PanelSidebar, type PanelNavItem } from '@/components/layout/panel-sidebar';
 import { adminApi, type AdminNavItem } from '@/features/admin/api';
@@ -15,6 +15,7 @@ import { adminPath } from '@/lib/admin-path';
 // Map backend slugs → icons (backend owns the routes; UI owns the icons).
 const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard,
+  hubs: Network,
   users: Users,
   kyc: ScanFace,
   hosts: BadgeCheck,
