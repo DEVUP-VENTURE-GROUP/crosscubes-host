@@ -15,10 +15,10 @@ export async function seedTestHub(): Promise<void> {
     timezone: 'America/Chicago',
     status: 'live',
     territory: { center: { type: 'Point', coordinates: [-96.797, 32.7767] }, radiusMiles: 60, exclusive: true },
-    franchisee: { legalName: 'Test Mobility LLC', contactName: 'Test', email: 'franchisee@example.com' },
-    agreement: { termYears: 10 },
-    economics: { royaltyPct: 8, techFeePct: 2, marketingFundPct: 2 },
-    licences: [],
+    holder: { legalName: 'Test Mobility LLC', contactName: 'Test', email: 'holder@example.com' },
+    economics: {},
+    documents: [],
+    licence: { terms: [] },
     timeline: [],
   });
 }

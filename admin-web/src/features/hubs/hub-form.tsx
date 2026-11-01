@@ -21,14 +21,11 @@ const TIMEZONES = [
   ['Pacific/Honolulu', 'Hawaii'],
 ] as const;
 
-const day = (iso?: string) => (iso ? iso.slice(0, 10) : '');
-
 interface Draft {
   code: string; name: string; city: string; state: string; timezone: string;
   lng: string; lat: string; radiusMiles: string; exclusive: boolean; place: string;
   legalName: string; contactName: string; email: string; phone: string;
-  signedAt: string; startsAt: string; termYears: string;
-  royaltyPct: string; techFeePct: string; marketingFundPct: string;
+  holderSharePct: string;
 }
 
 function draftFrom(h?: Hub): Draft {
@@ -36,19 +33,18 @@ function draftFrom(h?: Hub): Draft {
     code: h?.code ?? '', name: h?.name ?? '', city: h?.city ?? '', state: h?.state ?? '', timezone: h?.timezone ?? 'America/Chicago',
     lng: h ? String(h.territory.center.coordinates[0]) : '', lat: h ? String(h.territory.center.coordinates[1]) : '',
     radiusMiles: h ? String(h.territory.radiusMiles) : '', exclusive: h?.territory.exclusive ?? true, place: '',
-    legalName: h?.franchisee.legalName ?? '', contactName: h?.franchisee.contactName ?? '', email: h?.franchisee.email ?? '', phone: h?.franchisee.phone ?? '',
-    signedAt: day(h?.agreement.signedAt), startsAt: day(h?.agreement.startsAt), termYears: h ? String(h.agreement.termYears) : '',
-    royaltyPct: h ? String(h.economics.royaltyPct) : '', techFeePct: h ? String(h.economics.techFeePct) : '', marketingFundPct: h ? String(h.economics.marketingFundPct) : '',
+    legalName: h?.holder.legalName ?? '', contactName: h?.holder.contactName ?? '', email: h?.holder.email ?? '', phone: h?.holder.phone ?? '',
+    holderSharePct: h?.economics?.holderShareBps !== undefined ? String(h.economics.holderShareBps / 100) : '',
   };
 }
 
 function toInput(d: Draft): HubInput {
+  const share = d.holderSharePct.trim();
   return {
     code: d.code.trim().toUpperCase(), name: d.name.trim(), city: d.city.trim(), state: d.state.trim().toUpperCase(), timezone: d.timezone,
     territory: { lng: Number(d.lng), lat: Number(d.lat), radiusMiles: Number(d.radiusMiles), exclusive: d.exclusive },
-    franchisee: { legalName: d.legalName.trim(), contactName: d.contactName.trim(), email: d.email.trim(), phone: d.phone.trim() || undefined },
-    agreement: { signedAt: d.signedAt || undefined, startsAt: d.startsAt || undefined, termYears: Number(d.termYears) },
-    economics: { royaltyPct: Number(d.royaltyPct), techFeePct: Number(d.techFeePct), marketingFundPct: Number(d.marketingFundPct) },
+    holder: { legalName: d.legalName.trim(), contactName: d.contactName.trim(), email: d.email.trim(), phone: d.phone.trim() || undefined },
+    economics: { holderShareBps: share === '' ? undefined : Math.round(Number(share) * 100) },
   };
 }
 
@@ -61,19 +57,15 @@ function check(d: Draft): Partial<Record<keyof Draft, string>> {
   if (d.lat === '' || d.lng === '' || Number.isNaN(Number(d.lat)) || Number.isNaN(Number(d.lng))) e.place = 'Find the centre of the area first.';
   const r = Number(d.radiusMiles);
   if (!(r >= 1 && r <= 300)) e.radiusMiles = 'Between 1 and 300 miles.';
-  if (d.legalName.trim().length < 2) e.legalName = 'The franchisee’s company name, as on the agreement.';
+  if (d.legalName.trim().length < 2) e.legalName = 'The holder’s company or full name, as on the licence.';
   if (d.contactName.trim().length < 2) e.contactName = 'Who we deal with day to day.';
   if (!/^\S+@\S+\.\S+$/.test(d.email.trim())) e.email = 'Enter a valid email.';
-  const t = Number(d.termYears);
-  if (!(Number.isInteger(t) && t >= 1 && t <= 30)) e.termYears = 'Whole years, 1 to 30.';
-  for (const k of ['royaltyPct', 'techFeePct', 'marketingFundPct'] as const) {
-    const v = Number(d[k]);
-    if (d[k] === '' || !(v >= 0 && v <= 50)) e[k] = 'A percent from 0 to 50.';
-  }
+  const share = d.holderSharePct.trim();
+  if (share !== '' && !(Number(share) >= 0 && Number(share) <= 50)) e.holderSharePct = 'A percent from 0 to 50, or leave it blank.';
   return e;
 }
 
-export function HubForm({ hub, submitLabel, onSubmit }: { hub?: Hub; submitLabel: string; onSubmit: (input: HubInput) => Promise<unknown> }) {
+export function HubForm({ hub, defaultSharePct, submitLabel, onSubmit }: { hub?: Hub; defaultSharePct?: number; submitLabel: string; onSubmit: (input: HubInput) => Promise<unknown> }) {
   const [d, setD] = useState<Draft>(() => draftFrom(hub));
   const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
   const [found, setFound] = useState<string | null>(hub ? `${hub.city}, ${hub.state}` : null);
@@ -81,7 +73,6 @@ export function HubForm({ hub, submitLabel, onSubmit }: { hub?: Hub; submitLabel
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((p) => ({ ...p, [k]: v }));
-  const total = ['royaltyPct', 'techFeePct', 'marketingFundPct'].reduce((s, k) => s + (Number(d[k as keyof Draft]) || 0), 0);
 
   async function findCentre() {
     if (d.place.trim().length < 3) return setErrors((e) => ({ ...e, place: 'Type a city or address, like Houston, TX.' }));
@@ -156,29 +147,21 @@ export function HubForm({ hub, submitLabel, onSubmit }: { hub?: Hub; submitLabel
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Franchisee</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Licence holder</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="Company name" htmlFor="legal" error={errors.legalName} required><Input id="legal" value={d.legalName} onChange={(e) => set('legalName', e.target.value)} placeholder="Bayou Mobility LLC" /></Field>
+          <Field label="Company or full name" htmlFor="legal" error={errors.legalName} required><Input id="legal" value={d.legalName} onChange={(e) => set('legalName', e.target.value)} placeholder="Bayou Mobility LLC" /></Field>
           <Field label="Main contact" htmlFor="contact" error={errors.contactName} required><Input id="contact" value={d.contactName} onChange={(e) => set('contactName', e.target.value)} /></Field>
           <Field label="Email" htmlFor="email" error={errors.email} required><Input id="email" type="email" value={d.email} onChange={(e) => set('email', e.target.value)} /></Field>
           <Field label="Phone" htmlFor="phone"><Input id="phone" type="tel" value={d.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle>Agreement and money</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Signed on" htmlFor="signed" hint="Needed before launch."><Input id="signed" type="date" value={d.signedAt} onChange={(e) => set('signedAt', e.target.value)} /></Field>
-            <Field label="Term starts" htmlFor="starts"><Input id="starts" type="date" value={d.startsAt} onChange={(e) => set('startsAt', e.target.value)} /></Field>
-            <Field label="Term in years" htmlFor="term" error={errors.termYears} required><Input id="term" inputMode="numeric" value={d.termYears} onChange={(e) => set('termYears', e.target.value)} className="tabular-nums" /></Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Royalty %" htmlFor="royalty" error={errors.royaltyPct} required><Input id="royalty" inputMode="decimal" value={d.royaltyPct} onChange={(e) => set('royaltyPct', e.target.value)} className="tabular-nums" /></Field>
-            <Field label="Technology fee %" htmlFor="tech" error={errors.techFeePct} required><Input id="tech" inputMode="decimal" value={d.techFeePct} onChange={(e) => set('techFeePct', e.target.value)} className="tabular-nums" /></Field>
-            <Field label="Marketing fund %" htmlFor="mkt" error={errors.marketingFundPct} required><Input id="mkt" inputMode="decimal" value={d.marketingFundPct} onChange={(e) => set('marketingFundPct', e.target.value)} className="tabular-nums" /></Field>
-          </div>
-          <p className="text-sm text-muted-foreground">The franchisee pays HQ <span className="font-semibold text-foreground tabular-nums">{Number(total.toFixed(2))}%</span> of the hub’s gross trip revenue each month.</p>
+          <Field
+            label="Holder’s share of gross %"
+            htmlFor="share"
+            error={errors.holderSharePct}
+            hint={`Leave blank to use the platform setting${defaultSharePct !== undefined ? ` (${defaultSharePct}%)` : ''}. It comes out of HQ’s management fee.`}
+            className="sm:col-span-2"
+          >
+            <Input id="share" inputMode="decimal" value={d.holderSharePct} onChange={(e) => set('holderSharePct', e.target.value)} className="max-w-32 tabular-nums" />
+          </Field>
         </CardContent>
       </Card>
 

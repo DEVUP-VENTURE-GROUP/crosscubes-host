@@ -14,7 +14,6 @@ import { AssetPartnerModel, type AssetPartnerDoc, type PartnerContact } from '..
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
 import { vehicleService } from '../../vehicles/application/vehicle.service';
 import { MaintenanceModel } from '../../maintenance/infrastructure/maintenance.model';
-import { TollAccountModel } from '../../tolls/infrastructure/toll.model';
 import { HostStaffModel } from '../../hosts/infrastructure/host-staff.model';
 import { UserModel } from '../../users/infrastructure/user.model';
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
@@ -38,7 +37,7 @@ export const CHECKLIST: { key: ChecklistKey; label: string; hint: string; auto: 
   { key: 'delisted', label: 'Taken off the marketplace', hint: 'Done automatically when the runner starts the return.', auto: true },
   { key: 'repairs_closed', label: 'Repairs closed', hint: 'No repair or service is still scheduled or in progress.', auto: true },
   { key: 'insurance_removed', label: 'Removed from CatoDrive’s insurance', hint: 'Car taken off the fleet policy; note the confirmation number.', auto: false },
-  { key: 'toll_tag_removed', label: 'TollTag removed (NTTA)', hint: 'Tag taken off the windshield and the car removed from CatoDrive’s toll account.', auto: false },
+  { key: 'toll_tag_removed', label: 'Toll tag removed', hint: 'Tag taken off the windshield and the car removed from the hub’s toll account.', auto: false },
   { key: 'gps_removed', label: 'GPS tracker removed', hint: 'CatoDrive’s tracker taken out of the car.', auto: false },
   { key: 'keys_returned', label: 'All keys and fobs collected', hint: 'Out of the lockbox or key safe; enter how many.', auto: false },
   { key: 'accessories_removed', label: 'Lockbox and CatoDrive items removed', hint: 'Lockbox, phone mount, chargers, stickers and anything else CatoDrive put in.', auto: false },
@@ -108,17 +107,16 @@ function freshChecklist(): ChecklistItem[] {
 }
 
 async function factsFor(vehicleId: string): Promise<CarFacts> {
-  const [v, upcomingTrips, openRepairs, inTollAccount] = await Promise.all([
+  const [v, upcomingTrips, openRepairs] = await Promise.all([
     VehicleModel.findById(vehicleId).select('status tollTagId wheelbase').lean<{ status: string; tollTagId?: string; wheelbase?: { name?: string } }>(),
     vehicleService.upcomingTrips(vehicleId),
     MaintenanceModel.countDocuments({ vehicleId, status: { $in: ['scheduled', 'in_progress'] } }),
-    TollAccountModel.exists({ vehicleIds: vehicleId }),
   ]);
   return {
     upcomingTrips,
     listed: v?.status === 'listed',
     openRepairs,
-    hasTollTag: !!(v?.tollTagId || inTollAccount),
+    hasTollTag: !!v?.tollTagId,
     tollTagId: v?.tollTagId,
     insuredAs: v?.wheelbase?.name,
   };
@@ -565,7 +563,7 @@ export class AssetPartnerExitService {
     return done;
   }
 
-  /** A manager approves: cars leave the programme, toll tags come off CatoDrive's accounts, and the partner exits once no car is left. */
+  /** A manager approves: cars leave the programme, toll tags come off, and the partner exits once no car is left. */
   async approve(exitId: string, by: string, note?: string): Promise<AssetPartnerExitDoc> {
     const exit = await this.load(exitId);
     if (exit.status !== 'submitted') throw new ConflictError('Only a submitted return can be approved.', 'EXIT_STATE');
@@ -580,7 +578,6 @@ export class AssetPartnerExitService {
     const now = new Date();
     await VehicleModel.updateMany({ _id: { $in: ids }, assetPartnerEndedAt: null }, { $set: { assetPartnerEndedAt: now } });
     await VehicleModel.updateMany({ _id: { $in: ids } }, { $set: { status: 'delisted' }, $unset: { tollTagId: 1 } });
-    await TollAccountModel.updateMany({ vehicleIds: { $in: ids } }, { $pull: { vehicleIds: { $in: ids } } });
 
     const left = await VehicleModel.countDocuments({ assetPartnerId: exit.partnerId, assetPartnerEndedAt: null, deletedAt: null });
     const partner = await assetPartnerService.getById(exit.partnerId);

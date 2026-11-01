@@ -93,6 +93,14 @@ router.put(
         })
         .optional(),
       commission: z.object({ defaultBps: bps.optional(), minBps: bps.optional(), maxBps: bps.optional() }).optional(),
+      hubs: z
+        .object({
+          holderShareBps: bps.optional(),
+          licenceFeeCents: cents.optional(),
+          licenceTermMonths: z.number().int().min(1).max(60).optional(),
+          licenceReminderDays: z.number().int().min(1).max(120).optional(),
+        })
+        .optional(),
       // Asset Partner programme defaults. A management fee is only one of the
       // three deductions — the other two are monthly per-vehicle costs.
       assetPartner: z

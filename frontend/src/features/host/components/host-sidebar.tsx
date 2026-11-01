@@ -25,7 +25,6 @@ const NAV = [
   { slug: 'fleet', label: 'Fleet', path: '/host/fleet', group: 'Manage', mobile: false },
   { slug: 'operations', label: 'Operations', path: '/host/operations', group: 'Manage', mobile: false },
   { slug: 'team', label: 'Captains', path: '/host/team', group: 'Manage', mobile: false },
-  { slug: 'tolls', label: 'Toll accounts', path: '/host/tolls', group: 'Manage' },
   { slug: 'earnings', label: 'Earnings', path: '/host/earnings', group: 'Money' },
   { slug: 'performance', label: 'Performance', path: '/host/performance', group: 'Money', mobile: false },
   { slug: 'profile', label: 'Profile', path: '/host/profile', group: 'Account' },

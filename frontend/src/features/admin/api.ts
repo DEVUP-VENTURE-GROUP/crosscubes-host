@@ -1,7 +1,7 @@
 import { api } from '@/lib/api/client';
 import type { Insurer, InsurerPayout, InsurerPlan, InsurerSummary } from '@/features/insurers/api';
 import type { Booking } from '@/features/bookings/types';
-import type { Hub, HubDetail, HubInput, HubLicenceInput, HubStatus, NetworkOverview } from '@/features/hubs/types';
+import type { Hub, HubDetail, HubDocumentInput, HubInput, HubStatus, NetworkOverview } from '@/features/hubs/types';
 
 export interface AdminMetrics {
   users: { total: number; active: number; suspended: number; newThisWeek: number };
@@ -55,6 +55,8 @@ export interface PlatformConfig {
    * purpose: a partner is paid monthly on gross − management fee − insurance
    * − detailing, which no commission rate can express.
    */
+  /** City licences: price, length, reminder and the holder's default share of gross. */
+  hubs?: { holderShareBps: number; licenceFeeCents: number; licenceTermMonths: number; licenceReminderDays: number };
   assetPartner: {
     managementFeeBps: number;
     insuranceMonthlyCents: number;
@@ -320,48 +322,6 @@ export interface GeoSummaryEntry {
   count: number;
 }
 
-export interface TollAccount {
-  _id: string;
-  agency: 'ntta';
-  nickname: string;
-  status: 'manual' | 'connected' | 'disconnected';
-  hasLogin: boolean;
-  loginSavedAt?: string;
-  lastImportAt?: string;
-  lastFetchAt?: string;
-  lastError?: string;
-  vehicleIds: string[];
-}
-
-export type TollStatus = 'matched' | 'no_trip' | 'unknown_car' | 'billed' | 'covered' | 'waived' | 'too_late';
-
-export interface TollTransaction {
-  _id: string;
-  externalId: string;
-  occurredAt: string;
-  postedAt: string;
-  location: string;
-  tagId?: string;
-  plate?: string;
-  plateState?: string;
-  amountCents: number;
-  status: TollStatus;
-  vehicleId?: string;
-  bookingId?: string;
-  billedAt?: string;
-  note?: string;
-}
-
-export interface TollImportSummary {
-  read: number;
-  added: number;
-  duplicates: number;
-  matched: number;
-  noTrip: number;
-  unknownCar: number;
-  skipped: number;
-  errors: { line: number; reason: string }[];
-}
 
 export interface ReviewCheck {
   key: 'photos' | 'photo_match' | 'registration' | 'insurance' | 'wheelbase' | 'vin' | 'pricing' | 'location';
@@ -505,19 +465,6 @@ export const adminApi = {
   vehiclePhotoCheck: (id: string) => api.post<VehicleReview>(`/admin/vehicles/${id}/photo-check`),
   vehicleRemindHost: (id: string, note?: string) =>
     api.post<{ sent: number; items: string[] }>(`/admin/vehicles/${id}/remind-host`, note ? { note } : {}),
-  tollAccounts: () => api.get<{ accounts: TollAccount[]; loginStorage: boolean }>('/admin/tolls/accounts'),
-  tollCreateAccount: (nickname: string) => api.post<TollAccount>('/admin/tolls/accounts', { agency: 'ntta', nickname }),
-  tollUpdateAccount: (id: string, patch: { nickname?: string; vehicleIds?: string[] }) => api.patch<TollAccount>(`/admin/tolls/accounts/${id}`, patch),
-  tollSaveLogin: (id: string, username: string, password: string) =>
-    api.raw<TollAccount>(`/admin/tolls/accounts/${id}/login`, { method: 'PUT', body: { username, password } }).then((r) => r.data),
-  tollRemoveLogin: (id: string) => api.delete<TollAccount>(`/admin/tolls/accounts/${id}/login`),
-  tollSetTag: (vehicleId: string, tagId: string | null) =>
-    api.raw<{ ok: true }>(`/admin/tolls/vehicles/${vehicleId}/tag`, { method: 'PUT', body: { tagId } }).then((r) => r.data),
-  tollImport: (text: string, accountId?: string) => api.post<TollImportSummary>('/admin/tolls/import', { text, ...(accountId ? { accountId } : {}) }),
-  tollTransactions: (status?: TollStatus) => api.get<TollTransaction[]>('/admin/tolls/transactions', status ? { status } : {}),
-  tollAssign: (id: string, vehicleId: string) => api.post<TollTransaction>(`/admin/tolls/transactions/${id}/assign`, { vehicleId }),
-  tollWaive: (id: string, note: string) => api.post<TollTransaction>(`/admin/tolls/transactions/${id}/waive`, { note }),
-  tollBill: (bookingId: string) => api.post<{ billed: number; totalCents: number; collected: boolean }>(`/admin/tolls/bill/${bookingId}`),
   setExternalRating: (id: string, body: { rating: number; trips: number; source: string } | { clear: true }) =>
     api.raw(`/admin/vehicles/${id}/external-rating`, { method: 'PUT', body }).then((r) => r.data),
   vehicleAction: (id: string, action: 'approve' | 'suspend' | 'reject') =>
@@ -549,8 +496,9 @@ export const adminApi = {
   updateHub: (id: string, body: Partial<HubInput>) => api.patch<Hub>(`/admin/hubs/${id}`, body),
   setHubStatus: (id: string, status: HubStatus, note?: string) => api.post<Hub>(`/admin/hubs/${id}/status`, { status, note }),
   createHubLogin: (id: string, body: { name: string; email: string }) => api.post<{ username: string; password?: string }>(`/admin/hubs/${id}/operator`, body),
-  addHubLicence: (id: string, body: HubLicenceInput) => api.post<Hub>(`/admin/hubs/${id}/licences`, body),
-  removeHubLicence: (id: string, licenceId: string) => api.delete<Hub>(`/admin/hubs/${id}/licences/${licenceId}`),
+  recordLicencePayment: (id: string, body: { paidAt?: string; feeCents?: number; reference?: string }) => api.post<Hub>(`/admin/hubs/${id}/licence-payments`, body),
+  addHubDocument: (id: string, body: HubDocumentInput) => api.post<Hub>(`/admin/hubs/${id}/documents`, body),
+  removeHubDocument: (id: string, documentId: string) => api.delete<Hub>(`/admin/hubs/${id}/documents/${documentId}`),
 
   tickets: (q: Q = {}) => api.get<any[]>('/admin/tickets', q),
   ticket: (id: string) => api.get<any>(`/admin/tickets/${id}`),

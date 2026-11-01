@@ -96,7 +96,6 @@ const ENTRIES = [
   'features/host/profile-form.ts',
   'features/host/fleet-import.ts',
   'features/host/team-api.ts',
-  'features/host/tolls-api.ts',
   'features/asset-partners/api.ts',
   'features/asset-partners/hooks.ts',
   'features/asset-partners/status.ts',

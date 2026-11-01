@@ -2,9 +2,7 @@ import { LedgerModel } from '../../payments/infrastructure/ledger.model';
 import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import { PayoutModel } from '../../payouts/infrastructure/payout.model';
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
-import { userRepository } from '../../users/infrastructure/user.repository';
-import { hostService } from '../../hosts/application/host.service';
-import { config } from '../../../config';
+import { HubModel } from '../../hubs/infrastructure/hub.model';
 import { Account } from '../../payments/domain/ledger.accounts';
 
 /**
@@ -158,10 +156,8 @@ export class FinanceReportService {
     currency: string;
     sources: { label: string; trips: number; gmv: number; platformRevenue: number }[];
   }> {
-    const houseFleetUser = config.houseFleet.email
-      ? await userRepository.findByEmail(config.houseFleet.email.toLowerCase())
-      : null;
-    const houseFleetHost = houseFleetUser ? await hostService.getByUserId(houseFleetUser._id) : null;
+    // Cars a hub operator lists under their own host account are that hub's fleet.
+    const hubFleetHosts = new Set(await HubModel.find({ operatorHostId: { $exists: true } }).distinct('operatorHostId'));
 
     const partnerVehicleIds = await VehicleModel.find({ assetPartnerId: { $exists: true } }).distinct('_id');
 
@@ -191,7 +187,7 @@ export class FinanceReportService {
 
     for (const r of rows) {
       const key =
-        houseFleetHost && r.hostId === houseFleetHost._id
+        hubFleetHosts.has(r.hostId)
           ? 'houseFleet'
           : partnerSet.has(r.vehicleId)
             ? 'assetPartner'
@@ -206,7 +202,7 @@ export class FinanceReportService {
       sources: [
         { label: 'Host (self-serve)', trips: buckets.host, gmv: gmvBy.host, platformRevenue: revBy.host },
         { label: 'Asset Partners', trips: buckets.assetPartner, gmv: gmvBy.assetPartner, platformRevenue: revBy.assetPartner },
-        { label: 'House Fleet', trips: buckets.houseFleet, gmv: gmvBy.houseFleet, platformRevenue: revBy.houseFleet },
+        { label: 'Hub fleets', trips: buckets.houseFleet, gmv: gmvBy.houseFleet, platformRevenue: revBy.houseFleet },
       ],
     };
   }

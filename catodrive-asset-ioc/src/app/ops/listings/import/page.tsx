@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils/cn';
 import { ApiError } from '@/lib/api/types';
 import { LocationSearch } from '@/features/maps/components/location-search';
 import { hostApi, type RowPreview, type ImportResult } from '~/features/host/api';
-import { WheelbaseImport } from '~/features/host/components/wheelbase-import';
 import { DEFAULT_IMPORT_ADDRESS, IMPORT_SAMPLE, importReadiness, parseImport, toImportRows } from '~/features/host/fleet-import';
 
 /**
@@ -65,7 +64,6 @@ export default function ImportPage() {
         description="Set your address once, then paste one line per car. We decode the rest from the VIN."
       />
 
-      <WheelbaseImport />
 
       {/* What the VIN saves them typing, said once, up front. */}
       <Card className="border-primary/30 bg-primary/5">

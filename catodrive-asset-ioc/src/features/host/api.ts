@@ -152,32 +152,6 @@ export interface RowPreview {
   duplicate?: boolean;
 }
 
-export interface WheelbasePreviewRow {
-  listingId: number;
-  name: string;
-  photos: number;
-  pricePerDayCents?: number;
-  action: 'update' | 'create' | 'choose';
-  cars: { id: string; name: string; status: string; fills: string[] }[];
-  note?: string;
-}
-
-export interface WheelbasePreview {
-  listings: number;
-  toUpdate: number;
-  toCreate: number;
-  toChoose: number;
-  rows: WheelbasePreviewRow[];
-}
-
-export interface WheelbaseImportResult {
-  listingId: number;
-  name: string;
-  outcome: 'updated' | 'created' | 'skipped' | 'failed';
-  vehicleIds: string[];
-  detail?: string;
-}
-
 export interface ImportResult {
   vin: string;
   status: 'created' | 'updated' | 'skipped' | 'failed';
@@ -207,9 +181,6 @@ export const hostApi = {
   earningsInsights: (days = 90) => api.get<EarningsInsights>('/earnings/insights', { days }),
   importPreview: (vins: string[]) => api.post<RowPreview[]>('/vehicles/import/preview', { vins }),
   importFleet: (rows: ImportRow[]) => api.post<ImportResult[]>('/vehicles/import', { rows }),
-  wheelbaseAvailable: () => api.get<{ available: boolean }>('/vehicles/import/wheelbase/available'),
-  wheelbasePreview: () => api.post<WheelbasePreview>('/vehicles/import/wheelbase/preview'),
-  wheelbaseImport: () => api.post<WheelbaseImportResult[]>('/vehicles/import/wheelbase'),
   earnings: () => api.get<EarningsDashboard>('/earnings/dashboard'),
 
   payouts: () => api.get<Payout[]>('/payouts/me'),

@@ -13,7 +13,6 @@ import { ValidationError } from '../../../core/errors/app-error';
 const router = Router();
 const MANAGE = PERMISSIONS.HUB_MANAGE;
 
-const pct = z.coerce.number().min(0).max(50);
 const hubBody = z.object({
   code: z.string().trim().regex(/^[A-Za-z]{2,6}$/, 'Use 2 to 6 letters, like HOU'),
   name: z.string().trim().min(2).max(80),
@@ -26,18 +25,14 @@ const hubBody = z.object({
     radiusMiles: z.coerce.number().min(1).max(300),
     exclusive: z.boolean(),
   }),
-  franchisee: z.object({
+  holder: z.object({
     legalName: z.string().trim().min(2).max(120),
     contactName: z.string().trim().min(2).max(80),
     email: z.string().trim().email(),
     phone: z.string().trim().max(30).optional(),
   }),
-  agreement: z.object({
-    signedAt: z.coerce.date().optional(),
-    startsAt: z.coerce.date().optional(),
-    termYears: z.coerce.number().int().min(1).max(30),
-  }),
-  economics: z.object({ royaltyPct: pct, techFeePct: pct, marketingFundPct: pct }),
+  // Left out, the hub uses the platform's holder share.
+  economics: z.object({ holderShareBps: z.coerce.number().int().min(0).max(5000).optional() }).optional(),
 });
 
 router.get(
@@ -68,7 +63,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const hub = await hubService.get(req.params.id);
     res.set('Cache-Control', 'private, no-store');
-    sendSuccess(res, { ...hub, launchBlockers: hub.status === 'closed' ? [] : hubService.launchBlockers(hub) });
+    sendSuccess(res, { ...hub, holderShareBps: await hubService.holderShareBps(hub), launchBlockers: hub.status === 'closed' ? [] : hubService.launchBlockers(hub) });
   }),
 );
 
@@ -109,8 +104,24 @@ router.post(
   }),
 );
 
+/** A licence payment taken outside the site (bank transfer, card on the phone); online payments record themselves. */
 router.post(
-  '/hubs/:id/licences',
+  '/hubs/:id/licence-payments',
+  authorize(MANAGE),
+  validate({
+    body: z.object({
+      paidAt: z.coerce.date().optional(),
+      feeCents: z.coerce.number().int().min(0).optional(),
+      reference: z.string().trim().max(120).optional(),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    sendCreated(res, await hubService.recordLicencePayment(req.params.id, req.body, req.principal!.userId));
+  }),
+);
+
+router.post(
+  '/hubs/:id/documents',
   authorize(MANAGE),
   validate({
     body: z.object({
@@ -123,15 +134,15 @@ router.post(
     }),
   }),
   asyncHandler(async (req, res) => {
-    sendCreated(res, await hubService.addLicence(req.params.id, req.body, req.principal!.userId));
+    sendCreated(res, await hubService.addDocument(req.params.id, req.body, req.principal!.userId));
   }),
 );
 
 router.delete(
-  '/hubs/:id/licences/:licenceId',
+  '/hubs/:id/documents/:documentId',
   authorize(MANAGE),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await hubService.removeLicence(req.params.id, req.params.licenceId, req.principal!.userId));
+    sendSuccess(res, await hubService.removeDocument(req.params.id, req.params.documentId, req.principal!.userId));
   }),
 );
 

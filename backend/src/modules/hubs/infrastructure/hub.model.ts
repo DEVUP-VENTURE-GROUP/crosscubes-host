@@ -4,10 +4,10 @@ import { uuid } from '../../../shared/utils/uuid';
 export const HUB_STATUSES = ['setup', 'live', 'paused', 'closed'] as const;
 export type HubStatus = (typeof HUB_STATUSES)[number];
 
-export const LICENCE_KINDS = ['franchise_agreement', 'insurance', 'state_permit', 'business_licence', 'sales_tax', 'other'] as const;
+export const LICENCE_KINDS = ['insurance', 'state_permit', 'business_licence', 'sales_tax', 'other'] as const;
 export type LicenceKind = (typeof LICENCE_KINDS)[number];
 
-export interface HubLicence {
+export interface HubDocument {
   _id: string;
   kind: LicenceKind;
   label: string;
@@ -17,6 +17,15 @@ export interface HubLicence {
   fileKey?: string;
   addedAt: Date;
   addedBy: string;
+}
+
+export interface LicenceTerm {
+  feeCents: number;
+  paidAt: Date;
+  startsAt: Date;
+  expiresAt: Date;
+  reference?: string;
+  by: string;
 }
 
 export interface HubDoc {
@@ -29,20 +38,22 @@ export interface HubDoc {
   timezone: string;
   status: HubStatus;
   territory: { center: { type: 'Point'; coordinates: [number, number] }; radiusMiles: number; exclusive: boolean };
-  franchisee: { legalName: string; contactName: string; email: string; phone?: string };
+  /** The licence holder: our representative who runs this city. */
+  holder: { legalName: string; contactName: string; email: string; phone?: string };
   operatorUserId?: string;
   operatorHostId?: string;
-  agreement: { signedAt?: Date; startsAt?: Date; termYears: number; endsAt?: Date };
-  /** Percent of gross trip revenue owed to HQ each month. */
-  economics: { royaltyPct: number; techFeePct: number; marketingFundPct: number };
-  licences: HubLicence[];
+  /** Holder share of the hub's gross, overriding the platform default when set. */
+  economics: { holderShareBps?: number };
+  /** The paid licence; the hub only takes bookings while it is in date. */
+  licence: { startsAt?: Date; expiresAt?: Date; terms: LicenceTerm[]; remindedFor?: Date };
+  /** Insurance, permits and registrations the holder must keep in date. */
+  documents: HubDocument[];
   timeline: { at: Date; by: string; event: string; note?: string }[];
+  applicationId?: string;
   launchedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
-
-const pct = { type: Number, required: true, min: 0, max: 50 };
 
 const schema = new Schema<HubDoc>(
   {
@@ -61,7 +72,7 @@ const schema = new Schema<HubDoc>(
       radiusMiles: { type: Number, required: true, min: 1, max: 300 },
       exclusive: { type: Boolean, default: true },
     },
-    franchisee: {
+    holder: {
       legalName: { type: String, required: true, trim: true },
       contactName: { type: String, required: true, trim: true },
       email: { type: String, required: true, lowercase: true, trim: true },
@@ -69,14 +80,17 @@ const schema = new Schema<HubDoc>(
     },
     operatorUserId: String,
     operatorHostId: String,
-    agreement: {
-      signedAt: Date,
+    economics: { holderShareBps: { type: Number, min: 0, max: 5000 } },
+    licence: {
       startsAt: Date,
-      termYears: { type: Number, required: true, min: 1, max: 30 },
-      endsAt: Date,
+      expiresAt: Date,
+      remindedFor: Date,
+      terms: {
+        type: [new Schema({ feeCents: Number, paidAt: Date, startsAt: Date, expiresAt: Date, reference: String, by: String }, { _id: false })],
+        default: [],
+      },
     },
-    economics: { royaltyPct: pct, techFeePct: pct, marketingFundPct: pct },
-    licences: {
+    documents: {
       type: [
         new Schema(
           {
@@ -96,6 +110,7 @@ const schema = new Schema<HubDoc>(
       default: [],
     },
     timeline: { type: [new Schema({ at: Date, by: String, event: String, note: String }, { _id: false })], default: [] },
+    applicationId: String,
     launchedAt: Date,
   },
   { timestamps: true },
@@ -104,5 +119,6 @@ const schema = new Schema<HubDoc>(
 schema.index({ code: 1 }, { unique: true });
 schema.index({ operatorUserId: 1 }, { unique: true, sparse: true });
 schema.index({ status: 1 });
+schema.index({ 'licence.expiresAt': 1 });
 
 export const HubModel = model<HubDoc>('Hub', schema);

@@ -5,7 +5,6 @@ import { VehicleModel } from '../infrastructure/vehicle.model';
 import { hostService } from '../../hosts/application/host.service';
 import { mapsProvider } from '../../maps/infrastructure/maps.provider';
 import { logger } from '../../../infrastructure/logging/logger';
-import { buildDefaultDeliveryLocations } from './default-delivery';
 
 /**
  * Fleet import & bulk edit — one paste box for onboarding new cars AND
@@ -97,7 +96,6 @@ export const fleetImportService = {
     const alreadyById = new Map(existing.map((e) => [e.vin, e._id]));
 
     // Geocoded lazily, once, only if a new car actually needs it.
-    let defaultDeliveryLocations: Awaited<ReturnType<typeof buildDefaultDeliveryLocations>> | null = null;
 
     const results: ImportResult[] = [];
 
@@ -179,8 +177,6 @@ export const fleetImportService = {
         dailyPrice = suggestion?.suggested ?? 4500;
       }
 
-      if (!defaultDeliveryLocations) defaultDeliveryLocations = await buildDefaultDeliveryLocations();
-
       const label = `${d.year} ${d.make} ${d.model}${d.trim ? ` ${d.trim}` : ''}`;
       try {
         // Parsed through the real schema rather than cast: an import must get
@@ -207,7 +203,6 @@ export const fleetImportService = {
             minTripHours: 24,
             maxTripHours: 24 * 30,
             cancellationPolicy: 'moderate',
-            deliveryLocations: defaultDeliveryLocations,
           },
           pricing: { dailyPrice, currency: 'USD', cleaningFee: 0 },
           // Status is not in the create DTO — the model defaults new vehicles

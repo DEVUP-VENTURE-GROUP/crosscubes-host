@@ -192,9 +192,6 @@ export const config = Object.freeze({
   wheelbase: {
     dealerId: env.WHEELBASE_DEALER_ID ?? '',
   },
-  tolls: {
-    credentialsKey: env.TOLL_CREDENTIALS_KEY,
-  },
   ai: {
     apiKey: env.OPENROUTER_API_KEY,
     fallbackApiKey: env.OPENROUTER_API_KEY_FALLBACK,
@@ -226,12 +223,6 @@ export const config = Object.freeze({
     password: env.ADMIN_PASSWORD,
     name: env.ADMIN_NAME ?? 'CatoDrive Admin',
     enabled: !!(env.ADMIN_EMAIL && env.ADMIN_PASSWORD),
-  },
-  houseFleet: {
-    email: env.HOUSE_FLEET_EMAIL,
-    password: env.HOUSE_FLEET_PASSWORD,
-    name: env.HOUSE_FLEET_NAME,
-    enabled: !!(env.HOUSE_FLEET_EMAIL && env.HOUSE_FLEET_PASSWORD),
   },
 });
 

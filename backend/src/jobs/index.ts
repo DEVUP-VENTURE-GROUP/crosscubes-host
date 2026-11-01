@@ -1,3 +1,4 @@
+import { hubService } from '../modules/hubs/application/hub.service';
 import { inspectionService } from '../modules/trips/application/inspection.service';
 import { tripService } from '../modules/trips/application/trip.service';
 import { makeQueue, makeWorker } from '../infrastructure/queue/bullmq.client';
@@ -15,7 +16,6 @@ import { platformConfigService } from '../modules/platform-config/application/pl
 import { acquireJobLease } from './job-lease.model';
 import { notificationService } from '../modules/notifications/application/notification.service';
 import { wheelbaseInsuranceService } from '../modules/insurance/application/wheelbase-insurance.service';
-import { tollService } from '../modules/tolls/application/toll.service';
 import { returnWatchService } from '../modules/trips/application/return-watch.service';
 import { assetPartnerOfferService } from '../modules/asset-partners/application/asset-partner-offer.service';
 
@@ -147,12 +147,6 @@ const JOBS: JobDef[] = [
     run: () => webhookRetryService.retryFailed(),
   },
   {
-    // Charge finished trips for their tolls once late-posting tolls have had time to arrive.
-    name: 'toll-billing',
-    everyMs: 60 * MIN,
-    run: () => tollService.billDue(),
-  },
-  {
     // Keep each car's insurance as Wheelbase reports it; an outage leaves the last reading in place.
     name: 'wheelbase-insurance',
     everyMs: 6 * 60 * MIN,
@@ -163,6 +157,12 @@ const JOBS: JobDef[] = [
     name: 'retry-notifications',
     everyMs: 5 * MIN,
     run: async () => ({ retried: await notificationService.retryFailed() }),
+  },
+  {
+    // City licences: pause hubs whose licence ran out, remind holders before it does.
+    name: 'hub-licences',
+    everyMs: 60 * MIN,
+    run: () => hubService.sweepLicences(),
   },
   {
     // Partner signing windows: open the ones that should exist, remind before they end, tell partners when one ends.

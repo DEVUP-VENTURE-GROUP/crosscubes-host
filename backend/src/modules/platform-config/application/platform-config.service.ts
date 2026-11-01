@@ -156,6 +156,7 @@ export class PlatformConfigService {
         ...(doc.deposit ?? {}),
       },
       commission: { defaultBps: 2000, minBps: 0, maxBps: 4000, ...(doc.commission ?? {}) },
+      hubs: { holderShareBps: 1000, licenceFeeCents: 100000, licenceTermMonths: 12, licenceReminderDays: 30, ...(doc.hubs ?? {}) },
       assetPartner: {
         managementFeeBps: 2000,
         insuranceMonthlyCents: 13_700,

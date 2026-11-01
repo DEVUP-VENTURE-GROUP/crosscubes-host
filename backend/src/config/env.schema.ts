@@ -139,8 +139,6 @@ export const envSchema = z.object({
   OPENROUTER_API_KEY: optional(z.string()),
   // Wheelbase dealer account the fleet's insurance is read from; kept out of the source.
   WHEELBASE_DEALER_ID: optional(z.string().regex(/^\d{1,20}$/)),
-  // 32-byte key (base64 or 64 hex chars) that encrypts saved toll-account logins; without it no login can be saved.
-  TOLL_CREDENTIALS_KEY: optional(z.string().min(32)),
   /** Second key, tried only when the primary fails on auth, rate limit or credit. */
   OPENROUTER_API_KEY_FALLBACK: optional(z.string()),
   /** Default model. Vision-capable, because damage review reads photographs. */
@@ -219,9 +217,6 @@ export const envSchema = z.object({
   ADMIN_NAME: z.string().optional(),
 
   // House Fleet: the single seeded Host account for CatoDrive's own vehicles.
-  HOUSE_FLEET_EMAIL: z.string().email().optional(),
-  HOUSE_FLEET_PASSWORD: z.string().min(8).optional(),
-  HOUSE_FLEET_NAME: z.string().default('CatoDrive Fleet'),
 });
 
 /**

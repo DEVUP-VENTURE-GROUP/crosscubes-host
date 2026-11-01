@@ -33,7 +33,7 @@ import { hubService } from '../../hubs/application/hub.service';
 
 const router = Router();
 
-// The franchisee's own hub: what they run, what they pay HQ, and what is still missing or expiring.
+// The licence holder's own hub: their share, their licence, and what is still missing or expiring.
 router.get(
   '/hub',
   asyncHandler(async (req, res) => {
@@ -47,10 +47,11 @@ router.get(
       state: hub.state,
       status: hub.status,
       launchedAt: hub.launchedAt,
-      economics: hub.economics,
-      licences: hub.licences.map((l) => ({ id: l._id, kind: l.kind, label: l.label, expiresAt: l.expiresAt })),
+      holderShareBps: await hubService.holderShareBps(hub),
+      licenceExpiresAt: hub.licence?.expiresAt,
+      documents: (hub.documents ?? []).map((d) => ({ id: d._id, kind: d.kind, label: d.label, expiresAt: d.expiresAt })),
       launchBlockers: hub.status === 'setup' ? hubService.launchBlockers(hub) : [],
-      pauseReason: hub.status === 'paused' ? [...hub.timeline].reverse().find((t) => t.event === 'paused')?.note : undefined,
+      pauseReason: hub.status === 'paused' ? hubService.lastPauseNote(hub) : undefined,
     });
   }),
 );

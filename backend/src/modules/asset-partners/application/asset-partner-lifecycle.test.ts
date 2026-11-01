@@ -18,7 +18,6 @@ import { KycModel } from '../../kyc/infrastructure/kyc.model';
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
 import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import { MaintenanceModel } from '../../maintenance/infrastructure/maintenance.model';
-import { TollAccountModel } from '../../tolls/infrastructure/toll.model';
 import { HostStaffModel } from '../../hosts/infrastructure/host-staff.model';
 import { notificationService } from '../../notifications/application/notification.service';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
@@ -226,7 +225,6 @@ describe('returning a car the partner asked for', () => {
     const { userId, partner } = await approved();
     await AssetPartnerModel.updateOne({ _id: partner._id }, { $set: { status: 'active' } });
     const v = await car(partner._id, { tollTagId: 'TAG-778' });
-    await TollAccountModel.create({ agency: 'ntta', nickname: 'Fleet', hostId: 'hf-host', vehicleIds: [String(v._id), 'other-car'] });
     const r = await runner();
 
     await expect(assetPartnerExitService.requestByPartner(userId, { vehicleIds: [String(v._id)], preferredDate: new Date(Date.now() + 5 * DAY), handoverPreference: 'pickup' })).rejects.toThrow('30 days’ notice');
@@ -272,7 +270,6 @@ describe('returning a car the partner asked for', () => {
     const after = await VehicleModel.findById(v._id).lean();
     expect(after?.assetPartnerEndedAt).toBeInstanceOf(Date);
     expect(after?.tollTagId).toBeUndefined();
-    expect((await TollAccountModel.findOne({}).lean())?.vehicleIds).toEqual(['other-car']);
     expect((await assetPartnerService.getById(partner._id)).status).toBe('exited');
     expect(notificationService.send).toHaveBeenLastCalledWith(expect.objectContaining({ userId, templateKey: 'account.asset_partner_return_completed' }));
   });

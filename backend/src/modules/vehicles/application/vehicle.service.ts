@@ -15,7 +15,6 @@ import type { CreateVehicleDto } from '../dto/vehicle.schemas';
 import { vinDecodeService } from './vin-decode.service';
 import { toPublicVehicle } from './vehicle-public';
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
-import { buildDefaultDeliveryLocations, isDallasArea } from './default-delivery';
 
 const KM_PER_MILE = 1.609344;
 
@@ -140,9 +139,8 @@ export class VehicleService implements IVehicleContract {
     const vinVerified = dto.vin ? await this.vinMatches(dto.vin, dto.make, dto.model, dto.year) : false;
 
     const fleetOwned = !!(await userRepository.findById(userId))?.roles?.includes('house_fleet');
-    // A Dallas-area car with no delivery spots gets the standard ones, so guests pick a priced spot, never type one in.
     const deliveryLocations =
-      dto.listing.deliveryLocations ?? (isDallasArea(dto.location.lng, dto.location.lat) ? await buildDefaultDeliveryLocations() : undefined);
+      dto.listing.deliveryLocations;
     const listing = { ...dto.listing, cancellationPolicy: await platformCancellationPolicy() };
 
     const vehicle = await VehicleModel.create({
@@ -186,27 +184,6 @@ export class VehicleService implements IVehicleContract {
       pricing: dto.pricing,
     });
     return vehicle.toObject();
-  }
-
-  /** Gives each Dallas-area car that has no delivery spots the standard priced ones; idempotent, run at boot. */
-  async backfillDefaultDelivery(): Promise<number> {
-    const cars = await VehicleModel.find({
-      deletedAt: null,
-      $or: [{ 'listing.deliveryLocations': { $exists: false } }, { 'listing.deliveryLocations': { $size: 0 } }],
-    })
-      .select('location listing.delivery')
-      .lean<Pick<VehicleDoc, '_id' | 'location' | 'listing'>[]>();
-    const due = cars.filter((c) => isDallasArea(c.location?.coordinates?.[0], c.location?.coordinates?.[1]));
-    if (!due.length) return 0;
-    const template = await buildDefaultDeliveryLocations();
-    for (const c of due) {
-      const locations = normaliseDeliveryLocations(template);
-      await VehicleModel.updateOne(
-        { _id: c._id },
-        { $set: { 'listing.deliveryLocations': locations, 'listing.delivery': legacyDeliveryFrom(locations, c.listing?.delivery) } },
-      );
-    }
-    return due.length;
   }
 
   async getById(vehicleId: string): Promise<VehicleDoc> {

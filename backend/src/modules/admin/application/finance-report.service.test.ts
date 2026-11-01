@@ -9,13 +9,9 @@ import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
 import { UserModel } from '../../users/infrastructure/user.model';
 import { HostModel } from '../../hosts/infrastructure/host.model';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
-import { config } from '../../../config';
+import { HubModel } from '../../hubs/infrastructure/hub.model';
 
-beforeAll(async () => {
-  // The report finds the fleet by configured email; CI has no .env, so pin one.
-  (config.houseFleet as { email?: string }).email = 'fleet@test.local';
-  await connectTestDb();
-});
+beforeAll(connectTestDb);
 afterAll(disconnectTestDb);
 beforeEach(clearTestDb);
 
@@ -77,14 +73,15 @@ describe('revenueBySource', () => {
     expect(sources.find((s) => s.label === 'Host (self-serve)')!.trips).toBe(0);
   });
 
-  it('buckets a booking on the House Fleet host under House Fleet', async () => {
-    const fleetUser = await UserModel.create({ email: config.houseFleet.email, roles: ['host'] });
-    const fleetHost = await HostModel.create({ userId: fleetUser._id, displayName: 'CatoDrive Fleet' });
+  it('buckets a booking on a hub operator’s own host under Hub fleets', async () => {
+    const fleetUser = await UserModel.create({ email: 'ops@houston.example', roles: ['host', 'house_fleet'] });
+    const fleetHost = await HostModel.create({ userId: fleetUser._id, displayName: 'Houston Hub' });
+    await HubModel.collection.insertOne({ _id: 'hub-hou' as never, code: 'HOU', operatorHostId: fleetHost._id });
     await VehicleModel.create(baseVehicle({ _id: 'veh-fleet', hostId: fleetHost._id }));
     await BookingModel.create(baseBooking({ hostId: fleetHost._id, vehicleId: 'veh-fleet' }));
 
     const { sources } = await financeReportService.revenueBySource();
-    expect(sources.find((s) => s.label === 'House Fleet')!.trips).toBe(1);
+    expect(sources.find((s) => s.label === 'Hub fleets')!.trips).toBe(1);
     expect(sources.find((s) => s.label === 'Host (self-serve)')!.trips).toBe(0);
   });
 

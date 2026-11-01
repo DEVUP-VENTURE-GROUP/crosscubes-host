@@ -20,14 +20,13 @@ const hubFor = (operatorUserId: string, status = 'live') =>
   HubModel.create({
     code: 'HOU', name: 'Houston', city: 'Houston', state: 'TX', timezone: 'America/Chicago', status,
     territory: { center: { type: 'Point', coordinates: [-95.37, 29.76] }, radiusMiles: 40 },
-    franchisee: { legalName: 'Bayou Mobility LLC', contactName: 'Ana Ruiz', email: 'ana@example.com' },
-    agreement: { termYears: 10 }, economics: { royaltyPct: 8, techFeePct: 2, marketingFundPct: 2 }, operatorUserId,
+    holder: { legalName: 'Bayou Mobility LLC', contactName: 'Ana Ruiz', email: 'ana@example.com' }, economics: {}, operatorUserId,
   });
 
 const user = async (roles: string[], status = 'active') => String((await UserModel.create({ email: `${roles.join('-')}-${status}@example.com`, roles, status }))._id);
 
 describe('operations panel gate', () => {
-  it('lets a franchisee in with only Asset Partner powers, confined to their own hub', async () => {
+  it('lets a licence holder in with only Asset Partner powers, confined to their own hub', async () => {
     const id = await user(['house_fleet']);
     const hub = await hubFor(id);
     const { err, req, hubInScope } = (await run(requireFleetOwner, id)) as unknown as { err: unknown; req: Request; hubInScope?: string };
@@ -37,7 +36,7 @@ describe('operations panel gate', () => {
     expect(hubInScope).toBe(hub._id);
   });
 
-  it('turns away a franchisee whose hub is closed or who has no hub yet', async () => {
+  it('turns away a licence holder whose hub is closed or who has no hub yet', async () => {
     const noHub = await user(['house_fleet']);
     expect((await run(requireFleetOwner, noHub)).err).toBeTruthy();
     const id = String((await UserModel.create({ email: 'closed@example.com', roles: ['house_fleet'], status: 'active' }))._id);

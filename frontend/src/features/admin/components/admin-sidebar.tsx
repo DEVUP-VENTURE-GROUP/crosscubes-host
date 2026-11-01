@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, Users, BadgeCheck, Car, CalendarCheck, ShieldAlert, LifeBuoy,
   ScanFace, Flag, ScrollText, LayoutGrid, Shield, Percent, SlidersHorizontal, TrendingUp, Star, Layers, Building2, Banknote, Route,
-  Handshake, Receipt, PieChart, Radio, Gift, Umbrella, Milestone,
+  Handshake, Receipt, PieChart, Radio, Gift, Umbrella,
   Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles, Network,
 } from 'lucide-react';
 import { PanelSidebar, type PanelNavItem } from '@/components/layout/panel-sidebar';
@@ -22,7 +22,6 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   vehicles: Car,
   insurance: Umbrella,
   insurers: Shield,
-  tolls: Milestone,
   bookings: CalendarCheck,
   claims: ShieldAlert,
   support: LifeBuoy,

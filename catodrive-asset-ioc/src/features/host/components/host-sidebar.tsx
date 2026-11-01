@@ -27,7 +27,6 @@ export const NAV = [
   { slug: 'operations', label: 'Operations', path: '/ops/operations', group: 'Manage', mobile: false },
   { slug: 'partners', label: 'Asset management', path: '/ops/partners', group: 'Manage', mobile: false },
   { slug: 'team', label: 'Captains', path: '/ops/team', group: 'Manage', mobile: false },
-  { slug: 'tolls', label: 'Toll accounts', path: '/ops/tolls', group: 'Manage' },
   { slug: 'earnings', label: 'Earnings', path: '/ops/earnings', group: 'Money' },
   { slug: 'performance', label: 'Performance', path: '/ops/performance', group: 'Money', mobile: false },
   { slug: 'profile', label: 'Profile', path: '/ops/profile', group: 'Account' },

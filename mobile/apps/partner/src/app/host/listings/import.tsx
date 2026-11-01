@@ -8,7 +8,6 @@ import { LocationSearch, RequireAuth } from '@catodrive/core';
 import { hostApi, type ImportResult, type RowPreview } from '@catodrive/core/web/features/host/api';
 import { DEFAULT_IMPORT_ADDRESS, IMPORT_SAMPLE, importReadiness, parseImport, previewBadge, toImportRows } from '@catodrive/core/web/features/host/fleet-import';
 import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { WheelbaseImport } from '@/features/listings/WheelbaseImport';
 
 const TONE: Record<ReturnType<typeof previewBadge>['tone'], BadgeTone> = { default: 'primary', muted: 'neutral', destructive: 'destructive', warning: 'warning', success: 'success' };
 
@@ -37,7 +36,6 @@ function ImportFleet() {
 
   return (
     <Screen header={<ScreenHeader title="Import your fleet" subtitle="Set your address once, then paste one line per car." onBack={back} />}>
-      <WheelbaseImport />
       <Card style={{ backgroundColor: c.primarySoft, borderColor: c.primary }}>
         <View style={{ flexDirection: 'row', gap: space.sm }}>
           <Wand2 size={18} color={c.primary} />

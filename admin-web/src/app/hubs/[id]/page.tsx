@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,35 +16,37 @@ import { ErrorState } from '@/components/ui/states';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { adminApi } from '@/features/admin/api';
-import { HUB_STATUS_LABEL, HUB_STATUS_TONE, LICENCE_LABEL, type HubDetail, type HubLicence, type LicenceKind } from '@/features/hubs/types';
+import { bpsToPercent, DOCUMENT_LABEL, HUB_STATUS_LABEL, HUB_STATUS_TONE, type DocumentKind, type HubDetail, type HubDocument } from '@/features/hubs/types';
 import { ApiError } from '@/lib/api/types';
-import { formatDate, formatDateTime } from '@/lib/utils/format';
+import { formatDate, formatDateTime, formatMoney } from '@/lib/utils/format';
 import { adminPath } from '@/lib/admin-path';
 import { HubForm } from '../../../features/hubs/hub-form';
 
 const fail = (e: unknown, fallback: string) => (e instanceof ApiError ? e.message : fallback);
 const DAY = 86_400_000;
+const usd = (amount: number) => formatMoney({ amount, currency: 'USD' });
 
 const EVENT_LABEL: Record<string, string> = {
   created: 'Hub created',
   updated: 'Details changed',
-  operator_assigned: 'Franchisee login created',
-  licence_added: 'Licence added',
-  licence_removed: 'Licence removed',
+  operator_assigned: 'Licence holder login created',
+  licence_paid: 'Licence paid',
+  document_added: 'Document added',
+  document_removed: 'Document removed',
   live: 'Went live',
   paused: 'Paused',
   closed: 'Closed',
 };
 
-function expiry(l: HubLicence, now = Date.now()): { tone: 'success' | 'warning' | 'destructive' | 'muted'; text: string } {
-  if (!l.expiresAt) return { tone: 'muted', text: 'No expiry' };
-  const left = new Date(l.expiresAt).getTime() - now;
-  if (left <= 0) return { tone: 'destructive', text: `Expired ${formatDate(l.expiresAt)}` };
-  if (left <= 30 * DAY) return { tone: 'warning', text: `Expires ${formatDate(l.expiresAt)}` };
-  return { tone: 'success', text: `Valid to ${formatDate(l.expiresAt)}` };
+function expiry(iso: string | undefined, now = Date.now()): { tone: 'success' | 'warning' | 'destructive' | 'muted'; text: string } {
+  if (!iso) return { tone: 'muted', text: 'No expiry' };
+  const left = new Date(iso).getTime() - now;
+  if (left <= 0) return { tone: 'destructive', text: `Expired ${formatDate(iso)}` };
+  if (left <= 30 * DAY) return { tone: 'warning', text: `Ends ${formatDate(iso)}` };
+  return { tone: 'success', text: `Valid to ${formatDate(iso)}` };
 }
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</dt>
@@ -59,14 +61,15 @@ export default function HubDetailPage() {
   const toast = useToast();
   const confirm = useConfirm();
   const q = useQuery({ queryKey: ['hub', id], queryFn: () => adminApi.hub(id) });
+  const settings = useQuery({ queryKey: ['admin-config'], queryFn: () => adminApi.config(), staleTime: 5 * 60_000 });
   const [editing, setEditing] = useState(false);
   const [login, setLogin] = useState({ name: '', email: '' });
   const [issued, setIssued] = useState<{ username: string; password?: string } | null>(null);
-  const [lic, setLic] = useState<{ kind: LicenceKind; label: string; number: string; expiresAt: string }>({ kind: 'insurance', label: '', number: '', expiresAt: '' });
-  const [licError, setLicError] = useState<string | null>(null);
+  const [doc, setDoc] = useState<{ kind: DocumentKind; label: string; number: string; expiresAt: string }>({ kind: 'insurance', label: '', number: '', expiresAt: '' });
+  const [docError, setDocError] = useState<string | null>(null);
+  const [pay, setPay] = useState({ paidAt: '', amount: '', reference: '' });
 
-  const refresh = (hub?: HubDetail | unknown) => {
-    if (hub && typeof hub === 'object' && '_id' in hub) qc.setQueryData(['hub', id], (old: HubDetail | undefined) => ({ ...(old ?? {}), ...(hub as HubDetail) }));
+  const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['hub', id] });
     void qc.invalidateQueries({ queryKey: ['hub-overview'] });
   };
@@ -74,7 +77,7 @@ export default function HubDetailPage() {
   const status = useMutation({
     mutationFn: (v: { status: 'live' | 'paused' | 'closed'; note?: string }) => adminApi.setHubStatus(id, v.status, v.note),
     onSuccess: (hub, v) => {
-      refresh(hub);
+      refresh();
       toast({ tone: 'success', title: v.status === 'live' ? `${hub.name} is live` : v.status === 'paused' ? `${hub.name} is paused` : `${hub.name} is closed` });
     },
     onError: (e) => toast({ tone: 'error', title: fail(e, 'We couldn’t change the hub’s status.') }),
@@ -87,19 +90,33 @@ export default function HubDetailPage() {
     },
     onError: (e) => toast({ tone: 'error', title: fail(e, 'We couldn’t create the login.') }),
   });
-  const addLicence = useMutation({
-    mutationFn: () => adminApi.addHubLicence(id, { kind: lic.kind, label: lic.label.trim(), number: lic.number.trim() || undefined, expiresAt: lic.expiresAt || undefined }),
+  const recordPayment = useMutation({
+    mutationFn: () =>
+      adminApi.recordLicencePayment(id, {
+        paidAt: pay.paidAt || undefined,
+        feeCents: pay.amount.trim() === '' ? undefined : Math.round(Number(pay.amount) * 100),
+        reference: pay.reference.trim() || undefined,
+      }),
     onSuccess: (hub) => {
-      refresh(hub);
-      setLic({ kind: 'insurance', label: '', number: '', expiresAt: '' });
-      toast({ tone: 'success', title: 'Licence added' });
+      refresh();
+      setPay({ paidAt: '', amount: '', reference: '' });
+      toast({ tone: 'success', title: 'Licence payment recorded', description: hub.licence.expiresAt ? `Valid to ${formatDate(hub.licence.expiresAt)}.` : undefined });
     },
-    onError: (e) => setLicError(fail(e, 'We couldn’t add the licence.')),
+    onError: (e) => toast({ tone: 'error', title: fail(e, 'We couldn’t record the payment.') }),
   });
-  const removeLicence = useMutation({
-    mutationFn: (licenceId: string) => adminApi.removeHubLicence(id, licenceId),
-    onSuccess: (hub) => refresh(hub),
-    onError: (e) => toast({ tone: 'error', title: fail(e, 'We couldn’t remove the licence.') }),
+  const addDocument = useMutation({
+    mutationFn: () => adminApi.addHubDocument(id, { kind: doc.kind, label: doc.label.trim(), number: doc.number.trim() || undefined, expiresAt: doc.expiresAt || undefined }),
+    onSuccess: () => {
+      refresh();
+      setDoc({ kind: 'insurance', label: '', number: '', expiresAt: '' });
+      toast({ tone: 'success', title: 'Document added' });
+    },
+    onError: (e) => setDocError(fail(e, 'We couldn’t add the document.')),
+  });
+  const removeDocument = useMutation({
+    mutationFn: (documentId: string) => adminApi.removeHubDocument(id, documentId),
+    onSuccess: () => refresh(),
+    onError: (e) => toast({ tone: 'error', title: fail(e, 'We couldn’t remove the document.') }),
   });
 
   if (q.isError && !q.data) return <ErrorState message="We couldn’t load this hub." retry={() => void q.refetch()} />;
@@ -111,18 +128,20 @@ export default function HubDetailPage() {
       </div>
     );
 
-  const hub = q.data;
+  const hub: HubDetail = q.data;
   const closed = hub.status === 'closed';
   const blockers = hub.launchBlockers ?? [];
-  const fees = hub.economics.royaltyPct + hub.economics.techFeePct + hub.economics.marketingFundPct;
   const [lng, lat] = hub.territory.center.coordinates;
+  const price = settings.data?.hubs?.licenceFeeCents;
+  const licence = expiry(hub.licence?.expiresAt);
+  const defaultSharePct = settings.data?.hubs ? settings.data.hubs.holderShareBps / 100 : undefined;
 
   const askReason = async (title: string, label: string, tone: 'default' | 'destructive', requireText?: string) =>
     confirm({ title, tone, confirmLabel: title.replace(/\?$/, ''), reason: { label, required: true }, requireText });
 
   const checklist = [
-    { done: !!hub.operatorUserId, text: 'Franchisee login created' },
-    { done: !!hub.agreement.signedAt, text: 'Franchise agreement signed' },
+    { done: !!hub.operatorUserId, text: 'Licence holder login created' },
+    { done: !blockers.some((b) => b.includes('licence payment') || b.includes('licence ran out')), text: 'Licence paid and in date' },
     { done: !blockers.some((b) => b.includes('insurance')), text: 'Fleet insurance on file and in date' },
     { done: !blockers.some((b) => b.includes('business licence')), text: 'Business licence on file' },
   ];
@@ -141,7 +160,7 @@ export default function HubDetailPage() {
               <h1 className="font-display text-2xl font-bold">{hub.name}</h1>
               <Badge tone={HUB_STATUS_TONE[hub.status]}>{HUB_STATUS_LABEL[hub.status]}</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">{hub.franchisee.legalName} · {hub.city}, {hub.state}{hub.launchedAt ? ` · live since ${formatDate(hub.launchedAt)}` : ''}</p>
+            <p className="text-sm text-muted-foreground">{hub.holder.legalName} · {hub.city}, {hub.state}{hub.launchedAt ? ` · live since ${formatDate(hub.launchedAt)}` : ''}</p>
           </div>
         </div>
         {!closed && (
@@ -162,7 +181,7 @@ export default function HubDetailPage() {
                 variant="outline"
                 loading={status.isPending && status.variables?.status === 'paused'}
                 onClick={async () => {
-                  const r = await askReason('Pause this hub?', 'Why? The franchisee sees this.', 'default');
+                  const r = await askReason('Pause this hub?', 'Why? The licence holder sees this.', 'default');
                   if (r.ok) status.mutate({ status: 'paused', note: r.reason });
                 }}
               >
@@ -189,10 +208,11 @@ export default function HubDetailPage() {
         <div className="max-w-3xl">
           <HubForm
             hub={hub}
+            defaultSharePct={defaultSharePct}
             submitLabel="Save changes"
             onSubmit={async (input) => {
-              const updated = await adminApi.updateHub(id, input);
-              refresh(updated);
+              await adminApi.updateHub(id, input);
+              refresh();
               setEditing(false);
               toast({ tone: 'success', title: 'Hub saved' });
             }}
@@ -215,7 +235,7 @@ export default function HubDetailPage() {
                     ))}
                   </ol>
                   {blockers.length === 0 ? (
-                    <p className="rounded-sm bg-success/10 p-3 text-sm font-medium text-success">Everything is in place. Press Go live when the franchisee is ready to take bookings.</p>
+                    <p className="rounded-sm bg-success/10 p-3 text-sm font-medium text-success">Everything is in place. Press Go live when the holder is ready to take bookings.</p>
                   ) : (
                     <ul className="space-y-1 text-sm text-muted-foreground">{blockers.map((b) => <li key={b}>{b}</li>)}</ul>
                   )}
@@ -224,29 +244,66 @@ export default function HubDetailPage() {
             )}
 
             <Card>
-              <CardHeader><CardTitle>Licences and insurance</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+                <CardTitle>City licence</CardTitle>
+                <Badge tone={hub.licence?.expiresAt ? licence.tone : 'muted'}>{hub.licence?.expiresAt ? licence.text : 'Not paid yet'}</Badge>
+              </CardHeader>
               <CardContent className="space-y-4">
-                {hub.licences.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  One licence covers {settings.data?.hubs?.licenceTermMonths ?? 12} months{price !== undefined ? ` for ${usd(price)}` : ''}. A renewal starts when the current licence ends, so paying early loses no days. If it runs out, the hub pauses until it’s renewed.
+                </p>
+                {hub.licence?.terms?.length ? (
+                  <ul className="divide-y divide-border rounded-lg border border-border text-sm">
+                    {[...hub.licence.terms].reverse().map((t, i) => (
+                      <li key={`${t.paidAt}-${i}`} className="flex flex-wrap items-center justify-between gap-2 p-3">
+                        <span><span className="font-medium tabular-nums">{usd(t.feeCents)}</span> paid {formatDate(t.paidAt)}{t.reference ? <span className="text-muted-foreground"> · {t.reference}</span> : null}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{formatDate(t.startsAt)} to {formatDate(t.expiresAt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {!closed && (
+                  <form
+                    className="grid gap-3 rounded-lg bg-subtle p-4 sm:grid-cols-3"
+                    onSubmit={async (ev) => {
+                      ev.preventDefault();
+                      if (pay.amount.trim() !== '' && !(Number(pay.amount) >= 0)) return toast({ tone: 'error', title: 'Enter the amount in dollars, like 1000.' });
+                      if ((await confirm({ title: 'Record this licence payment?', description: `It adds ${settings.data?.hubs?.licenceTermMonths ?? 12} months to ${hub.name}’s licence.`, confirmLabel: 'Record payment' })).ok) recordPayment.mutate();
+                    }}
+                  >
+                    <Field label="Paid on" htmlFor="pay-date" hint="Blank means today."><Input id="pay-date" type="date" value={pay.paidAt} onChange={(e) => setPay((p) => ({ ...p, paidAt: e.target.value }))} /></Field>
+                    <Field label="Amount (USD)" htmlFor="pay-amount" hint={price !== undefined ? `Blank means ${usd(price)}.` : undefined}><Input id="pay-amount" inputMode="decimal" value={pay.amount} onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value }))} className="tabular-nums" /></Field>
+                    <Field label="Reference" htmlFor="pay-ref" hint="Wire or receipt number."><Input id="pay-ref" value={pay.reference} onChange={(e) => setPay((p) => ({ ...p, reference: e.target.value }))} /></Field>
+                    <div className="flex justify-end sm:col-span-3"><Button type="submit" variant="secondary" loading={recordPayment.isPending}>Record payment</Button></div>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Insurance and documents</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {hub.documents.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Nothing on file yet. The hub needs fleet insurance and a business licence before it can go live.</p>
                 ) : (
                   <ul className="divide-y divide-border rounded-lg border border-border">
-                    {hub.licences.map((l) => {
-                      const e = expiry(l);
+                    {hub.documents.map((d: HubDocument) => {
+                      const e = expiry(d.expiresAt);
                       return (
-                        <li key={l._id} className="flex items-center gap-3 p-3">
+                        <li key={d._id} className="flex items-center gap-3 p-3">
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{l.label}</p>
-                            <p className="truncate text-xs text-muted-foreground">{LICENCE_LABEL[l.kind]}{l.number ? ` · ${l.number}` : ''}</p>
+                            <p className="truncate text-sm font-medium">{d.label}</p>
+                            <p className="truncate text-xs text-muted-foreground">{DOCUMENT_LABEL[d.kind]}{d.number ? ` · ${d.number}` : ''}</p>
                           </div>
                           <Badge tone={e.tone}>{e.text}</Badge>
                           {!closed && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label={`Remove ${l.label}`}
-                              loading={removeLicence.isPending && removeLicence.variables === l._id}
+                              aria-label={`Remove ${d.label}`}
+                              loading={removeDocument.isPending && removeDocument.variables === d._id}
                               onClick={async () => {
-                                if ((await confirm({ title: `Remove ${l.label}?`, tone: 'destructive', confirmLabel: 'Remove' })).ok) removeLicence.mutate(l._id);
+                                if ((await confirm({ title: `Remove ${d.label}?`, tone: 'destructive', confirmLabel: 'Remove' })).ok) removeDocument.mutate(d._id);
                               }}
                             >
                               <Trash2 className="h-4 w-4" aria-hidden />
@@ -262,38 +319,36 @@ export default function HubDetailPage() {
                     className="grid gap-3 rounded-lg bg-subtle p-4 sm:grid-cols-2"
                     onSubmit={(ev) => {
                       ev.preventDefault();
-                      if (lic.label.trim().length < 2) return setLicError('Give it a name, like “Fleet policy 2026”.');
-                      setLicError(null);
-                      addLicence.mutate();
+                      if (doc.label.trim().length < 2) return setDocError('Give it a name, like “Fleet policy 2026”.');
+                      setDocError(null);
+                      addDocument.mutate();
                     }}
                   >
-                    <Field label="Type" htmlFor="lic-kind">
-                      <Select id="lic-kind" value={lic.kind} onChange={(e) => setLic((p) => ({ ...p, kind: e.target.value as LicenceKind }))}>
-                        {Object.entries(LICENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    <Field label="Type" htmlFor="doc-kind">
+                      <Select id="doc-kind" value={doc.kind} onChange={(e) => setDoc((p) => ({ ...p, kind: e.target.value as DocumentKind }))}>
+                        {Object.entries(DOCUMENT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </Select>
                     </Field>
-                    <Field label="Name" htmlFor="lic-label" error={licError ?? undefined}><Input id="lic-label" value={lic.label} onChange={(e) => setLic((p) => ({ ...p, label: e.target.value }))} placeholder="Fleet policy 2026" /></Field>
-                    <Field label="Number" htmlFor="lic-number"><Input id="lic-number" value={lic.number} onChange={(e) => setLic((p) => ({ ...p, number: e.target.value }))} /></Field>
-                    <Field label="Expires" htmlFor="lic-exp"><Input id="lic-exp" type="date" value={lic.expiresAt} onChange={(e) => setLic((p) => ({ ...p, expiresAt: e.target.value }))} /></Field>
-                    <div className="sm:col-span-2 flex justify-end"><Button type="submit" variant="secondary" loading={addLicence.isPending}>Add licence</Button></div>
+                    <Field label="Name" htmlFor="doc-label" error={docError ?? undefined}><Input id="doc-label" value={doc.label} onChange={(e) => setDoc((p) => ({ ...p, label: e.target.value }))} placeholder="Fleet policy 2026" /></Field>
+                    <Field label="Number" htmlFor="doc-number"><Input id="doc-number" value={doc.number} onChange={(e) => setDoc((p) => ({ ...p, number: e.target.value }))} /></Field>
+                    <Field label="Expires" htmlFor="doc-exp"><Input id="doc-exp" type="date" value={doc.expiresAt} onChange={(e) => setDoc((p) => ({ ...p, expiresAt: e.target.value }))} /></Field>
+                    <div className="flex justify-end sm:col-span-2"><Button type="submit" variant="secondary" loading={addDocument.isPending}>Add document</Button></div>
                   </form>
                 )}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Territory and money</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Territory and share</CardTitle></CardHeader>
               <CardContent>
                 <dl className="grid gap-4 sm:grid-cols-3">
                   <Detail label="Area"><span className="tabular-nums">{hub.territory.radiusMiles} mile radius</span>{hub.territory.exclusive ? ', exclusive' : ''}</Detail>
                   <Detail label="Centre"><span className="tabular-nums">{lat.toFixed(4)}, {lng.toFixed(4)}</span></Detail>
                   <Detail label="Time zone">{hub.timezone.replace('_', ' ')}</Detail>
-                  <Detail label="Royalty"><span className="tabular-nums">{hub.economics.royaltyPct}%</span></Detail>
-                  <Detail label="Technology fee"><span className="tabular-nums">{hub.economics.techFeePct}%</span></Detail>
-                  <Detail label="Marketing fund"><span className="tabular-nums">{hub.economics.marketingFundPct}%</span></Detail>
-                  <Detail label="Total to HQ"><span className="font-semibold tabular-nums">{fees}% of gross</span></Detail>
-                  <Detail label="Agreement signed">{hub.agreement.signedAt ? formatDate(hub.agreement.signedAt) : <span className="text-warning">Not yet</span>}</Detail>
-                  <Detail label="Term">{hub.agreement.termYears} years{hub.agreement.endsAt ? `, to ${formatDate(hub.agreement.endsAt)}` : ''}</Detail>
+                  <Detail label="Holder’s share of gross">
+                    <span className="font-semibold tabular-nums">{bpsToPercent(hub.holderShareBps)}</span>
+                    <span className="text-muted-foreground">{hub.economics?.holderShareBps === undefined ? ' (platform setting)' : ' (set for this hub)'}</span>
+                  </Detail>
                 </dl>
               </CardContent>
             </Card>
@@ -301,14 +356,14 @@ export default function HubDetailPage() {
 
           <div className="space-y-6">
             <Card>
-              <CardHeader><CardTitle>Franchisee login</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Licence holder login</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {issued ? (
                   <div className="space-y-3" role="status">
-                    <p className="text-sm">Send these to <span className="font-medium">{hub.franchisee.contactName}</span>. They sign in on the hub portal.</p>
+                    <p className="text-sm">Send these to <span className="font-medium">{hub.holder.contactName}</span>. They sign in on the hub portal.</p>
                     <dl className="space-y-2 rounded-lg bg-subtle p-3 font-mono text-sm">
-                      <div><dt className="text-xs font-sans font-semibold text-muted-foreground">Username</dt><dd className="break-all">{issued.username}</dd></div>
-                      {issued.password && <div><dt className="text-xs font-sans font-semibold text-muted-foreground">Password</dt><dd className="break-all">{issued.password}</dd></div>}
+                      <div><dt className="font-sans text-xs font-semibold text-muted-foreground">Username</dt><dd className="break-all">{issued.username}</dd></div>
+                      {issued.password && <div><dt className="font-sans text-xs font-semibold text-muted-foreground">Password</dt><dd className="break-all">{issued.password}</dd></div>}
                     </dl>
                     {issued.password ? (
                       <>
@@ -333,7 +388,7 @@ export default function HubDetailPage() {
                     )}
                   </div>
                 ) : hub.operatorUserId ? (
-                  <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> Login created. The franchisee signs in on the hub portal.</p>
+                  <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> Login created. The holder signs in on the hub portal.</p>
                 ) : closed ? (
                   <p className="text-sm text-muted-foreground">This hub is closed.</p>
                 ) : (
@@ -345,16 +400,16 @@ export default function HubDetailPage() {
                       createLogin.mutate();
                     }}
                   >
-                    <Field label="Their name" htmlFor="op-name"><Input id="op-name" value={login.name} onChange={(e) => setLogin((p) => ({ ...p, name: e.target.value }))} placeholder={hub.franchisee.contactName} /></Field>
-                    <Field label="Sign-in email" htmlFor="op-email"><Input id="op-email" type="email" value={login.email} onChange={(e) => setLogin((p) => ({ ...p, email: e.target.value }))} placeholder={hub.franchisee.email} /></Field>
+                    <Field label="Their name" htmlFor="op-name"><Input id="op-name" value={login.name} onChange={(e) => setLogin((p) => ({ ...p, name: e.target.value }))} placeholder={hub.holder.contactName} /></Field>
+                    <Field label="Sign-in email" htmlFor="op-email"><Input id="op-email" type="email" value={login.email} onChange={(e) => setLogin((p) => ({ ...p, email: e.target.value }))} placeholder={hub.holder.email} /></Field>
                     <Button type="submit" className="w-full" loading={createLogin.isPending}><KeyRound className="h-4 w-4" aria-hidden /> Create login</Button>
                   </form>
                 )}
                 <dl className="space-y-2 border-t border-border pt-4 text-sm">
-                  <Detail label="Company">{hub.franchisee.legalName}</Detail>
-                  <Detail label="Contact">{hub.franchisee.contactName}</Detail>
-                  <Detail label="Email"><a className="break-all text-primary hover:underline" href={`mailto:${hub.franchisee.email}`}>{hub.franchisee.email}</a></Detail>
-                  {hub.franchisee.phone && <Detail label="Phone"><a className="text-primary hover:underline" href={`tel:${hub.franchisee.phone}`}>{hub.franchisee.phone}</a></Detail>}
+                  <Detail label="Company or name">{hub.holder.legalName}</Detail>
+                  <Detail label="Contact">{hub.holder.contactName}</Detail>
+                  <Detail label="Email"><a className="break-all text-primary hover:underline" href={`mailto:${hub.holder.email}`}>{hub.holder.email}</a></Detail>
+                  {hub.holder.phone && <Detail label="Phone"><a className="text-primary hover:underline" href={`tel:${hub.holder.phone}`}>{hub.holder.phone}</a></Detail>}
                 </dl>
               </CardContent>
             </Card>
@@ -367,7 +422,7 @@ export default function HubDetailPage() {
                     <li key={`${t.at}-${i}`} className="text-sm">
                       <p className="font-medium">{EVENT_LABEL[t.event] ?? t.event}</p>
                       {t.note && <p className="text-muted-foreground">{t.note}</p>}
-                      <p className="text-xs text-muted-foreground">{formatDateTime(t.at)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(t.at)}{t.by === 'system' ? ' · automatic' : ''}</p>
                     </li>
                   ))}
                 </ol>

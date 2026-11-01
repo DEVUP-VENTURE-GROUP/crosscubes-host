@@ -16,7 +16,6 @@ export default function HostMenuScreen() {
         <MenuRow icon={icon(Building2)} label="Fleet" onPress={() => router.push('/host/fleet')} />
         <MenuRow icon={icon(ClipboardList)} label="Operations" onPress={() => router.push('/host/operations')} />
         <MenuRow icon={icon(Users)} label="Captains" onPress={() => router.push('/host/team')} />
-        <MenuRow icon={icon(Receipt)} label="Toll accounts" onPress={() => router.push('/host/tolls')} />
       </MenuSection>
       <MenuSection title="Money">
         <MenuRow icon={icon(BarChart3)} label="Performance" onPress={() => router.push('/host/performance')} />

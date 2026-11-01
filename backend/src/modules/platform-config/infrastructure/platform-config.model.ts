@@ -76,6 +76,16 @@ export interface PlatformConfigDoc {
    * Values default to the terms published on /asset-partners. A negotiated
    * partner overrides individual fields on their own record.
    */
+  /** City licences: what a licence holder pays to run a hub, for how long, and their share of each trip. */
+  hubs: {
+    /** Licence holder share of a hub's gross trip revenue, taken from the management fee. 1000 = 10%. */
+    holderShareBps: number;
+    /** Price of one licence term, in minor units. */
+    licenceFeeCents: number;
+    licenceTermMonths: number;
+    /** Days before expiry the holder and HQ are reminded to renew. */
+    licenceReminderDays: number;
+  };
   assetPartner: {
     /** Management fee on gross booking revenue. 2000 = the published 20%. */
     managementFeeBps: number;
@@ -724,6 +734,12 @@ const schema = new Schema<PlatformConfigDoc>(
       defaultBps: { type: Number, default: 2000 }, // 20%
       minBps: { type: Number, default: 0 },
       maxBps: { type: Number, default: 4000 }, // 40% ceiling — a typo can't take 90%
+    },
+    hubs: {
+      holderShareBps: { type: Number, default: 1000 },
+      licenceFeeCents: { type: Number, default: 100000 },
+      licenceTermMonths: { type: Number, default: 12 },
+      licenceReminderDays: { type: Number, default: 30 },
     },
     // Defaults are the terms published on /asset-partners.
     assetPartner: {

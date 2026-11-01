@@ -18,7 +18,7 @@ import { captainApi } from '~/features/host/team-api';
 import { cn } from '@/lib/utils/cn';
 import { api } from '@/lib/api/client';
 import { formatDate } from '@/lib/utils/format';
-import { LICENCE_LABEL, type HubStatus, type LicenceKind } from '@/features/hubs/types';
+import { DOCUMENT_LABEL, type DocumentKind, type HubStatus } from '@/features/hubs/types';
 
 interface MyHub {
   id: string;
@@ -27,15 +27,17 @@ interface MyHub {
   status: HubStatus;
   launchBlockers: string[];
   pauseReason?: string;
-  licences: { id: string; kind: LicenceKind; label: string; expiresAt?: string }[];
+  licenceExpiresAt?: string;
+  documents: { id: string; kind: DocumentKind; label: string; expiresAt?: string }[];
 }
 
 const SOON = 30 * 86_400_000;
 
-/** Tells the franchisee, above every page, when guests can't book them or a licence is about to lapse. */
+/** Tells the licence holder, above every page, when guests can't book them or the licence or a document is about to lapse. */
 function HubStatusBanner({ hub }: { hub: MyHub }) {
-  const expiring = hub.licences.filter((l) => l.expiresAt && new Date(l.expiresAt).getTime() - Date.now() <= SOON);
-  if (hub.status === 'live' && expiring.length === 0) return null;
+  const expiring = hub.documents.filter((l) => l.expiresAt && new Date(l.expiresAt).getTime() - Date.now() <= SOON);
+  const licenceEnding = !!hub.licenceExpiresAt && new Date(hub.licenceExpiresAt).getTime() - Date.now() <= SOON;
+  if (hub.status === 'live' && expiring.length === 0 && !licenceEnding) return null;
   const warn = hub.status === 'paused' || expiring.some((l) => new Date(l.expiresAt!).getTime() <= Date.now());
   return (
     <div role="status" className={cn('mb-6 rounded-lg border p-4 text-sm', warn ? 'border-warning/40 bg-warning/5' : 'border-border bg-subtle')}>
@@ -46,9 +48,12 @@ function HubStatusBanner({ hub }: { hub: MyHub }) {
         </>
       )}
       {hub.status === 'paused' && <p className="font-semibold">{hub.name} is paused, so guests can’t book right now.{hub.pauseReason ? ` HQ’s note: ${hub.pauseReason}` : ''}</p>}
+      {licenceEnding && hub.status === 'live' && (
+        <p className="font-semibold">Your city licence ends on {formatDate(hub.licenceExpiresAt!)}. Renew it with HQ so your partners’ cars keep taking bookings.</p>
+      )}
       {expiring.map((l) => (
         <p key={l.id} className={hub.status === 'live' ? 'font-semibold' : 'mt-2'}>
-          {LICENCE_LABEL[l.kind]} “{l.label}” {new Date(l.expiresAt!).getTime() <= Date.now() ? 'has expired' : 'expires'} on {formatDate(l.expiresAt!)}. Send HQ the renewal.
+          {DOCUMENT_LABEL[l.kind]} “{l.label}” {new Date(l.expiresAt!).getTime() <= Date.now() ? 'has expired' : 'expires'} on {formatDate(l.expiresAt!)}. Send HQ the renewal.
         </p>
       ))}
     </div>

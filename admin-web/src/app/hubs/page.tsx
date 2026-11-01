@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Building2, Car, Network, Plus, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Building2, Handshake, Network, Plus, UserCheck, Wallet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,8 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/states';
 import { DataTable, type Column } from '@/features/admin/components/data-table';
 import { adminApi } from '@/features/admin/api';
-import { growthPct, HUB_STATUS_LABEL, HUB_STATUS_TONE, type HubPerformance } from '@/features/hubs/types';
-import { formatMoney } from '@/lib/utils/format';
+import { bpsToPercent, growthPct, HUB_STATUS_LABEL, HUB_STATUS_TONE, type HubPerformance } from '@/features/hubs/types';
+import { formatDate, formatMoney } from '@/lib/utils/format';
 import { adminPath } from '@/lib/admin-path';
 
 type Period = 'month' | '30d' | 'quarter' | 'year';
@@ -26,13 +26,14 @@ const PERIODS: { key: Period; label: string }[] = [
   { key: 'quarter', label: 'This quarter' },
   { key: 'year', label: 'This year' },
 ];
+const DAY = 86_400_000;
 
 function rangeFor(p: Period, now = new Date()): { from: string; to: string } {
   const y = now.getUTCFullYear();
   const m = now.getUTCMonth();
   const from =
     p === 'month' ? new Date(Date.UTC(y, m, 1))
-    : p === '30d' ? new Date(now.getTime() - 30 * 86_400_000)
+    : p === '30d' ? new Date(now.getTime() - 30 * DAY)
     : p === 'quarter' ? new Date(Date.UTC(y, m - (m % 3), 1))
     : new Date(Date.UTC(y, 0, 1));
   return { from: from.toISOString(), to: now.toISOString() };
@@ -40,6 +41,7 @@ function rangeFor(p: Period, now = new Date()): { from: string; to: string } {
 
 const usd = (amount: number) => formatMoney({ amount, currency: 'USD' });
 const MONTH = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'UTC' });
+const soon = (iso?: string) => !!iso && new Date(iso).getTime() - Date.now() <= 30 * DAY;
 
 function Growth({ now, before }: { now: number; before: number }) {
   const g = growthPct(now, before);
@@ -51,6 +53,12 @@ function Growth({ now, before }: { now: number; before: number }) {
       {Math.abs(g)}%<span className="sr-only">{up ? ' up' : ' down'} on the previous period</span>
     </span>
   );
+}
+
+function growthLabel(now: number, before: number): string {
+  const g = growthPct(now, before);
+  if (g === null) return 'Nothing to compare with yet';
+  return `${g >= 0 ? 'Up' : 'Down'} ${Math.abs(g)}% on the period before`;
 }
 
 export default function HubNetworkPage() {
@@ -65,8 +73,8 @@ export default function HubNetworkPage() {
     [data],
   );
   const sparkFor = (id: string) => (data?.monthly ?? []).map((m) => m.byHub[id] ?? 0);
-  const ranked = useMemo(() => (data?.hubs ?? []).map((h) => ({ ...h, _id: h.id })).sort((a, b) => b.gmv - a.gmv), [data]);
-  const attention = ranked.filter((h) => h.licencesExpiringSoon > 0 || h.status === 'paused');
+  const ranked = useMemo(() => (data?.hubs ?? []).map((h) => ({ ...h, _id: h.id })).sort((a, b) => b.gross - a.gross), [data]);
+  const attention = ranked.filter((h) => h.status === 'paused' || h.documentsExpiringSoon > 0 || (h.status !== 'setup' && soon(h.licenceExpiresAt)));
 
   const columns: Column<HubPerformance & { _id: string }>[] = [
     {
@@ -87,23 +95,28 @@ export default function HubNetworkPage() {
         <div className="flex flex-col items-start gap-0.5">
           <Badge tone={HUB_STATUS_TONE[h.status]}>{HUB_STATUS_LABEL[h.status]}</Badge>
           {h.status === 'setup' && h.blockers > 0 && <span className="text-xs text-muted-foreground tabular-nums">{h.blockers} step{h.blockers === 1 ? '' : 's'} to launch</span>}
-          {h.licencesExpiringSoon > 0 && <span className="text-xs font-medium text-warning">Licence expiring</span>}
+          {h.licenceExpiresAt ? (
+            <span className={`text-xs ${soon(h.licenceExpiresAt) ? 'font-medium text-warning' : 'text-muted-foreground'}`}>Licence to {formatDate(h.licenceExpiresAt)}</span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Licence not paid</span>
+          )}
         </div>
       ),
     },
     {
       header: 'Gross',
       numeric: true,
-      sortValue: (h) => h.gmv,
+      sortValue: (h) => h.gross,
       cell: (h) => (
         <div className="flex flex-col items-end">
-          <span className="font-semibold tabular-nums">{usd(h.gmv)}</span>
-          <Growth now={h.gmv} before={h.previousGmv} />
+          <span className="font-semibold tabular-nums">{usd(h.gross)}</span>
+          <Growth now={h.gross} before={h.previousGross} />
         </div>
       ),
     },
-    { header: 'Owed to HQ', numeric: true, sortValue: (h) => h.owedToHq, cell: (h) => <span className="tabular-nums">{usd(h.owedToHq)}<span className="block text-xs text-muted-foreground">{h.feePct}% of gross</span></span> },
-    { header: 'Trips', numeric: true, sortValue: (h) => h.trips, cell: (h) => <span className="tabular-nums">{h.trips.toLocaleString()}</span>, hideOnMobile: true },
+    { header: 'HQ keeps', numeric: true, sortValue: (h) => h.hqShare, cell: (h) => <span className="font-medium tabular-nums">{usd(h.hqShare)}</span> },
+    { header: 'Holder', numeric: true, sortValue: (h) => h.holderShare, cell: (h) => <span className="tabular-nums">{usd(h.holderShare)}<span className="block text-xs text-muted-foreground">{bpsToPercent(h.holderShareBps)}</span></span>, hideOnMobile: true },
+    { header: 'Partners', numeric: true, sortValue: (h) => h.partnerShare, cell: (h) => <span className="tabular-nums">{usd(h.partnerShare)}<span className="block text-xs text-muted-foreground">{h.partners} active</span></span>, hideOnMobile: true },
     { header: 'Cars live', numeric: true, sortValue: (h) => h.listedCars, cell: (h) => <span className="tabular-nums">{h.listedCars}<span className="text-muted-foreground"> / {h.cars}</span></span>, hideOnMobile: true },
     { header: '6 months', cell: (h) => <div className="w-24"><Sparkline data={sparkFor(h.id)} /></div>, hideOnMobile: true },
   ];
@@ -113,9 +126,9 @@ export default function HubNetworkPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Franchise"
+        eyebrow="Cities"
         title="Hub network"
-        description={data ? `${data.totals.live} of ${data.totals.hubs} hub${data.totals.hubs === 1 ? '' : 's'} live. Gross is every paid, active and completed trip, the same as Reports.` : 'Every hub side by side.'}
+        description={data ? `${data.totals.live} of ${data.totals.hubs} hub${data.totals.hubs === 1 ? '' : 's'} live. Gross counts paid, active and completed trips, the same as Reports.` : 'Every city side by side.'}
         actions={
           <Link href={adminPath('hubs/new')}>
             <Button><Plus className="h-4 w-4" aria-hidden /> New hub</Button>
@@ -141,7 +154,7 @@ export default function HubNetworkPage() {
             <EmptyState
               icon={<Network className="h-6 w-6" />}
               title="No hubs yet"
-              description="A hub is one city run by one franchisee. Create the first one with its area, money terms and franchisee, then work through the launch checklist."
+              description="A hub is one city run by one licence holder. Create it with its area and holder, record the licence payment, then work through the launch checklist."
               action={<Link href={adminPath('hubs/new')}><Button><Plus className="h-4 w-4" aria-hidden /> Create the first hub</Button></Link>}
             />
           </CardContent>
@@ -149,10 +162,10 @@ export default function HubNetworkPage() {
       ) : (
         <>
           <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Network totals">
-            <StatTile tone="primary" icon={<Building2 className="h-5 w-5" />} label="Network gross" value={usd(data.totals.gmv)} sub={growthLabel(data.totals.gmv, data.totals.previousGmv)} />
-            <StatTile tone="primary" icon={<Wallet className="h-5 w-5" />} label="Owed to HQ" value={usd(data.totals.owedToHq)} sub="Royalty, tech fee and marketing fund" />
-            <StatTile icon={<Network className="h-5 w-5" />} label="Live hubs" value={`${data.totals.live} / ${data.totals.hubs}`} sub={data.totals.hubs - data.totals.live > 0 ? `${data.totals.hubs - data.totals.live} getting ready or paused` : 'All hubs taking bookings'} />
-            <StatTile icon={<Car className="h-5 w-5" />} label="Cars live" value={data.totals.listedCars.toLocaleString()} sub={`${data.totals.trips.toLocaleString()} trips this period`} />
+            <StatTile tone="primary" icon={<Building2 className="h-5 w-5" />} label="Network gross" value={usd(data.totals.gross)} sub={growthLabel(data.totals.gross, data.totals.previousGross)} />
+            <StatTile tone="primary" icon={<Wallet className="h-5 w-5" />} label="HQ keeps" value={usd(data.totals.hqShare)} sub="After partners and licence holders" />
+            <StatTile icon={<UserCheck className="h-5 w-5" />} label="Licence holders" value={usd(data.totals.holderShare)} sub={`${data.totals.live} of ${data.totals.hubs} hubs live`} />
+            <StatTile icon={<Handshake className="h-5 w-5" />} label="Asset Partners" value={usd(data.totals.partnerShare)} sub={`${data.totals.listedCars.toLocaleString()} cars live · ${data.totals.trips.toLocaleString()} trips`} />
           </section>
 
           {(attention.length > 0 || data.unassigned.trips > 0) && (
@@ -162,7 +175,11 @@ export default function HubNetworkPage() {
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
                   <span>
                     <span className="font-semibold">{h.name}</span>{' '}
-                    {h.status === 'paused' ? 'is paused and not taking bookings.' : `has ${h.licencesExpiringSoon} licence${h.licencesExpiringSoon === 1 ? '' : 's'} expiring within 30 days.`}
+                    {h.status === 'paused'
+                      ? 'is paused and not taking bookings.'
+                      : soon(h.licenceExpiresAt)
+                        ? `’s licence ends on ${formatDate(h.licenceExpiresAt!)}.`
+                        : `has ${h.documentsExpiringSoon} document${h.documentsExpiringSoon === 1 ? '' : 's'} expiring within 30 days.`}
                   </span>
                 </Link>
               ))}
@@ -170,7 +187,7 @@ export default function HubNetworkPage() {
                 <p className="flex items-start gap-3 rounded-lg border border-border bg-subtle p-4 text-sm">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   <span>
-                    <span className="font-semibold tabular-nums">{data.unassigned.trips} trip{data.unassigned.trips === 1 ? '' : 's'} ({usd(data.unassigned.gmv)})</span> came from cars outside every hub’s area, so no hub is credited for them.
+                    <span className="font-semibold tabular-nums">{data.unassigned.trips} trip{data.unassigned.trips === 1 ? '' : 's'} ({usd(data.unassigned.gross)})</span> came from cars outside every hub’s area, so no hub is credited for them.
                   </span>
                 </p>
               )}
@@ -203,10 +220,4 @@ export default function HubNetworkPage() {
       )}
     </div>
   );
-}
-
-function growthLabel(now: number, before: number): string {
-  const g = growthPct(now, before);
-  if (g === null) return 'Nothing to compare with yet';
-  return `${g >= 0 ? 'Up' : 'Down'} ${Math.abs(g)}% on the period before`;
 }
