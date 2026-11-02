@@ -40,6 +40,8 @@ export const envSchema = z.object({
    */
   PUBLIC_API_URL: optional(z.string().url()),
   APP_NAME: z.string().default('CatoDrive'),
+  // Tags every Stripe payment, so a webhook shared with another system on the same Stripe account acts only on its own.
+  APP_KEY: z.string().regex(/^[a-z0-9-]+$/).default('crosscubes'),
 
   /**
    * Secret base path for the admin console, e.g. `your-secret-admin-path`.

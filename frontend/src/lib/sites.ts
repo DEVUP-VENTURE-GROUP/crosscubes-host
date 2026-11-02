@@ -5,16 +5,16 @@ const DEV = process.env.NODE_ENV !== 'production';
 const origin = (value: string | undefined, dev: string, prod: string) => (value ?? (DEV ? dev : prod)).replace(/\/$/, '');
 
 /** The guest website (catodrive.com). */
-export const GUEST_SITE = origin(process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000', 'https://www.catodrive.com');
+export const GUEST_SITE = origin(process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000', 'https://www.crosscubes.com');
 
-/** The host website: self-serve hosts and their captains. */
-export const HOST_SITE = origin(process.env.NEXT_PUBLIC_HOST_URL, 'http://localhost:3020', 'https://host.catodrive.com');
+/** Host and captain pages live in the hub portal; there is no separate host site. */
+export const HOST_SITE = origin(process.env.NEXT_PUBLIC_HOST_URL ?? process.env.NEXT_PUBLIC_CATODRIVE_ASSET_IOC_URL, 'http://localhost:3030', 'https://hub.crosscubes.com');
 
 /** The partner website: the Asset Partner portal. */
-export const PARTNER_SITE = origin(process.env.NEXT_PUBLIC_PARTNER_URL, 'http://localhost:3010', 'https://partners.catodrive.com');
+export const PARTNER_SITE = origin(process.env.NEXT_PUBLIC_PARTNER_URL, 'http://localhost:3010', 'https://partners.crosscubes.com');
 
-/** CatoDrive's operations panel, including its secret path (e.g. https://assets-ioc.catodrive.com/<slug>); no public path maps to it. */
-export const IOC_SITE = origin(process.env.NEXT_PUBLIC_CATODRIVE_ASSET_IOC_URL, 'http://localhost:3030', 'https://assets-ioc.catodrive.com');
+/** The hub portal licence holders sign in to. */
+export const IOC_SITE = origin(process.env.NEXT_PUBLIC_CATODRIVE_ASSET_IOC_URL, 'http://localhost:3030', 'https://hub.crosscubes.com');
 
 export type Site = 'guest' | 'host' | 'partner' | 'ioc';
 

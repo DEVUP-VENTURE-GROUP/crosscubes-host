@@ -81,7 +81,7 @@ class StripeIdentityProvider implements IdentityProvider {
   async createSession(userId: string): Promise<IdentitySession> {
     const vs = await this.stripe.identity.verificationSessions.create({
       type: 'document',
-      metadata: { userId },
+      metadata: { userId, app: config.app.key },
       options: {
         document: {
           // The two checks that make this worth doing: a live selfie matched to
@@ -132,6 +132,8 @@ class StripeIdentityProvider implements IdentityProvider {
     if (!event.type.startsWith('identity.verification_session.')) return null;
 
     const vs = event.data.object as Stripe.Identity.VerificationSession;
+    // The Stripe account is shared: an ID check started by the other system (untagged there) is not ours.
+    if (vs.metadata?.app !== config.app.key) return null;
     const userId = (vs.metadata?.userId as string) ?? '';
     if (!userId) return null;
 

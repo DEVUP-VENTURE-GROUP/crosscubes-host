@@ -2,6 +2,8 @@ import { api } from '@/lib/api/client';
 import type { Insurer, InsurerPayout, InsurerPlan, InsurerSummary } from '@/features/insurers/api';
 import type { Booking } from '@/features/bookings/types';
 import type { Hub, HubDetail, HubDocumentInput, HubInput, HubStatus, NetworkOverview } from '@/features/hubs/types';
+import type { HubApplicationRow, HubApplicationStatus, HubRejectionReason } from '@/features/hubs/applications-api';
+import type { PersonSummary } from '@/features/people/types';
 
 export interface AdminMetrics {
   users: { total: number; active: number; suspended: number; newThisWeek: number };
@@ -499,6 +501,10 @@ export const adminApi = {
   recordLicencePayment: (id: string, body: { paidAt?: string; feeCents?: number; reference?: string }) => api.post<Hub>(`/admin/hubs/${id}/licence-payments`, body),
   addHubDocument: (id: string, body: HubDocumentInput) => api.post<Hub>(`/admin/hubs/${id}/documents`, body),
   removeHubDocument: (id: string, documentId: string) => api.delete<Hub>(`/admin/hubs/${id}/documents/${documentId}`),
+  hubApplications: (status?: HubApplicationStatus) => api.get<HubApplicationRow[]>('/admin/hub-applications', status ? { status } : {}),
+  hubApplication: (id: string) => api.get<HubApplicationRow & { account: PersonSummary | null; reasons: Record<HubRejectionReason, { why: string; improve: string }> }>(`/admin/hub-applications/${id}`),
+  approveHubApplication: (id: string, body: { hub: Pick<HubInput, 'code' | 'name' | 'timezone' | 'territory' | 'economics'>; note?: string }) => api.post<HubApplicationRow>(`/admin/hub-applications/${id}/approve`, body),
+  rejectHubApplication: (id: string, body: { reasons: HubRejectionReason[]; note?: string }) => api.post<HubApplicationRow>(`/admin/hub-applications/${id}/reject`, body),
 
   tickets: (q: Q = {}) => api.get<any[]>('/admin/tickets', q),
   ticket: (id: string) => api.get<any>(`/admin/tickets/${id}`),

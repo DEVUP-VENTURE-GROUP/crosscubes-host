@@ -152,6 +152,8 @@ export class HubService {
   /** A licence payment adds one term, starting when the current one ends so an early renewal loses no days. */
   async recordLicencePayment(id: string, input: { paidAt?: Date; feeCents?: number; reference?: string }, by: string, now = new Date()): Promise<HubDoc> {
     const hub = await this.get(id);
+    // The webhook and the payer's page can both report the same payment; it counts once.
+    if (input.reference && hub.licence?.terms?.some((t) => t.reference === input.reference)) return hub;
     if (hub.status === 'closed') throw new ValidationError('A closed hub can’t take a licence payment.');
     const cfg = (await platformConfigService.get()).hubs;
     const startsAt = hub.licence?.expiresAt && hub.licence.expiresAt > now ? hub.licence.expiresAt : now;
@@ -159,7 +161,7 @@ export class HubService {
     const term = { feeCents: input.feeCents ?? cfg.licenceFeeCents, paidAt: input.paidAt ?? now, startsAt, expiresAt, reference: input.reference, by };
     const updated = await HubModel.findOneAndUpdate(
       // Matching the expiry we read stops two payments both extending from the same date.
-      { _id: id, 'licence.expiresAt': hub.licence?.expiresAt ?? null },
+      { _id: id, 'licence.expiresAt': hub.licence?.expiresAt ?? null, ...(input.reference ? { 'licence.terms.reference': { $ne: input.reference } } : {}) },
       {
         $set: { 'licence.expiresAt': expiresAt, ...(hub.licence?.startsAt ? {} : { 'licence.startsAt': startsAt }) },
         $push: { 'licence.terms': term, timeline: { at: now, by, event: 'licence_paid', note: `Valid to ${longDate(expiresAt)}` } },

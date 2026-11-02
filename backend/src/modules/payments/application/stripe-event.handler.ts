@@ -9,6 +9,8 @@ import { chargebackService } from './chargeback.service';
 import { emit } from '../../../shared/events/event-bus';
 import { EVENTS } from '../../../core/events/event-names';
 import { logger } from '../../../infrastructure/logging/logger';
+import { config } from '../../../config';
+import { hubApplicationService } from '../../hubs/application/hub-application.service';
 
 /**
  * Handle one verified Stripe event and record the outcome.
@@ -28,12 +30,18 @@ export async function runStripeEvent(event: {
   try {
     const obj = event.data.object as {
       id: string;
-      metadata?: { bookingId?: string; userId?: string };
+      metadata?: { bookingId?: string; userId?: string; app?: string; kind?: string; applicationId?: string };
       last_payment_error?: { message?: string };
     };
+    // The Stripe account is shared with another system, whose payments reach this webhook too.
+    if (event.type.startsWith('payment_intent.') && obj.metadata?.app !== config.app.key) {
+      await WebhookEventModel.updateOne({ _id: event.id }, { status: 'processed', processedAt: new Date(), $unset: { payload: 1 } });
+      return;
+    }
     const bookingId = obj.metadata?.bookingId;
     switch (event.type) {
       case 'payment_intent.succeeded':
+        if (obj.metadata?.kind === 'hub_licence' && obj.metadata.applicationId) await hubApplicationService.recordPayment(obj.metadata.applicationId, obj.id);
         if (bookingId) {
           await paymentService.recordIntentSucceeded(obj.id);
           emit(EVENTS.PAYMENT_SUCCEEDED, bookingId, { bookingId });

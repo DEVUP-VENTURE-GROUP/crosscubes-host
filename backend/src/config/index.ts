@@ -68,6 +68,7 @@ export const config = Object.freeze({
   },
   app: {
     name: env.APP_NAME,
+    key: env.APP_KEY,
     port: env.PORT,
     host: env.HOST,
     apiPrefix: env.API_PREFIX,

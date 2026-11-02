@@ -86,7 +86,7 @@ export class StripeGateway implements PaymentGateway {
             ? { automatic_payment_methods: { enabled: true }, ...(input.customerId ? { customer: input.customerId } : {}) }
             : { payment_method_types: ['card'] }),
           ...(input.saveCard ? { setup_future_usage: 'off_session' as const, ...(input.customerId ? { customer: input.customerId } : {}) } : {}),
-          metadata: { userId: input.userId, ...input.metadata },
+          metadata: { userId: input.userId, ...input.metadata, app: config.app.key },
           ...(offSession
             ? {
                 customer: input.customerId,

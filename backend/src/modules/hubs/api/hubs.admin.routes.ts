@@ -9,6 +9,9 @@ import { validate } from '../../../shared/middleware/validate';
 import { sendCreated, sendSuccess } from '../../../shared/http/api-response';
 import { PERMISSIONS } from '../../../shared/constants/rbac';
 import { ValidationError } from '../../../core/errors/app-error';
+import { hubApplicationService, REJECTION_TEXT } from '../application/hub-application.service';
+import { HUB_APPLICATION_STATUSES, HUB_REJECTION_REASONS } from '../infrastructure/hub-application.model';
+import { personSummary } from '../../people/application/person-summary.service';
 
 const router = Router();
 const MANAGE = PERMISSIONS.HUB_MANAGE;
@@ -143,6 +146,41 @@ router.delete(
   authorize(MANAGE),
   asyncHandler(async (req, res) => {
     sendSuccess(res, await hubService.removeDocument(req.params.id, req.params.documentId, req.principal!.userId));
+  }),
+);
+
+router.get(
+  '/hub-applications',
+  validate({ query: z.object({ status: z.enum(HUB_APPLICATION_STATUSES).optional() }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hubApplicationService.list(req.query as never));
+  }),
+);
+
+router.get(
+  '/hub-applications/:id',
+  asyncHandler(async (req, res) => {
+    const app = await hubApplicationService.get(req.params.id);
+    res.set('Cache-Control', 'private, no-store');
+    sendSuccess(res, { ...app, account: await personSummary(app.userId, { visibility: 'staff' }), reasons: REJECTION_TEXT });
+  }),
+);
+
+router.post(
+  '/hub-applications/:id/approve',
+  authorize(MANAGE),
+  validate({ body: z.object({ hub: hubBody.pick({ code: true, name: true, timezone: true, territory: true, economics: true }), note: z.string().trim().max(1000).optional() }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hubApplicationService.approve(req.params.id, req.principal!.userId, req.body.hub, req.body.note));
+  }),
+);
+
+router.post(
+  '/hub-applications/:id/reject',
+  authorize(MANAGE),
+  validate({ body: z.object({ reasons: z.array(z.enum(HUB_REJECTION_REASONS)).min(1), note: z.string().trim().max(1000).optional() }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hubApplicationService.reject(req.params.id, req.principal!.userId, req.body.reasons, req.body.note));
   }),
 );
 
