@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, Car, TrendingUp, Wrench, User, LayoutGrid, Store, Route, BarChart3, Users, Milestone, Handshake, Inbox } from 'lucide-react';
+import { LayoutDashboard, Car, TrendingUp, Wrench, User, LayoutGrid, Store, Route, BarChart3, Users, Handshake, Inbox, MapPin } from 'lucide-react';
 import { PanelSidebar } from '@/components/layout/panel-sidebar';
 import { useHostMe } from '~/features/host/hooks';
 import { useAttention } from '~/features/host/use-attention';
@@ -14,9 +14,9 @@ export const ICONS = {
   earnings: TrendingUp,
   operations: Wrench,
   team: Users,
-  tolls: Milestone,
   partners: Handshake,
   profile: User,
+  hub: MapPin,
 };
 
 export const NAV = [
@@ -29,6 +29,7 @@ export const NAV = [
   { slug: 'team', label: 'Captains', path: '/ops/team', group: 'Manage', mobile: false },
   { slug: 'earnings', label: 'Earnings', path: '/ops/earnings', group: 'Money' },
   { slug: 'performance', label: 'Performance', path: '/ops/performance', group: 'Money', mobile: false },
+  { slug: 'hub', label: 'My hub', path: '/ops/hub', group: 'Money' },
   { slug: 'profile', label: 'Profile', path: '/ops/profile', group: 'Account' },
 ];
 

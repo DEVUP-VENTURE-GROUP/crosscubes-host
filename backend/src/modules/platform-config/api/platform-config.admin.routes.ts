@@ -99,6 +99,7 @@ router.put(
           licenceFeeCents: cents.optional(),
           licenceTermMonths: z.number().int().min(1).max(60).optional(),
           licenceReminderDays: z.number().int().min(1).max(120).optional(),
+          payoutDayOfMonth: z.number().int().min(1).max(28).optional(),
         })
         .optional(),
       // Asset Partner programme defaults. A management fee is only one of the

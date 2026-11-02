@@ -195,7 +195,7 @@ describe('HQ network analytics', () => {
       vehicleId,
       status,
       createdAt: new Date(now.getTime() - daysAgo * DAY),
-      priceBreakdown: { total: { amount, currency: 'USD' } },
+      priceBreakdown: { subtotal: { amount, currency: 'USD' }, total: { amount: amount + 999, currency: 'USD' } },
     });
     await BookingModel.collection.insertMany([
       trip(hou._id, std._id, 50_000),

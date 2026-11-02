@@ -21,6 +21,7 @@ import { ApiError } from '@/lib/api/types';
 import { formatDate, formatDateTime, formatMoney } from '@/lib/utils/format';
 import { adminPath } from '@/lib/admin-path';
 import { HubForm } from '../../../features/hubs/hub-form';
+import { HubPayoutsCard } from '../../../features/hubs/payouts-card';
 
 const fail = (e: unknown, fallback: string) => (e instanceof ApiError ? e.message : fallback);
 const DAY = 86_400_000;
@@ -413,6 +414,8 @@ export default function HubDetailPage() {
                 </dl>
               </CardContent>
             </Card>
+
+            {hub.operatorUserId && <HubPayoutsCard hubId={hub._id} />}
 
             <Card>
               <CardHeader><CardTitle>History</CardTitle></CardHeader>

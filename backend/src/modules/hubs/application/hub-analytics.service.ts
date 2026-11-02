@@ -5,7 +5,7 @@ import { platformConfigService } from '../../platform-config/application/platfor
 import { HubModel, type HubDoc } from '../infrastructure/hub.model';
 import { hubService } from './hub.service';
 
-// Same trips the finance report counts as revenue.
+// Same trips the finance report counts; amounts are the trip subtotal (before tax and protection), the base partner statements split.
 const EARNING = ['paid', 'in_progress', 'completed'];
 const DAY = 86_400_000;
 
@@ -46,7 +46,7 @@ const monthKey = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 
 async function grossByHubAndCar(from: Date, to: Date) {
   return BookingModel.aggregate<{ _id: { hub: string | null; car: string }; trips: number; gross: number }>([
     { $match: { createdAt: { $gte: from, $lt: to }, status: { $in: EARNING } } },
-    { $group: { _id: { hub: { $ifNull: ['$hubId', null] }, car: '$vehicleId' }, trips: { $sum: 1 }, gross: { $sum: '$priceBreakdown.total.amount' } } },
+    { $group: { _id: { hub: { $ifNull: ['$hubId', null] }, car: '$vehicleId' }, trips: { $sum: 1 }, gross: { $sum: '$priceBreakdown.subtotal.amount' } } },
   ]).exec();
 }
 
@@ -74,7 +74,7 @@ export class HubAnalyticsService {
       countByHub(AssetPartnerModel, { status: 'active' }),
       BookingModel.aggregate<{ _id: { hub: string; month: string }; gross: number }>([
         { $match: { createdAt: { $gte: trendFrom, $lt: to }, status: { $in: EARNING }, hubId: { $type: 'string' } } },
-        { $group: { _id: { hub: '$hubId', month: { $dateToString: { format: '%Y-%m', date: '$createdAt' } } }, gross: { $sum: '$priceBreakdown.total.amount' } } },
+        { $group: { _id: { hub: '$hubId', month: { $dateToString: { format: '%Y-%m', date: '$createdAt' } } }, gross: { $sum: '$priceBreakdown.subtotal.amount' } } },
       ]).exec(),
     ]);
 

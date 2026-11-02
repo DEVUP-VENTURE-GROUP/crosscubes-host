@@ -85,6 +85,8 @@ export interface PlatformConfigDoc {
     licenceTermMonths: number;
     /** Days before expiry the holder and HQ are reminded to renew. */
     licenceReminderDays: number;
+    /** Day of the month last month's holder statements are written. */
+    payoutDayOfMonth: number;
   };
   assetPartner: {
     /** Management fee on gross booking revenue. 2000 = the published 20%. */
@@ -740,6 +742,7 @@ const schema = new Schema<PlatformConfigDoc>(
       licenceFeeCents: { type: Number, default: 100000 },
       licenceTermMonths: { type: Number, default: 12 },
       licenceReminderDays: { type: Number, default: 30 },
+      payoutDayOfMonth: { type: Number, default: 5 },
     },
     // Defaults are the terms published on /asset-partners.
     assetPartner: {

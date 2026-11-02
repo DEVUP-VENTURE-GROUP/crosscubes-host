@@ -117,3 +117,18 @@ export function growthPct(now: number, before: number): number | null {
   if (before <= 0) return null;
   return Math.round(((now - before) / before) * 100);
 }
+
+export type HubPayoutMethod = 'bank_transfer' | 'zelle' | 'check' | 'other';
+export const PAYOUT_METHOD_LABEL: Record<HubPayoutMethod, string> = { bank_transfer: 'Bank transfer', zelle: 'Zelle', check: 'Check', other: 'Other' };
+
+export interface HubPayout {
+  _id: string;
+  hubId: string;
+  period: string;
+  trips: number;
+  grossCents: number;
+  holderShareBps: number;
+  amountCents: number;
+  status: 'pending' | 'paid';
+  paid?: { at: string; method: HubPayoutMethod; reference?: string };
+}

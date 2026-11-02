@@ -128,7 +128,7 @@ export default function HubNetworkPage() {
       <PageHeader
         eyebrow="Cities"
         title="Hub network"
-        description={data ? `${data.totals.live} of ${data.totals.hubs} hub${data.totals.hubs === 1 ? '' : 's'} live. Gross counts paid, active and completed trips, the same as Reports.` : 'Every city side by side.'}
+        description={data ? `${data.totals.live} of ${data.totals.hubs} hub${data.totals.hubs === 1 ? '' : 's'} live. Gross is the rental price of paid, active and completed trips, before tax and protection.` : 'Every city side by side.'}
         actions={
           <Link href={adminPath('hubs/new')}>
             <Button><Plus className="h-4 w-4" aria-hidden /> New hub</Button>

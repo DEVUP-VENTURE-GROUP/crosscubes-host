@@ -30,6 +30,7 @@ import { authorize } from '../../../shared/middleware/authorize';
 import { validate } from '../../../shared/middleware/validate';
 import { sendCreated, sendSuccess } from '../../../shared/http/api-response';
 import { hubService } from '../../hubs/application/hub.service';
+import { hubPayoutService } from '../../hubs/application/hub-payout.service';
 
 const router = Router();
 
@@ -53,6 +54,14 @@ router.get(
       launchBlockers: hub.status === 'setup' ? hubService.launchBlockers(hub) : [],
       pauseReason: hub.status === 'paused' ? hubService.lastPauseNote(hub) : undefined,
     });
+  }),
+);
+
+router.get(
+  '/hub/payouts',
+  asyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    sendSuccess(res, await hubPayoutService.forHub(req.principal!.hubId!));
   }),
 );
 

@@ -1,4 +1,5 @@
 import { hubService } from '../modules/hubs/application/hub.service';
+import { hubPayoutService } from '../modules/hubs/application/hub-payout.service';
 import { inspectionService } from '../modules/trips/application/inspection.service';
 import { tripService } from '../modules/trips/application/trip.service';
 import { makeQueue, makeWorker } from '../infrastructure/queue/bullmq.client';
@@ -163,6 +164,12 @@ const JOBS: JobDef[] = [
     name: 'hub-licences',
     everyMs: 60 * MIN,
     run: () => hubService.sweepLicences(),
+  },
+  {
+    // Last month's licence holder statements, written once the payout day arrives.
+    name: 'hub-payouts',
+    everyMs: 60 * MIN,
+    run: () => hubPayoutService.run(),
   },
   {
     // Partner signing windows: open the ones that should exist, remind before they end, tell partners when one ends.

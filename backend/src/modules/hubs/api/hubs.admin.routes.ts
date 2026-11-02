@@ -12,6 +12,8 @@ import { ValidationError } from '../../../core/errors/app-error';
 import { hubApplicationService, REJECTION_TEXT } from '../application/hub-application.service';
 import { HUB_APPLICATION_STATUSES, HUB_REJECTION_REASONS } from '../infrastructure/hub-application.model';
 import { personSummary } from '../../people/application/person-summary.service';
+import { hubPayoutService } from '../application/hub-payout.service';
+import { HUB_PAYOUT_METHODS } from '../infrastructure/hub-payout.model';
 
 const router = Router();
 const MANAGE = PERMISSIONS.HUB_MANAGE;
@@ -181,6 +183,30 @@ router.post(
   validate({ body: z.object({ reasons: z.array(z.enum(HUB_REJECTION_REASONS)).min(1), note: z.string().trim().max(1000).optional() }) }),
   asyncHandler(async (req, res) => {
     sendSuccess(res, await hubApplicationService.reject(req.params.id, req.principal!.userId, req.body.reasons, req.body.note));
+  }),
+);
+
+router.get(
+  '/hubs/:id/payouts',
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hubPayoutService.forHub(req.params.id));
+  }),
+);
+
+router.get(
+  '/hub-payouts/pending',
+  authorize(PERMISSIONS.PAYOUT_MANAGE),
+  asyncHandler(async (_req, res) => {
+    sendSuccess(res, await hubPayoutService.pending());
+  }),
+);
+
+router.post(
+  '/hub-payouts/:id/paid',
+  authorize(PERMISSIONS.PAYOUT_MANAGE),
+  validate({ body: z.object({ method: z.enum(HUB_PAYOUT_METHODS), reference: z.string().trim().max(120).optional() }) }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hubPayoutService.markPaid(req.params.id, req.body, req.principal!.userId));
   }),
 );
 
