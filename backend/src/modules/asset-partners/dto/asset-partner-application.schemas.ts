@@ -89,6 +89,7 @@ export const signAgreementSchema = z.object({
   acceptAgreement: mustAccept,
   acceptNda: mustAccept,
   acknowledgeDeductibles: mustAccept,
+  emailCode: z.string().trim().regex(/^d{6}$/, 'Enter the 6-digit code we emailed you'),
 });
 
 export const reviewApplicationSchema = z.object({
