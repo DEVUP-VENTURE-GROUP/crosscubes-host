@@ -11,6 +11,7 @@ import { EVENTS } from '../../../core/events/event-names';
 import { logger } from '../../../infrastructure/logging/logger';
 import { config } from '../../../config';
 import { hubApplicationService } from '../../hubs/application/hub-application.service';
+import { assetPartnerFeeService, FEE_KIND } from '../../asset-partners/application/asset-partner-fee.service';
 
 /**
  * Handle one verified Stripe event and record the outcome.
@@ -63,11 +64,19 @@ export async function runStripeEvent(event: {
         if (meta?.kind === 'security_deposit') await depositService.syncOnPage(obj.id);
         break;
       }
+      // The Asset Partner fee is paid on Stripe's hosted page, outside any booking.
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
+        const meta = (event.data.object as { metadata?: { kind?: string } }).metadata;
+        if (meta?.kind === FEE_KIND) await assetPartnerFeeService.onCheckoutCompleted(obj.id);
+        break;
+      }
       case 'charge.refunded': {
         // Book any refund we did not make ourselves (e.g. from the Stripe dashboard).
         const charge = event.data.object as { payment_intent?: string; amount_refunded?: number };
         if (charge.payment_intent && typeof charge.amount_refunded === 'number') {
           await dashboardRefundService.reconcile(charge.payment_intent, charge.amount_refunded);
+          await assetPartnerFeeService.reconcileRefund(charge.payment_intent, charge.amount_refunded);
         }
         if (bookingId) emit(EVENTS.PAYMENT_REFUNDED, bookingId, { bookingId });
         break;

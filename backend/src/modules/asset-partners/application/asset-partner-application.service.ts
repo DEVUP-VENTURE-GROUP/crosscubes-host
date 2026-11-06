@@ -27,6 +27,7 @@ import { DocumentModel } from '../../documents/infrastructure/document.model';
 import type { RejectionReason } from '../infrastructure/asset-partner-application.model';
 import type { PartnerProfile } from '../infrastructure/asset-partner.model';
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
+import { assetPartnerFeeService } from './asset-partner-fee.service';
 import { logger } from '../../../infrastructure/logging/logger';
 
 /** "CD-AP-482913" — server-generated, never client-supplied. */
@@ -76,7 +77,7 @@ function fieldsFrom(dto: PortalApplicationDto) {
 
 export type ReviewDecision = 'approved' | 'changes_requested' | 'rejected';
 
-export type OnboardingStage = 'verify_email' | 'apply' | 'review' | 'changes' | 'rejected' | 'profile' | 'identity' | 'agreement' | 'agreement_expired' | 'documents' | 'payout' | 'ready';
+export type OnboardingStage = 'verify_email' | 'apply' | 'review' | 'changes' | 'rejected' | 'profile' | 'identity' | 'fee' | 'agreement' | 'agreement_expired' | 'documents' | 'payout' | 'ready';
 
 export interface RejectionInput {
   reasons: RejectionReason[];
@@ -100,6 +101,7 @@ export interface PartnerOnboarding {
   profile?: PartnerProfile & { ownPhone?: string };
   identity?: Pick<PartnerIdentity, 'state' | 'reason'>;
   offer?: OfferState | null;
+  fee?: { amountCents: number; currency: string };
   rejection?: { reasons: { code: RejectionReason; label: string; why: string; improve: string }[]; improvements?: string; reapplyAfter?: Date; canReapply: boolean };
 }
 
@@ -290,7 +292,12 @@ export class AssetPartnerApplicationService {
     const enrolled = await assetPartnerService.getByUserId(userId);
     if (enrolled) {
       void assetPartnerProfileService.touch(userId);
-      const partner = await assetPartnerOfferService.open(enrolled).catch(() => enrolled);
+      const opened = await assetPartnerOfferService.open(enrolled).catch(() => enrolled);
+      // A partner back from Stripe's page moves on even if the webhook hasn't arrived yet.
+      const partner = await assetPartnerFeeService.sync(opened).catch((err) => {
+        logger.warn({ err, partnerId: opened._id }, 'fee sync failed');
+        return opened;
+      });
       const stage = await assetPartnerService.portalStage(partner);
       const summary = { displayName: partner.displayName, status: partner.status };
       const offer = assetPartnerOfferService.state(partner);
@@ -303,6 +310,9 @@ export class AssetPartnerApplicationService {
         // A result that just arrived from Stripe moves them straight on.
         if (assetPartnerProfileService.isIdentityDone(identity)) return this.onboarding(userId);
         return { ...base, stage, partner: summary, offer, identity: { state: identity.state, reason: identity.reason } };
+      }
+      if (stage === 'fee') {
+        return { ...base, stage, partner: summary, offer, fee: { amountCents: partner.joiningFee!.amountCents, currency: partner.joiningFee!.currency } };
       }
       if (stage === 'agreement') {
         const docs = await assetPartnerAgreementService.forPartner(partner);
@@ -468,6 +478,7 @@ export class AssetPartnerApplicationService {
     decision: ReviewDecision,
     notes?: string,
     rejection?: RejectionInput,
+    joiningFeeCents?: number,
   ): Promise<AssetPartnerApplicationDoc> {
     const app = await AssetPartnerApplicationModel.findById(id);
     if (!app) throw new NotFoundError('Application');
@@ -504,6 +515,7 @@ export class AssetPartnerApplicationService {
       });
       app.partnerId = partner._id;
       hostVerified = true;
+      await assetPartnerFeeService.setAtApproval(partner._id, joiningFeeCents, reviewerId);
       // The signing window opens now if the agreement and NDA are already published.
       await assetPartnerOfferService.open(partner).catch((err) => logger.warn({ err, partnerId: partner._id }, 'agreement offer not opened'));
       if (accountCreated) {
