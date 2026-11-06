@@ -159,6 +159,7 @@ export class PlatformConfigService {
       hubs: { holderShareBps: 1000, licenceFeeCents: 100000, licenceTermMonths: 12, licenceReminderDays: 30, payoutDayOfMonth: 5, ...(doc.hubs ?? {}) },
       assetPartner: {
         managementFeeBps: 2000,
+        minSeasonMonths: 2,
         insuranceMonthlyCents: 13_700,
         detailingMonthlyCents: 5_000,
         deductibleCapCents: 100_000,
