@@ -23,6 +23,8 @@ export interface PlatformPublicConfig {
   checkout?: { otherMethodsEnabled: boolean };
   /** The published Asset Partner management fee; the owner keeps the rest. */
   assetPartner?: { managementFeeBps: number };
+  /** Set only while admin has the site-wide notice switched on. */
+  siteNotice?: { message: string } | null;
   auth?: { phoneSignIn: boolean };
   /** Protection tiers a guest can buy at checkout; priced per day in cents. */
   protection: { code: string; label: string; description: string; pricePerDay: number }[];
