@@ -82,7 +82,7 @@ export interface PlatformConfig {
     returnPhotoMin?: number;
     minSeasonMonths?: number;
     joiningFeeEnabled?: boolean;
-    joiningFeeCents?: number;
+    registrationPlatformFeeCents?: number;
     exitSeparateApprover?: boolean;
   };
   payout: { holdHours: number; instantFeeBps: number; instantFeeMinCents: number };
