@@ -149,6 +149,26 @@ describe('city hubs', () => {
   });
 });
 
+describe('hub delivery spots', () => {
+  const AIRPORT = { kind: 'airport' as const, name: 'George Bush Intercontinental', address: '2800 N Terminal Rd, Houston, TX', lat: 29.99, lng: -95.34, fee: 5500, minTripDays: 2, accessMethod: 'in_person' as const };
+
+  it('saves the hub’s priced places, hands them to new cars there, and refuses a closed hub', async () => {
+    const hub = await hubService.create(input(), 'hq');
+    expect(await hubService.deliveryLocationsFor(hub._id)).toBeUndefined();
+
+    const saved = await hubService.setDeliverySpots(hub._id, [AIRPORT], 'hq');
+    expect(saved.deliverySpots).toEqual([AIRPORT]);
+    expect(saved.timeline.at(-1)).toMatchObject({ event: 'delivery_spots', note: '1 spot' });
+    expect(await hubService.deliveryLocationsFor(hub._id)).toEqual([{ ...AIRPORT, enabled: true }]);
+
+    await hubService.setDeliverySpots(hub._id, [], 'hq');
+    expect(await hubService.deliveryLocationsFor(hub._id)).toBeUndefined();
+
+    await HubModel.updateOne({ _id: hub._id }, { status: 'closed' });
+    await expect(hubService.setDeliverySpots(hub._id, [AIRPORT], 'hq')).rejects.toThrow('not found');
+  });
+});
+
 describe('hub isolation', () => {
   it('a holder sees, changes and creates records only in their own hub', async () => {
     const a = await car('hub-a');

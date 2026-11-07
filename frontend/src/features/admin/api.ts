@@ -1,7 +1,7 @@
 import { api } from '@/lib/api/client';
 import type { Insurer, InsurerPayout, InsurerPlan, InsurerSummary } from '@/features/insurers/api';
 import type { Booking } from '@/features/bookings/types';
-import type { Hub, HubDetail, HubDocumentInput, HubInput, HubPayout, HubPayoutMethod, HubStatus, NetworkOverview } from '@/features/hubs/types';
+import type { Hub, HubDetail, DeliverySpot, HubDocumentInput, HubInput, HubPayout, HubPayoutMethod, HubStatus, NetworkOverview } from '@/features/hubs/types';
 import type { HubApplicationRow, HubApplicationStatus, HubRejectionReason } from '@/features/hubs/applications-api';
 import type { PersonSummary } from '@/features/people/types';
 
@@ -58,7 +58,7 @@ export interface PlatformConfig {
    * − detailing, which no commission rate can express.
    */
   /** City licences: price, length, reminder and the holder's default share of gross. */
-  hubs?: { holderShareBps: number; licenceFeeCents: number; licenceTermMonths: number; licenceReminderDays: number };
+  hubs?: { holderShareBps: number; licenceFeeCents: number; licenceTermMonths: number; licenceReminderDays: number; payoutDayOfMonth: number };
   assetPartner: {
     managementFeeBps: number;
     insuranceMonthlyCents: number;
@@ -501,6 +501,7 @@ export const adminApi = {
   recordLicencePayment: (id: string, body: { paidAt?: string; feeCents?: number; reference?: string }) => api.post<Hub>(`/admin/hubs/${id}/licence-payments`, body),
   addHubDocument: (id: string, body: HubDocumentInput) => api.post<Hub>(`/admin/hubs/${id}/documents`, body),
   removeHubDocument: (id: string, documentId: string) => api.delete<Hub>(`/admin/hubs/${id}/documents/${documentId}`),
+  setHubDeliverySpots: (id: string, spots: DeliverySpot[]) => api.put<Hub>(`/admin/hubs/${id}/delivery-spots`, { spots }),
   hubPayouts: (id: string) => api.get<HubPayout[]>(`/admin/hubs/${id}/payouts`),
   markHubPayoutPaid: (id: string, body: { method: HubPayoutMethod; reference?: string }) => api.post<HubPayout>(`/admin/hub-payouts/${id}/paid`, body),
   hubApplications: (status?: HubApplicationStatus) => api.get<HubApplicationRow[]>('/admin/hub-applications', status ? { status } : {}),

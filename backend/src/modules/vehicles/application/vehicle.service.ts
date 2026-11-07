@@ -139,13 +139,14 @@ export class VehicleService implements IVehicleContract {
     const vinVerified = dto.vin ? await this.vinMatches(dto.vin, dto.make, dto.model, dto.year) : false;
 
     const fleetOwned = !!(await userRepository.findById(userId))?.roles?.includes('house_fleet');
-    const deliveryLocations =
-      dto.listing.deliveryLocations;
+    const hubId = await hubService.hubForCar(host.hubId, dto.location.lng, dto.location.lat);
+    // A car with no delivery places of its own starts with its hub's standard priced ones.
+    const deliveryLocations = dto.listing.deliveryLocations ?? (hubId ? await hubService.deliveryLocationsFor(hubId) : undefined);
     const listing = { ...dto.listing, cancellationPolicy: await platformCancellationPolicy() };
 
     const vehicle = await VehicleModel.create({
       hostId: host._id,
-      hubId: await hubService.hubForCar(host.hubId, dto.location.lng, dto.location.lat),
+      hubId,
       fleetOwned,
       make: dto.make,
       model: dto.model,

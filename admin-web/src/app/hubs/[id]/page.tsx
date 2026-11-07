@@ -22,6 +22,7 @@ import { formatDate, formatDateTime, formatMoney } from '@/lib/utils/format';
 import { adminPath } from '@/lib/admin-path';
 import { HubForm } from '../../../features/hubs/hub-form';
 import { HubPayoutsCard } from '../../../features/hubs/payouts-card';
+import { DeliverySpotsCard } from '../../../features/hubs/delivery-spots-card';
 
 const fail = (e: unknown, fallback: string) => (e instanceof ApiError ? e.message : fallback);
 const DAY = 86_400_000;
@@ -338,6 +339,8 @@ export default function HubDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            <DeliverySpotsCard hubId={hub._id} spots={hub.deliverySpots ?? []} readOnly={closed} />
 
             <Card>
               <CardHeader><CardTitle>Territory and share</CardTitle></CardHeader>

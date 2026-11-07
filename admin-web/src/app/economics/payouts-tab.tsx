@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Gift, Car } from 'lucide-react';
+import { Clock, Gift, Car, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
@@ -52,6 +52,35 @@ export function PayoutsTab({ draft, set }: TabProps) {
         </Card>
 
       </div>
+      {draft.hubs && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" /> City licences</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-3">
+            <Field label="Licence price ($)" hint="What a new or renewing licence holder pays.">
+              <Input type="number" min={0} value={toDollars(draft.hubs.licenceFeeCents)}
+                onChange={(e) => set((d) => { d.hubs!.licenceFeeCents = toCents(e.target.value); })} />
+            </Field>
+            <Field label="Licence length (months)">
+              <Input type="number" min={1} max={60} value={draft.hubs.licenceTermMonths}
+                onChange={(e) => set((d) => { d.hubs!.licenceTermMonths = Number(e.target.value); })} />
+            </Field>
+            <Field label="Holder share of each trip %" hint="Taken from the management fee. A hub can override it.">
+              <Input type="number" step="0.5" min={0} max={50} value={toPct(draft.hubs.holderShareBps)}
+                onChange={(e) => set((d) => { d.hubs!.holderShareBps = toBps(e.target.value); })} />
+            </Field>
+            <Field label="Renewal reminder (days before)">
+              <Input type="number" min={1} max={120} value={draft.hubs.licenceReminderDays}
+                onChange={(e) => set((d) => { d.hubs!.licenceReminderDays = Number(e.target.value); })} />
+            </Field>
+            <Field label="Holder payout day" hint="Day of the month last month’s statements are written.">
+              <Input type="number" min={1} max={28} value={draft.hubs.payoutDayOfMonth}
+                onChange={(e) => set((d) => { d.hubs!.payoutDayOfMonth = Number(e.target.value); })} />
+            </Field>
+          </CardContent>
+        </Card>
+      )}
         </>
     </>
   );

@@ -33,6 +33,7 @@ export interface Hub {
   economics: { holderShareBps?: number };
   licence: { startsAt?: string; expiresAt?: string; terms: LicenceTerm[] };
   documents: HubDocument[];
+  deliverySpots: DeliverySpot[];
   timeline: { at: string; by: string; event: string; note?: string }[];
   launchedAt?: string;
   createdAt: string;
@@ -131,4 +132,15 @@ export interface HubPayout {
   amountCents: number;
   status: 'pending' | 'paid';
   paid?: { at: string; method: HubPayoutMethod; reference?: string };
+}
+
+export interface DeliverySpot {
+  kind: 'airport' | 'hotel' | 'business';
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  fee: number;
+  minTripDays: number;
+  accessMethod: 'lockbox' | 'remote_unlock' | 'in_person';
 }

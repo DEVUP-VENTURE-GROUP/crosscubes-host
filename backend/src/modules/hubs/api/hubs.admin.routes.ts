@@ -125,6 +125,32 @@ router.post(
   }),
 );
 
+router.put(
+  '/hubs/:id/delivery-spots',
+  authorize(MANAGE),
+  validate({
+    body: z.object({
+      spots: z
+        .array(
+          z.object({
+            kind: z.enum(['airport', 'hotel', 'business']),
+            name: z.string().trim().min(2).max(120),
+            address: z.string().trim().max(300),
+            lat: z.number().min(-90).max(90),
+            lng: z.number().min(-180).max(180),
+            fee: z.number().int().min(0).max(100_000),
+            minTripDays: z.number().int().min(0).max(30),
+            accessMethod: z.enum(['lockbox', 'remote_unlock', 'in_person']),
+          }),
+        )
+        .max(15),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await hubService.setDeliverySpots(req.params.id, req.body.spots, req.principal!.userId));
+  }),
+);
+
 router.post(
   '/hubs/:id/documents',
   authorize(MANAGE),

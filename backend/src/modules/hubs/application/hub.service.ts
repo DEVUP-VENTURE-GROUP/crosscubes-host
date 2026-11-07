@@ -1,5 +1,5 @@
 import { randomInt } from 'crypto';
-import { HubModel, type HubDoc, type HubStatus, type LicenceKind } from '../infrastructure/hub.model';
+import { HubModel, type DeliverySpot, type HubDoc, type HubStatus, type LicenceKind } from '../infrastructure/hub.model';
 import { UserModel } from '../../users/infrastructure/user.model';
 import { userRepository } from '../../users/infrastructure/user.repository';
 import { hostService } from '../../hosts/application/host.service';
@@ -254,6 +254,23 @@ export class HubService {
     );
     if (!updated.modifiedCount) throw new ConflictError('Someone else just set this hub’s login. Reload and try again.', 'HUB_CHANGED');
     return { username: email, password };
+  }
+
+  async setDeliverySpots(id: string, spots: DeliverySpot[], by: string): Promise<HubDoc> {
+    const updated = await HubModel.findOneAndUpdate(
+      { _id: id, status: { $ne: 'closed' } },
+      { $set: { deliverySpots: spots }, $push: { timeline: { at: new Date(), by, event: 'delivery_spots', note: `${spots.length} spot${spots.length === 1 ? '' : 's'}` } } },
+      { new: true },
+    ).lean<HubDoc>();
+    if (!updated) throw new NotFoundError('Hub');
+    return updated;
+  }
+
+  /** The hub's standard spots in the shape a car's delivery list takes, so a new car starts with priced places. */
+  async deliveryLocationsFor(hubId: string) {
+    const hub = await HubModel.findById(hubId).select('deliverySpots').lean<Pick<HubDoc, 'deliverySpots'>>();
+    if (!hub?.deliverySpots?.length) return undefined;
+    return hub.deliverySpots.map((s) => ({ ...s, enabled: true }));
   }
 
   async addDocument(id: string, input: DocumentInput, by: string): Promise<HubDoc> {

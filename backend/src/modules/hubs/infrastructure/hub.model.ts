@@ -28,6 +28,18 @@ export interface LicenceTerm {
   by: string;
 }
 
+/** A standard delivery place for the hub (an airport, a hotel), copied onto new cars there. */
+export interface DeliverySpot {
+  kind: 'airport' | 'hotel' | 'business';
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  fee: number;
+  minTripDays: number;
+  accessMethod: 'lockbox' | 'remote_unlock' | 'in_person';
+}
+
 export interface HubDoc {
   _id: string;
   /** Short unique tag shown everywhere a hub is named, e.g. HOU. */
@@ -48,6 +60,7 @@ export interface HubDoc {
   licence: { startsAt?: Date; expiresAt?: Date; terms: LicenceTerm[]; remindedFor?: Date };
   /** Insurance, permits and registrations the holder must keep in date. */
   documents: HubDocument[];
+  deliverySpots: DeliverySpot[];
   timeline: { at: Date; by: string; event: string; note?: string }[];
   applicationId?: string;
   launchedAt?: Date;
@@ -107,6 +120,10 @@ const schema = new Schema<HubDoc>(
           { _id: false },
         ),
       ],
+      default: [],
+    },
+    deliverySpots: {
+      type: [new Schema({ kind: String, name: String, address: String, lat: Number, lng: Number, fee: Number, minTripDays: Number, accessMethod: String }, { _id: false })],
       default: [],
     },
     timeline: { type: [new Schema({ at: Date, by: String, event: String, note: String }, { _id: false })], default: [] },

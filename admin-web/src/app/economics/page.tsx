@@ -79,6 +79,7 @@ function Economics() {
       save.mutate({
         serviceFee: draft.serviceFee,
         payout: draft.payout,
+        ...(draft.hubs ? { hubs: draft.hubs } : {}),
         incidentals: draft.incidentals,
         rewards: draft.rewards,
         protection: draft.protection,
