@@ -4,11 +4,11 @@ const PROD = process.env.NODE_ENV === 'production';
 const origin = (value, dev, prod) => (value ?? (PROD ? prod : dev)).replace(/\/$/, '');
 
 // Pages that live on the other websites, kept in step with siteForPath() in src/lib/sites.ts.
-const PARTNER_SITE = origin(process.env.NEXT_PUBLIC_PARTNER_URL, 'http://localhost:3010', 'https://partners.crosscubes.com');
+const PARTNER_SITE = origin(process.env.NEXT_PUBLIC_PARTNER_URL, 'http://localhost:4010', 'https://partners.crosscubes.com');
 
 const SITE_SECTIONS = [
   // The host website (self-serve hosts and their captains) - see host-web/.
-  { origin: origin(process.env.NEXT_PUBLIC_HOST_URL, 'http://localhost:3020', 'https://host.crosscubes.com'), sections: ['/host', '/captain'] },
+  { origin: origin(process.env.NEXT_PUBLIC_HOST_URL, 'http://localhost:4020', 'https://host.crosscubes.com'), sections: ['/host', '/captain'] },
   // The partner website (the Asset Partner portal) - see partner-web/.
   {
     origin: PARTNER_SITE,

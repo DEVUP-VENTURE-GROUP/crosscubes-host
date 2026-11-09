@@ -1,5 +1,23 @@
 # CrossCubes — Deployment Runbook
 
+## 0. Working on it locally (the team)
+
+| App | Folder | Local address | Settings file (copy from) |
+|---|---|---|---|
+| API | `backend/` | http://localhost:4400 | `backend/.env` (`.env.example`) |
+| Guest site | `frontend/` | http://localhost:4000 | `.env.local` (`.env.local.example`) |
+| HQ admin | `admin-web/` | http://localhost:4005/admin/login | `.env.local` (`.env.local.example`) |
+| Partner portal | `partner-web/` | http://localhost:4010 | `.env.local` (`.env.local.example`) |
+| City panel | `crosscubes-hub/` | http://localhost:4030 | `.env.local` (`.env.local.example`) |
+| Mobile apps | `mobile/apps/*` | Expo | `.env.local` (`.env.local.example`) |
+
+1. In each folder: `npm ci`, then copy the example settings file as shown.
+2. Start a local MongoDB replica set and Redis (commands are in `backend/.env.example`), then `npm run dev` in `backend/` and in each site.
+3. Use Stripe **test** keys only. With no Stripe key the API takes payments through a built-in mock.
+4. Every app has a `.env.production.example` listing what production needs; real values live only on the server and in Vercel, never in Git.
+
+CatoDrive uses ports 3000–3030 and 8080, so both projects can run side by side.
+
 CrossCubes runs on its own server, database, Redis and file storage, separate from CatoDrive.
 For now it shares two CatoDrive accounts: **Stripe** (payments) and the **email sender**.
 API on **AWS EC2**, websites on **Vercel**, DNS on **Cloudflare** (`crosscubes.com`).
@@ -25,7 +43,7 @@ placeholder secrets, half-set S3). Work through the checklist and it starts.
 ### 1.1 Instance
 - Ubuntu 22.04 LTS, t3.small to start (t3.medium if more than a few cities are live). Region us-east-1.
 - An Elastic IP attached, so the address never changes.
-- Security group inbound: 22 from your IP only, 80 and 443 from anywhere. Never 8080.
+- Security group inbound: 22 from your IP only, 80 and 443 from anywhere. Never 4400.
 - Install Node 20, nginx, certbot and pm2:
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -37,7 +55,7 @@ sudo npm i -g pm2
 ```bash
 git clone https://github.com/DEVUP-VENTURE-GROUP/crosscubes-host.git && cd crosscubes-host/backend
 npm ci
-nano .env                 # paste the production settings, see 1.3; never commit this file
+cp .env.production.example .env && nano .env   # fill in the blanks, see 1.3; never commit this file
 npm run build
 pm2 start dist/main.js --name crosscubes-api
 pm2 save && pm2 startup   # run the command it prints, so it survives reboots
@@ -75,7 +93,7 @@ server {
   server_name api.crosscubes.com;
   client_max_body_size 2m;
   location / {
-    proxy_pass http://127.0.0.1:8080;
+    proxy_pass http://127.0.0.1:4400;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;

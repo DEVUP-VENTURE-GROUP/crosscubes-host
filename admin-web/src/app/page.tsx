@@ -54,7 +54,7 @@ export default function AdminDashboard() {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Business</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatTile tone="primary" icon={<TrendingUp className="h-5 w-5" />} label="GMV" value={formatMoney({ amount: data.bookings.gmv, currency: cur })} sub={`${data.bookings.total} bookings`} href={adminPath('reports?tab=money')} />
-          <StatTile tone="primary" icon={<Wallet className="h-5 w-5" />} label="Platform revenue" value={formatMoney({ amount: data.revenue.platform, currency: cur })} sub="Commission + protection" href={adminPath('reports?tab=sources')} />
+          <StatTile tone="primary" icon={<Wallet className="h-5 w-5" />} label="Platform revenue" value={formatMoney({ amount: data.revenue.platform, currency: cur })} sub="Fees and protection" href={adminPath('reports?tab=sources')} />
           <StatTile icon={<Users className="h-5 w-5" />} label="Users" value={data.users.total.toLocaleString()} href={adminPath('users')} sub={`+${data.users.newThisWeek} this week`} />
           <StatTile icon={<Car className="h-5 w-5" />} label="Vehicles listed" value={data.vehicles.listed.toLocaleString()} href={adminPath('vehicles')} sub={`${data.vehicles.pendingVerification} pending verification`} />
         </div>

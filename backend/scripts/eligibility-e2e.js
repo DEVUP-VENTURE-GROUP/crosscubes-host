@@ -17,7 +17,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const API = process.env.API || 'http://localhost:8080/api/v1';
+const API = process.env.API || 'http://localhost:4400/api/v1';
 
 let pass = 0;
 let fail = 0;

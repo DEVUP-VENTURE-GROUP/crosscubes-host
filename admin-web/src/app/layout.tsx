@@ -5,7 +5,7 @@ import { Providers } from '@/app/providers';
 import { AdminChrome } from './admin-chrome';
 
 /**
- * Root shell for the standalone admin application (port 3005).
+ * Root shell for the standalone admin application (port 4005).
  *
  * Reuses the public app's Providers, design tokens and font pairing from
  * ../frontend/src, so the console is identical without a second copy of any of

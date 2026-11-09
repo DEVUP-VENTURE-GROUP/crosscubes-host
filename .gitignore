@@ -39,3 +39,8 @@ Thumbs.db
 # get-ride-in or main. This entry is a structural guard: even if the folder
 # is ever present in this working tree by accident, it can never be staged.
 get-your-ride/
+
+# Templates with no secrets are shared; every real env file stays out.
+!**/.env.example
+!**/.env.local.example
+!**/.env.production.example
