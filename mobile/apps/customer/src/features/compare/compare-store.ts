@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { toggleCompare } from '@catodrive/core/web/features/vehicles/compare';
+import { toggleCompare } from '@crosscubes/core/web/features/vehicles/compare';
 
 /** The compare tray: up to three cars, kept while the app runs. */
 export const useCompareStore = create<{ ids: string[]; toggle: (id: string) => void; remove: (id: string) => void; clear: () => void }>((set) => ({

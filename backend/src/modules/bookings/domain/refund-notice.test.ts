@@ -33,7 +33,7 @@ describe('cancellationNotice', () => {
     expect(n.body).toContain('The $2.50 service fee isn’t refunded');
     expect(n.body).toContain('refunding $100.00 and keeping $102.50');
     expect(n.body).toContain('$80.00 goes back to your card');
-    expect(n.body).toContain('$20.00 is back in your CatoDrive wallet now');
+    expect(n.body).toContain('$20.00 is back in your CrossCubes wallet now');
     expect(n.facts).toEqual([
       { label: 'Refunded', value: '$100.00' },
       { label: 'Kept', value: '$102.50' },
@@ -57,11 +57,11 @@ describe('cancellationNotice', () => {
     expect(n.body).toContain('Strict policy, cancelling less than 7 days ahead isn’t refundable, so we’ve kept $202.50');
   });
 
-  it('gives a full refund when the host or CatoDrive cancels, even without a kept figure', () => {
+  it('gives a full refund when the host or CrossCubes cancels, even without a kept figure', () => {
     expect(cancellationNotice({ cancelledBy: 'host', currency: 'USD', refunded: 20_250, kept: 0, toCard: 20_250 }).body).toMatch(/^Your host cancelled your booking, so you get a full refund of \$202\.50/);
     const system = cancellationNotice({ cancelledBy: 'system', currency: 'USD', refunded: 20_250 });
     expect(system.title).toBe('Booking cancelled · $202.50 refunded');
-    expect(system.body).toContain('CatoDrive cancelled your booking');
+    expect(system.body).toContain('CrossCubes cancelled your booking');
     expect(system.body).not.toContain('haven’t been charged');
   });
 

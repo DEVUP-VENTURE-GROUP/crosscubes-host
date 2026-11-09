@@ -2,11 +2,11 @@ import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, Trash2 } from 'lucide-react-native';
-import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, Skeleton, Text, useConfirm, useTheme, useToast, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
+import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, Skeleton, Text, useConfirm, useTheme, useToast, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
 import { usePayments } from '@/features/payments/usePayments';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 function Payments() {
   const { c } = useTheme();

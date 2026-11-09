@@ -4,14 +4,14 @@ import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { KeyRound, Monitor, Star } from 'lucide-react-native';
-import { Badge, Button, Card, Input, Screen, ScreenHeader, Section, Skeleton, Text, useConfirm, useTheme, useToast, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
-import { formatDate } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Input, Screen, ScreenHeader, Section, Skeleton, Text, useConfirm, useTheme, useToast, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
+import { formatDate } from '@crosscubes/core/web/lib/utils/format';
 
 function shortUa(ua?: string): string {
   if (!ua) return 'Unknown device';
-  if (/catodrive|expo|okhttp|cfnetwork/i.test(ua)) return 'CatoDrive app';
+  if (/crosscubes|catodrive|expo|okhttp|cfnetwork/i.test(ua)) return 'CrossCubes app';
   if (/mobile/i.test(ua)) return 'Mobile browser';
   if (/chrome/i.test(ua)) return 'Chrome';
   if (/firefox/i.test(ua)) return 'Firefox';

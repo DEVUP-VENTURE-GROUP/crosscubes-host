@@ -2,12 +2,12 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Car, ChevronRight, Plus, Sparkles, TrendingUp, Wallet } from 'lucide-react-native';
-import { Badge, Button, Card, EmptyState, KeyValue, Screen, ScreenHeader, Section, Skeleton, SkeletonList, Text, space, useTheme } from '@catodrive/ui';
-import { PushPrompt } from '@catodrive/core';
-import { hostApi } from '@catodrive/core/web/features/host/api';
-import { useEarnings, useHostMe } from '@catodrive/core/web/features/host/hooks';
-import { useMyVehicles } from '@catodrive/core/web/features/vehicles/hooks';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, EmptyState, KeyValue, Screen, ScreenHeader, Section, Skeleton, SkeletonList, Text, space, useTheme } from '@crosscubes/ui';
+import { PushPrompt } from '@crosscubes/core';
+import { hostApi } from '@crosscubes/core/web/features/host/api';
+import { useEarnings, useHostMe } from '@crosscubes/core/web/features/host/hooks';
+import { useMyVehicles } from '@crosscubes/core/web/features/vehicles/hooks';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { FleetCard } from '@/features/host/FleetCard';
 import { useOpenHref } from '@/features/workspace/useOpenHref';
 
@@ -45,7 +45,7 @@ export default function HostDashboardScreen() {
         <Text variant="caption" tone="muted">{cars.length} car{cars.length === 1 ? '' : 's'}</Text>
       </View>
 
-      <PushPrompt title="Get booking alerts on this device" detail="New bookings, requests to accept and guest messages arrive instantly, even when CatoDrive isn’t open." successBody="We’ll alert you about bookings and messages." />
+      <PushPrompt title="Get booking alerts on this device" detail="New bookings, requests to accept and guest messages arrive instantly, even when CrossCubes isn’t open." successBody="We’ll alert you about bookings and messages." />
 
       {actions.length > 0 || blockers.length > 0 ? (
         <Section

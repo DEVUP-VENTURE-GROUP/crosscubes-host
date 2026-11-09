@@ -1,6 +1,6 @@
 import { View } from 'react-native';
-import { Input, Text, space } from '@catodrive/ui';
-import { LocationSearch } from '@catodrive/core';
+import { Input, Text, space } from '@crosscubes/ui';
+import { LocationSearch } from '@crosscubes/core';
 import { ColorPicker } from '../ColorPicker';
 import { FeaturePicker } from '../FeaturePicker';
 import { useListingDraft } from './draft-store';

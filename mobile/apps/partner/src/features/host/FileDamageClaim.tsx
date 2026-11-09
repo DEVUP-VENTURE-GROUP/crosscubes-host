@@ -3,11 +3,11 @@ import { ScrollView, View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Camera, Check, ImageIcon, ShieldAlert } from 'lucide-react-native';
-import { Button, Card, Checkbox, Input, Text, space, useConfirm, useTheme, useToast } from '@catodrive/ui';
-import { pickPhotos, uploadPhotos, type PickSource } from '@catodrive/core';
-import { claimsApi } from '@catodrive/core/web/features/claims/api';
-import { tripApi } from '@catodrive/core/web/features/trips/api';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { Button, Card, Checkbox, Input, Text, space, useConfirm, useTheme, useToast } from '@crosscubes/ui';
+import { pickPhotos, uploadPhotos, type PickSource } from '@crosscubes/core';
+import { claimsApi } from '@crosscubes/core/web/features/claims/api';
+import { tripApi } from '@crosscubes/core/web/features/trips/api';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 /** A host files a damage claim on a finished trip, with the return photos pre-selected as evidence. */
 export function FileDamageClaim({ bookingId, tripId, currency = 'USD' }: { bookingId: string; tripId: string; currency?: string }) {

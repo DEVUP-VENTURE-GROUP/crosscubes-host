@@ -144,7 +144,7 @@ export class RewardsService {
           refType: 'reward_redeem',
           refId: userId,
           currency: 'USD',
-          description: `Redeemed ${points} CatoDrive points`,
+          description: `Redeemed ${points} CrossCubes points`,
           legs: [
             { account: Account.promoExpense(), direction: 'debit', amount: creditCents },
             { account: Account.userWallet(userId), direction: 'credit', amount: creditCents },

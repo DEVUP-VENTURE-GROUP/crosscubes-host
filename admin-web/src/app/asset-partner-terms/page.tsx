@@ -116,7 +116,7 @@ export default function AdminAssetPartnerTermsPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* ── What CatoDrive keeps and charges ───────────────────────────── */}
+        {/* ── What CrossCubes keeps and charges ───────────────────────────── */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function AdminAssetPartnerTermsPage() {
           <CardContent className="space-y-4">
             <Field
               label="Management fee"
-              hint="Percentage of gross booking revenue CatoDrive keeps. The published rate is 20%."
+              hint="Percentage of gross booking revenue CrossCubes keeps. The published rate is 20%."
             >
               <Input
                 type="number"
@@ -175,7 +175,7 @@ export default function AdminAssetPartnerTermsPage() {
           <CardContent className="space-y-4">
             <Field
               label="Damage deductible cap, per incident"
-              hint="The partner's maximum out-of-pocket per incident (Addendum No. 1). CatoDrive absorbs anything above it. This figure is published to partners — changing it changes a promise already made."
+              hint="The partner's maximum out-of-pocket per incident (Addendum No. 1). CrossCubes absorbs anything above it. This figure is published to partners — changing it changes a promise already made."
             >
               <Input
                 type="number"
@@ -248,14 +248,14 @@ export default function AdminAssetPartnerTermsPage() {
               />
             </Field>
 
-            <Field label="Countersigned by (name)" hint="Printed as CatoDrive’s signature on every agreement a partner signs from now on. Blank uses the company name.">
+            <Field label="Countersigned by (name)" hint="Printed as CrossCubes’s signature on every agreement a partner signs from now on. Blank uses the company name.">
               <Input maxLength={120} value={ap.countersignerName ?? ''} onChange={(e) => set((d) => { d.assetPartner.countersignerName = e.target.value; })} />
             </Field>
             <Field label="Countersigner’s title" hint="e.g. Chief Executive Officer. Blank shows “Authorised signatory”.">
               <Input maxLength={120} value={ap.countersignerTitle ?? ''} onChange={(e) => set((d) => { d.assetPartner.countersignerTitle = e.target.value; })} />
             </Field>
             <Field label="Company name on agreements">
-              <Input maxLength={120} value={ap.countersignerOrganisation ?? 'CatoDrive'} onChange={(e) => set((d) => { d.assetPartner.countersignerOrganisation = e.target.value; })} />
+              <Input maxLength={120} value={ap.countersignerOrganisation ?? 'CrossCubes'} onChange={(e) => set((d) => { d.assetPartner.countersignerOrganisation = e.target.value; })} />
             </Field>
           </CardContent>
         </Card>

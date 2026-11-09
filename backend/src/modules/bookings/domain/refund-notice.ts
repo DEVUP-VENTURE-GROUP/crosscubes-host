@@ -9,7 +9,7 @@ export interface CancellationNoticeInput {
   explained?: RefundExplanation;
   toCard?: number;
   toWallet?: number;
-  /** Extra credit for keeping the refund with CatoDrive, on top of toWallet. */
+  /** Extra credit for keeping the refund with CrossCubes, on top of toWallet. */
   creditBonus?: number;
   /** Cancelled inside the free window right after booking. */
   undo?: boolean;
@@ -43,8 +43,8 @@ export function cancellationNotice(n: CancellationNoticeInput): CancellationNoti
   if (n.toWallet) {
     where.push(
       n.creditBonus
-        ? `${money(n.toWallet + n.creditBonus, cur)} is in your CatoDrive wallet now, including a ${money(n.creditBonus, cur)} bonus for keeping it as credit.`
-        : `${money(n.toWallet, cur)} is back in your CatoDrive wallet now.`,
+        ? `${money(n.toWallet + n.creditBonus, cur)} is in your CrossCubes wallet now, including a ${money(n.creditBonus, cur)} bonus for keeping it as credit.`
+        : `${money(n.toWallet, cur)} is back in your CrossCubes wallet now.`,
     );
   }
   if (!where.length && n.refunded > 0) where.push('It usually reaches your card within 5–10 business days.');
@@ -72,7 +72,7 @@ export function cancellationNotice(n: CancellationNoticeInput): CancellationNoti
   }
 
   if (n.cancelledBy === 'host' || n.cancelledBy === 'system') {
-    const who = n.cancelledBy === 'host' ? 'Your host' : 'CatoDrive';
+    const who = n.cancelledBy === 'host' ? 'Your host' : 'CrossCubes';
     return {
       title: `Booking cancelled · ${money(n.refunded, cur)} refunded`,
       body: `${who} cancelled your booking, so you get a full refund of ${money(n.refunded, cur)}. ${where.join(' ')}`.trim(),

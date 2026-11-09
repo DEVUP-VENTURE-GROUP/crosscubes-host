@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MessageCircleQuestion } from 'lucide-react-native';
-import { Button, Card, Text, useTheme, space } from '@catodrive/ui';
-import { InquiryThreadView } from '@catodrive/core';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
-import { useVehicleInquiry } from '@catodrive/core/web/features/messaging/inquiry-hooks';
+import { Button, Card, Text, useTheme, space } from '@crosscubes/ui';
+import { InquiryThreadView } from '@crosscubes/core';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
+import { useVehicleInquiry } from '@crosscubes/core/web/features/messaging/inquiry-hooks';
 
 /** Ask the host before booking: the same inquiry thread the website uses. */
 export function AskHost({ vehicleId, hostName }: { vehicleId: string; hostName: string }) {

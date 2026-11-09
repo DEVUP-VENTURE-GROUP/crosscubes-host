@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { LogIn } from 'lucide-react-native';
-import { EmptyState, Screen, ScreenHeader, useTheme } from '@catodrive/ui';
+import { EmptyState, Screen, ScreenHeader, useTheme } from '@crosscubes/ui';
 
 /** A tab that needs an account, seen signed out: say why, offer sign-in, come back here after. */
 export function SignedOutPrompt({ title, heading, body, returnTo }: { title: string; heading: string; body: string; returnTo: string }) {

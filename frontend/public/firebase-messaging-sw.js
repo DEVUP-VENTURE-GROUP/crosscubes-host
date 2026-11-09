@@ -16,7 +16,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || 'CatoDrive';
+  const title = (payload.notification && payload.notification.title) || 'CrossCubes';
   const body = (payload.notification && payload.notification.body) || '';
   const deepLink = (payload.data && payload.data.deepLink) || '/';
   self.registration.showNotification(title, {

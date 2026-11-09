@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { Send } from 'lucide-react-native';
-import { Skeleton, Text, fonts, radius, space, useTheme } from '@catodrive/ui';
+import { Skeleton, Text, fonts, radius, space, useTheme } from '@crosscubes/ui';
 import { SYSTEM_SENDER } from '../web/features/messaging/hooks';
 import type { InquiryMessage } from '../web/features/messaging/inquiry-hooks';
 

@@ -3,18 +3,18 @@ import { uuid } from '../../../shared/utils/uuid';
 
 /**
  * An insurance partner: an insurer (or managing general agent) that offers its
- * own protection plans to CatoDrive guests.
+ * own protection plans to CrossCubes guests.
  *
  * Self-serve like Host: the insurer applies from its own account and runs its
  * own portal. Admin only approves, suspends and, where negotiated, overrides
- * CatoDrive's commission. No insurer is named in code; anything provider
+ * CrossCubes's commission. No insurer is named in code; anything provider
  * specific belongs in an adapter.
  */
 export type InsurancePartnerStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
 export interface InsurancePartnerDoc {
   _id: string;
-  /** The CatoDrive account the insurer signs in with. */
+  /** The CrossCubes account the insurer signs in with. */
   userId: string;
   status: InsurancePartnerStatus;
 

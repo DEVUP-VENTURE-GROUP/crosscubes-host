@@ -33,8 +33,10 @@ export async function runStripeEvent(event: {
       metadata?: { bookingId?: string; userId?: string; app?: string; kind?: string; applicationId?: string };
       last_payment_error?: { message?: string };
     };
-    // The Stripe account is shared with another system, whose payments reach this webhook too.
-    if (event.type.startsWith('payment_intent.') && obj.metadata?.app !== config.app.key) {
+    // The Stripe account is shared with another system: skip anything tagged for it, and untagged payments, which are its own.
+    const untaggedIsForeign = event.type.startsWith('payment_intent.') || (event.type.startsWith('charge.') && !event.type.startsWith('charge.dispute.'));
+    const foreign = obj.metadata?.app ? obj.metadata.app !== config.app.key : untaggedIsForeign;
+    if (foreign) {
       await WebhookEventModel.updateOne({ _id: event.id }, { status: 'processed', processedAt: new Date(), $unset: { payload: 1 } });
       return;
     }

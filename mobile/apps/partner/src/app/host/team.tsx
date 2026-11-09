@@ -3,10 +3,10 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, UserPlus, Users } from 'lucide-react-native';
-import { Button, Card, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, Text, space, useConfirm, useTheme, useToast } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { teamApi, type Captain } from '@catodrive/core/web/features/host/team-api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Button, Card, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, Text, space, useConfirm, useTheme, useToast } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { teamApi, type Captain } from '@crosscubes/core/web/features/host/team-api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 import { CaptainCard } from '@/features/host/CaptainCard';
 import { CaptainInviteForm } from '@/features/host/CaptainInviteForm';
 

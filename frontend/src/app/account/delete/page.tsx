@@ -54,7 +54,7 @@ function DeleteAccount() {
       <Link href="/account" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Account
       </Link>
-      <PageHeader title="Delete account" description="Permanently remove your CatoDrive account." />
+      <PageHeader title="Delete account" description="Permanently remove your CrossCubes account." />
       {eligibility.isLoading ? (
         <Skeleton className="h-48 w-full rounded-lg" />
       ) : eligibility.isError || !eligibility.data ? (

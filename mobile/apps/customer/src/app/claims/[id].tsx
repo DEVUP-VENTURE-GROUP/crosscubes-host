@@ -2,11 +2,11 @@ import { ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Clock, ShieldAlert, XCircle } from 'lucide-react-native';
-import { Badge, Card, ErrorState, KeyValue, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, radius, space } from '@catodrive/ui';
-import { RequireAuth, SecureImage } from '@catodrive/core';
-import { claimsApi } from '@catodrive/core/web/features/claims/api';
-import { CLAIM_DETAIL_TONE, CLAIM_STATUS_COPY } from '@catodrive/core/web/features/claims/status';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Card, ErrorState, KeyValue, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, radius, space } from '@crosscubes/ui';
+import { RequireAuth, SecureImage } from '@crosscubes/core';
+import { claimsApi } from '@crosscubes/core/web/features/claims/api';
+import { CLAIM_DETAIL_TONE, CLAIM_STATUS_COPY } from '@crosscubes/core/web/features/claims/status';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { claimBadge } from '@/features/claims/claimTone';
 
 /** The website's /claims/[id]: what was claimed, the evidence and every step of the review. */

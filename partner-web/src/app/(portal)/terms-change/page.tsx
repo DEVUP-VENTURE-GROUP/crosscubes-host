@@ -65,7 +65,7 @@ export default function TermsChangePage() {
     meta: { silentError: true },
     mutationFn: () => assetPartnerApi.declineAmendment(),
     onSuccess: () => {
-      toast({ tone: 'success', title: 'Declined', description: 'Your current terms continue. CatoDrive has been told.' });
+      toast({ tone: 'success', title: 'Declined', description: 'Your current terms continue. CrossCubes has been told.' });
       done();
     },
   });
@@ -96,7 +96,7 @@ export default function TermsChangePage() {
               </li>
             ))}
           </ul>
-          {a.reason && <p className="mt-3 rounded-sm bg-muted px-3 py-2 text-sm"><span className="font-medium">Note from CatoDrive:</span> {a.reason}</p>}
+          {a.reason && <p className="mt-3 rounded-sm bg-muted px-3 py-2 text-sm"><span className="font-medium">Note from CrossCubes:</span> {a.reason}</p>}
         </CardContent>
       </Card>
 
@@ -135,7 +135,7 @@ export default function TermsChangePage() {
               disabled={sign.isPending}
               loading={decline.isPending}
               onClick={async () => {
-                const { ok } = await confirm({ title: 'Decline this change?', description: 'Your current terms continue and CatoDrive is told.', confirmLabel: 'Decline', tone: 'destructive' });
+                const { ok } = await confirm({ title: 'Decline this change?', description: 'Your current terms continue and CrossCubes is told.', confirmLabel: 'Decline', tone: 'destructive' });
                 if (ok) decline.mutate();
               }}
             >

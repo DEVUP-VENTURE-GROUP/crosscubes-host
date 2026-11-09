@@ -15,7 +15,7 @@ export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     // Partners apply on the website; the partner app never creates accounts.
     if (mobileAppOf(req) === 'partner') {
-      throw new AppError({ code: 'APP_NOT_PARTNER', message: 'Partner accounts are created by applying on catodrive.com.', httpStatus: 403 });
+      throw new AppError({ code: 'APP_NOT_PARTNER', message: 'Partner accounts are created by applying on crosscubes.com.', httpStatus: 403 });
     }
     const result = await authService.register(req.body as RegisterDto, ctxOf(req));
     sendCreated(res, await gateSession(req, result));

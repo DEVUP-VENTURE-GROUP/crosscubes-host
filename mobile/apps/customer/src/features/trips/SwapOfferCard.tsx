@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shuffle } from 'lucide-react-native';
-import { Button, Card, Text, useTheme, useToast, space } from '@catodrive/ui';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import type { Booking } from '@catodrive/core/web/features/bookings/types';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Button, Card, Text, useTheme, useToast, space } from '@crosscubes/ui';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import type { Booking } from '@crosscubes/core/web/features/bookings/types';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 const errorText = (e: unknown) => (e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
 

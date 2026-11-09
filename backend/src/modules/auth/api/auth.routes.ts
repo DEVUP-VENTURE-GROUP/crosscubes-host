@@ -126,7 +126,7 @@ router.post(
 );
 
 /**
- * Moving between CatoDrive's own websites, which keep separate sessions: the
+ * Moving between CrossCubes's own websites, which keep separate sessions: the
  * signed-in site asks for a one-time code, the other redeems it for its own
  * session. The code lives a minute and works once.
  */

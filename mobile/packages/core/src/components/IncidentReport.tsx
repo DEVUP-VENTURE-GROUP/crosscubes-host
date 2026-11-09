@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Ban, Car, HeartPulse, Phone, ShieldAlert, Wrench } from 'lucide-react-native';
-import { Button, Card, Input, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
+import { Button, Card, Input, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
 import { INCIDENT_TYPES, reportIncident, type IncidentType } from '../web/features/trips/incidents';
 import { openExternal } from '../links';
 

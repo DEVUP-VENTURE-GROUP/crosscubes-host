@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Bell, BookOpen, FileText, HelpCircle, LifeBuoy, LogOut, Mail, Repeat, ShieldCheck, Trash2 } from 'lucide-react-native';
-import { MenuRow, MenuSection, Text, useTheme } from '@catodrive/ui';
-import { appInfo, openInAppBrowser, useSignOut, webUrl } from '@catodrive/core';
-import { usePlatformConfig } from '@catodrive/core/web/features/platform/config';
+import { MenuRow, MenuSection, Text, useTheme } from '@crosscubes/ui';
+import { appInfo, openInAppBrowser, useSignOut, webUrl } from '@crosscubes/core';
+import { usePlatformConfig } from '@crosscubes/core/web/features/platform/config';
 import { WORKSPACE_HOME, WORKSPACE_LABEL, useWorkspaceChoice, useWorkspaces, type Workspace } from './workspaces';
 
 /** The part of every workspace's menu that is about the account: switch, notifications, help, legal, sign out, delete. */
@@ -50,7 +50,7 @@ export function AccountMenu({ current }: { current: Workspace }) {
         <MenuRow icon={<LogOut size={20} color={c.foreground} />} label={pending ? 'Signing out…' : 'Sign out'} onPress={() => void signOut()} />
         <MenuRow icon={<Trash2 size={20} color={c.destructive} />} label="Delete account" destructive onPress={() => router.push('/account/delete')} />
       </MenuSection>
-      <Text variant="caption" tone="muted" center>CatoDrive Partner {appInfo.version}</Text>
+      <Text variant="caption" tone="muted" center>CrossCubes Partner {appInfo.version}</Text>
     </>
   );
 }

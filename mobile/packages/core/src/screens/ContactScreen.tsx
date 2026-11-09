@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CheckCircle2, ChevronDown, Clock, Mail, MapPin, Phone, Send } from 'lucide-react-native';
-import { Button, Card, Chip, Input, Screen, ScreenHeader, Section, Text, useTheme, useToast, space } from '@catodrive/ui';
+import { Button, Card, Chip, Input, Screen, ScreenHeader, Section, Text, useTheme, useToast, space } from '@crosscubes/ui';
 import { contactApi, type ContactInterest } from '../web/features/contact/api';
 import { CONTACT, CONTACT_FAQ, INTEREST_OPTIONS, contactFormErrors } from '../web/features/contact/content';
 import { ApiError } from '../web/lib/api/types';
@@ -66,7 +66,7 @@ export function ContactScreen() {
     <Screen header={<ScreenHeader title="Contact us" onBack={router.canGoBack() ? () => router.back() : undefined} />}>
       <View style={{ gap: space.sm }}>
         <Text variant="display">Get in touch.</Text>
-        <Text tone="muted">Interested in becoming an asset partner? Have questions about CatoDrive? We’re here to help.</Text>
+        <Text tone="muted">Interested in becoming an asset partner? Have questions about CrossCubes? We’re here to help.</Text>
       </View>
       <Card>
         {row(Mail, 'Email', CONTACT.email, `mailto:${CONTACT.email}`)}

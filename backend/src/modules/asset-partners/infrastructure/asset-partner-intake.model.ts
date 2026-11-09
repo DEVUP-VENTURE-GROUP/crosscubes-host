@@ -4,7 +4,7 @@ import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 export type FuelLevel = 'full' | 'three_quarters' | 'half' | 'quarter';
 
-/** Agreement Exhibit A: the car's condition at intake, signed by CatoDrive and acknowledged by the partner. */
+/** Agreement Exhibit A: the car's condition at intake, signed by CrossCubes and acknowledged by the partner. */
 export interface AssetPartnerIntakeDoc {
   _id: string;
   partnerId: string;
@@ -20,7 +20,7 @@ export interface AssetPartnerIntakeDoc {
   preExistingDamage: string;
   conditionNotes?: string;
   photos: { url: string; key?: string; label?: string }[];
-  catodriveSignature: { name: string; title: string; signedAt: Date; userId: string };
+  crosscubesSignature: { name: string; title: string; signedAt: Date; userId: string };
   partnerResponse?: { kind: 'acknowledged' | 'objected'; signedName?: string; objection?: string; at: Date; ip?: string };
   createdAt: Date;
   updatedAt: Date;
@@ -50,7 +50,7 @@ const schema = new Schema<AssetPartnerIntakeDoc>(
     preExistingDamage: { type: String, required: true },
     conditionNotes: String,
     photos: { type: [{ _id: false, url: String, key: String, label: String }], default: [] },
-    catodriveSignature: {
+    crosscubesSignature: {
       name: { type: String, required: true },
       title: { type: String, required: true },
       signedAt: { type: Date, required: true },

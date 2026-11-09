@@ -104,7 +104,7 @@ export interface PlatformConfigDoc {
     payoutMethod: 'check' | 'zelle';
     /** Business days a partner has to object to an intake report before it stands as written. */
     intakeObjectionDays: number;
-    /** Who signs partner agreements for CatoDrive; printed on every sealed document. */
+    /** Who signs partner agreements for CrossCubes; printed on every sealed document. */
     countersignerName: string;
     countersignerTitle: string;
     countersignerOrganisation: string;
@@ -298,7 +298,7 @@ export interface PlatformConfigDoc {
     requireApproved: boolean;
     /** Refuse a renter younger than the car's Wheelbase minimum renter age. */
     enforceMinAge: boolean;
-    /** CatoDrive's share of an insurance partner's protection premium, in basis points, unless set per insurer. */
+    /** CrossCubes's share of an insurance partner's protection premium, in basis points, unless set per insurer. */
     partnerCommissionBps: number;
   };
   legal: {
@@ -318,7 +318,7 @@ export interface PlatformConfigDoc {
     notifyEmail: string;
   };
   /**
-   * Verification / eligibility policy — admin-configurable, so CatoDrive can change
+   * Verification / eligibility policy — admin-configurable, so CrossCubes can change
    * how often an expensive check runs and how long a passing result is trusted
    * WITHOUT a code change. Each check type carries the same four levers:
    *
@@ -557,7 +557,7 @@ export interface PlatformConfigDoc {
     /** Moving dates closes this many hours before pickup. */
     moveMinLeadHours: number;
     switchCarEnabled: boolean;
-    /** Extra value when the guest takes CatoDrive credit instead of a card refund (bps of the refund; 0 = credit offered at par). */
+    /** Extra value when the guest takes CrossCubes credit instead of a card refund (bps of the refund; 0 = credit offered at par). */
     creditBonusBps: number;
     creditEnabled: boolean;
     exceptionsEnabled: boolean;
@@ -756,7 +756,7 @@ const schema = new Schema<PlatformConfigDoc>(
       intakeObjectionDays: { type: Number, default: 3 },
       countersignerName: { type: String, default: '' },
       countersignerTitle: { type: String, default: '' },
-      countersignerOrganisation: { type: String, default: 'CatoDrive' },
+      countersignerOrganisation: { type: String, default: 'CrossCubes' },
       agreementValidDays: { type: Number, default: 25 },
       agreementReminderDays: { type: Number, default: 5 },
       requireIdentity: { type: Boolean, default: true },

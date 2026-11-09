@@ -2,12 +2,12 @@ import { config } from '../../config';
 
 // The production web origins, always allowed so the live site works even if CORS_ORIGINS was not updated on the server.
 const ALWAYS_ALLOWED = [
-  'https://www.catodrive.com',
-  'https://catodrive.com',
-  'https://host.catodrive.com',
-  'https://partners.catodrive.com',
-  'https://assets-ioc.catodrive.com',
-  'https://integratedoperationscenter.catodrive.com',
+  'https://www.crosscubes.com',
+  'https://crosscubes.com',
+  'https://host.crosscubes.com',
+  'https://partners.crosscubes.com',
+  'https://hub.crosscubes.com',
+  'https://hub.crosscubes.com',
 ];
 
 export const allowedOrigins = (): Set<string> => new Set([...config.cors.origins, ...ALWAYS_ALLOWED]);

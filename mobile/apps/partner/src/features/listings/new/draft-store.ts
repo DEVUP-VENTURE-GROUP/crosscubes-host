@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { INITIAL_LISTING_DRAFT, type ListingDraft } from '@catodrive/core/web/features/vehicles/new-listing';
+import { INITIAL_LISTING_DRAFT, type ListingDraft } from '@crosscubes/core/web/features/vehicles/new-listing';
 
 /** The wizard's draft and step, kept while the app runs so leaving the screen never loses the work. */
 export const useListingDraft = create<{

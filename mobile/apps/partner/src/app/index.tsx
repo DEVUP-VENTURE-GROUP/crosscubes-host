@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Screen, SkeletonList } from '@catodrive/ui';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
+import { Screen, SkeletonList } from '@crosscubes/ui';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
 import { WORKSPACE_HOME, useWorkspaceChoice, useWorkspaces } from '@/features/workspace/workspaces';
 import { GetStarted } from '@/features/workspace/GetStarted';
 

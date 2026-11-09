@@ -32,7 +32,7 @@ const PAYMENT_TYPE: Record<string, string> = { booking: 'Trip payment', deposit:
 const PAYMENT_TONE: Record<string, 'success' | 'warning' | 'destructive' | 'muted' | 'default'> = {
   succeeded: 'success', authorized: 'warning', requires_action: 'warning', pending: 'warning', partially_refunded: 'warning', refunded: 'muted', cancelled: 'muted', failed: 'destructive',
 };
-const CANCELLED_BY: Record<string, string> = { guest: 'the guest', host: 'the host', admin: 'staff', system: 'CatoDrive (automatic)' };
+const CANCELLED_BY: Record<string, string> = { guest: 'the guest', host: 'the host', admin: 'staff', system: 'CrossCubes (automatic)' };
 const statusLabel = (s: string) => (STATUS_LABEL as Record<string, string>)[s] ?? s.replace(/_/g, ' ');
 
 function Line({ label, value, strong }: { label: string; value?: React.ReactNode; strong?: boolean }) {
@@ -73,7 +73,7 @@ function MoneyCard({ o }: { o: AdminBookingOverview }) {
       <div className="mt-1 border-t border-border pt-1">
         <Line label="Guest total" value={money(p.total) ?? formatMoney(p.total)} strong />
         <Line label="Host earns" value={formatMoney(p.hostEarnings)} />
-        <Line label="CatoDrive commission" value={formatMoney(p.commission)} />
+        <Line label="CrossCubes commission" value={formatMoney(p.commission)} />
       </div>
     </Section>
   );

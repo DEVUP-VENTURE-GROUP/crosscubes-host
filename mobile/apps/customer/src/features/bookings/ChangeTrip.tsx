@@ -3,16 +3,16 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarRange, Car, Clock, FileUp, ShieldCheck, X } from 'lucide-react-native';
-import { Button, Card, Chip, Input, RadioCard, Skeleton, Text, useConfirm, useTheme, radius, space } from '@catodrive/ui';
-import { pickPhotos, uploadPhotos, type PickedPhoto } from '@catodrive/core';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { useMoveTrip, useRequestException, useShiftPickup, useSwitchCar } from '@catodrive/core/web/features/bookings/queries';
-import { CANCEL_REASON_LABEL, EXCEPTION_REASON_LABEL } from '@catodrive/core/web/features/bookings/status';
-import type { Booking, CancelReasonCode, ChangeOptions, ExceptionReasonCode } from '@catodrive/core/web/features/bookings/types';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDateTime, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Chip, Input, RadioCard, Skeleton, Text, useConfirm, useTheme, radius, space } from '@crosscubes/ui';
+import { pickPhotos, uploadPhotos, type PickedPhoto } from '@crosscubes/core';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { useMoveTrip, useRequestException, useShiftPickup, useSwitchCar } from '@crosscubes/core/web/features/bookings/queries';
+import { CANCEL_REASON_LABEL, EXCEPTION_REASON_LABEL } from '@crosscubes/core/web/features/bookings/status';
+import type { Booking, CancelReasonCode, ChangeOptions, ExceptionReasonCode } from '@crosscubes/core/web/features/bookings/types';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDateTime, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { DateTimeSheet } from './DateTimeSheet';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 const errorText = (e: unknown, fallback: string) => (e instanceof ApiError ? e.message : fallback);
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -235,7 +235,7 @@ export function CancelOption({ options, exceptionNext, pending, error, onCancel 
               <RadioCard
                 selected={choice === 'credit'}
                 onPress={() => setChoice('credit')}
-                title={`${formatMoney(options.credit.amount)} CatoDrive credit`}
+                title={`${formatMoney(options.credit.amount)} CrossCubes credit`}
                 detail={options.credit.bonus.amount > 0 ? `Includes a ${formatMoney(options.credit.bonus)} bonus. Ready now, for any trip.` : 'Ready now, for any trip.'}
               />
             ) : null}
@@ -248,7 +248,7 @@ export function CancelOption({ options, exceptionNext, pending, error, onCancel 
           variant="destructive"
           loading={pending}
           onPress={async () => {
-            const back = choice === 'credit' ? `${formatMoney(options.credit.amount)} goes to your CatoDrive credit now.` : nothingBack ? 'Nothing is refunded.' : `${formatMoney(options.refund)} goes back to your card.`;
+            const back = choice === 'credit' ? `${formatMoney(options.credit.amount)} goes to your CrossCubes credit now.` : nothingBack ? 'Nothing is refunded.' : `${formatMoney(options.refund)} goes back to your card.`;
             const { ok } = await confirm({ title: 'Cancel this trip?', description: `${back} This can’t be undone.`, confirmLabel: 'Cancel trip', tone: 'destructive' });
             if (ok) onCancel(choice);
           }}

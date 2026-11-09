@@ -1,8 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BadgeCheck, Clock, MessageSquare } from 'lucide-react-native';
-import { Avatar, Badge, Card, Skeleton, Text, useTheme, space } from '@catodrive/ui';
-import { joinedLabel, responseTimeLabel, useHostPublicProfile } from '@catodrive/core/web/features/host/public-profile';
+import { Avatar, Badge, Card, Skeleton, Text, useTheme, space } from '@crosscubes/ui';
+import { joinedLabel, responseTimeLabel, useHostPublicProfile } from '@crosscubes/core/web/features/host/public-profile';
 
 /** The "Hosted by" block: real host, real trip count and rating, links to the host's page. */
 export function HostCard({ hostId }: { hostId: string }) {

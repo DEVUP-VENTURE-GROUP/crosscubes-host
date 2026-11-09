@@ -60,7 +60,7 @@ export interface PartnerStatement {
   final: boolean;
   /** Every management-fee rate applied this month, in basis points. */
   managementFeeBpsUsed: number[];
-  /** Set once CatoDrive has recorded sending this month's money. */
+  /** Set once CrossCubes has recorded sending this month's money. */
   paid?: { amount: number; method: string; reference: string; paidAt: Date };
 }
 

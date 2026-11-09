@@ -39,7 +39,7 @@ export class PayoutReadinessService {
       configured: boolean;
       verified: boolean;
       viaStripe: boolean;
-      /** True only for the House Fleet host: its earnings are CatoDrive's own and stay on the platform. */
+      /** True only for the House Fleet host: its earnings are CrossCubes's own and stay on the platform. */
       platformOwned?: boolean;
       accountHolder?: string;
       bankName?: string;

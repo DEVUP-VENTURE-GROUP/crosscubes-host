@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { CheckSquare, FileText, LayoutDashboard, Menu, Users } from 'lucide-react-native';
-import { ErrorState, Screen, SkeletonList, fonts, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
+import { ErrorState, Screen, SkeletonList, fonts, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
 
 /** The corporate workspace for admins and managers: four daily tabs, the rest under Menu. */
 function CorporateTabs() {

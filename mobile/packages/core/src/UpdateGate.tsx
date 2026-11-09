@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Download, X } from 'lucide-react-native';
-import { Button, Screen, Text, useTheme, space } from '@catodrive/ui';
+import { Button, Screen, Text, useTheme, space } from '@crosscubes/ui';
 import { checkAppRelease, type UpdateState } from './app-release';
 import { openExternal } from './links';
 import { checkForOtaUpdate } from './ota';
@@ -24,7 +24,7 @@ export function UpdateGate({ children }: { children: ReactNode }) {
         <View style={[styles.icon, { backgroundColor: c.primarySoft }]}>
           <Download size={30} color={c.primary} />
         </View>
-        <Text variant="title" center>Update CatoDrive</Text>
+        <Text variant="title" center>Update CrossCubes</Text>
         <Text tone="muted" center>This version is no longer supported. Update to the latest version to keep using the app.</Text>
         {state.storeUrl ? <Button title="Update" onPress={() => void openExternal(state.storeUrl)} /> : null}
       </Screen>

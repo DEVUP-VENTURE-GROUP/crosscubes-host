@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Badge, Button, Card, Chip, EmptyState, Screen, ScreenHeader, SkeletonList, Text, space, useConfirm, type BadgeTone } from '@catodrive/ui';
-import { REQUEST_TONE, corporateApi, type TripRequest } from '@catodrive/core/web/features/corporate/api';
-import { formatDateRange, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Chip, EmptyState, Screen, ScreenHeader, SkeletonList, Text, space, useConfirm, type BadgeTone } from '@crosscubes/ui';
+import { REQUEST_TONE, corporateApi, type TripRequest } from '@crosscubes/core/web/features/corporate/api';
+import { formatDateRange, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 const STATUSES = ['pending', 'approved', 'booked', 'rejected', ''];
 const BADGE: Record<string, BadgeTone> = { warning: 'warning', success: 'success', destructive: 'destructive', default: 'primary' };

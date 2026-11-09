@@ -33,7 +33,7 @@ function Review({ report, onDone }: { report: IntakeReport; onDone: () => void }
     meta: { silentError: true },
     mutationFn: () => assetPartnerApi.respondIntake(report._id, mode === 'sign' ? { kind: 'acknowledged', signedName: name } : { kind: 'objected', objection }),
     onSuccess: () => {
-      toast({ tone: 'success', title: mode === 'sign' ? 'Intake report signed' : 'Your objection was sent to CatoDrive' });
+      toast({ tone: 'success', title: mode === 'sign' ? 'Intake report signed' : 'Your objection was sent to CrossCubes' });
       onDone();
     },
     onError: (e) => toast({ tone: 'error', title: e instanceof ApiError ? e.message : 'That didn’t work' }),
@@ -114,7 +114,7 @@ export function IntakeReports() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="flex flex-wrap items-center gap-2 font-medium">{r.vehicle.year} {r.vehicle.make} {r.vehicle.model} <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge></p>
-                <p className="text-xs text-muted-foreground">Recorded {formatDate(r.intakeDate)} by {r.catodriveSignature.name}{r.status === 'awaiting_partner' ? ` · reply by ${formatDate(r.respondBy)}` : ''}</p>
+                <p className="text-xs text-muted-foreground">Recorded {formatDate(r.intakeDate)} by {r.crosscubesSignature.name}{r.status === 'awaiting_partner' ? ` · reply by ${formatDate(r.respondBy)}` : ''}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {r.status === 'awaiting_partner' && <Button size="sm" onClick={() => setOpen(open === r._id ? null : r._id)}>{open === r._id ? 'Close' : 'Review'}</Button>}

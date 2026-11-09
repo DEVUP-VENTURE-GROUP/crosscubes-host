@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
-import { Button, Card, Input, Screen, ScreenHeader, Text, useToast, space } from '@catodrive/ui';
+import { Button, Card, Input, Screen, ScreenHeader, Text, useToast, space } from '@crosscubes/ui';
 import { authApi } from '../web/features/auth/api';
 import { ApiError } from '../web/lib/api/types';
 

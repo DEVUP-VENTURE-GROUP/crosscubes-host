@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Clock, Info, Landmark, Lock, ShieldCheck } from 'lucide-react-native';
-import { Button, Card, Text, useTheme, useToast, space } from '@catodrive/ui';
-import { depositsApi } from '@catodrive/core/web/features/payments/deposits-api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDate, formatDateTime, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Text, useTheme, useToast, space } from '@crosscubes/ui';
+import { depositsApi } from '@crosscubes/core/web/features/payments/deposits-api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDate, formatDateTime, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { usePayments } from '@/features/payments/usePayments';
 
 /**

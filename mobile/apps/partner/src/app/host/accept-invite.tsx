@@ -3,13 +3,13 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Car, Check, ShieldCheck } from 'lucide-react-native';
-import { Button, Card, ErrorState, Input, Screen, SkeletonList, Text, radius, space, useTheme } from '@catodrive/ui';
-import { ABILITY_LABELS, captainApi } from '@catodrive/core/web/features/host/team-api';
-import { authApi } from '@catodrive/core/web/features/auth/api';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
-import { tokenStore } from '@catodrive/core/web/lib/api/token-store';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { config } from '@catodrive/core/web/lib/config';
+import { Button, Card, ErrorState, Input, Screen, SkeletonList, Text, radius, space, useTheme } from '@crosscubes/ui';
+import { ABILITY_LABELS, captainApi } from '@crosscubes/core/web/features/host/team-api';
+import { authApi } from '@crosscubes/core/web/features/auth/api';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
+import { tokenStore } from '@crosscubes/core/web/lib/api/token-store';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { config } from '@crosscubes/core/web/lib/config';
 
 /** The website's /host/accept-invite: a captain joins a host's team from the link in their invite. */
 export default function AcceptInvite() {

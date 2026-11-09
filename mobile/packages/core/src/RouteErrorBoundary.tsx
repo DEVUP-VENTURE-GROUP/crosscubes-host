@@ -1,4 +1,4 @@
-import { ErrorState, Screen } from '@catodrive/ui';
+import { ErrorState, Screen } from '@crosscubes/ui';
 
 /** expo-router's per-route error boundary: the screen offers a retry instead of crashing the app. */
 export function RouteErrorBoundary({ retry }: { error: Error; retry: () => Promise<void> }) {

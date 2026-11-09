@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { Text, space, useTheme } from '@catodrive/ui';
-import { APPLICATION_STAGES } from '@catodrive/core/web/features/asset-partners/status';
+import { Text, space, useTheme } from '@crosscubes/ui';
+import { APPLICATION_STAGES } from '@crosscubes/core/web/features/asset-partners/status';
 
 /** Submitted → Under review → Approved → Earning, with the current stage filled. */
 export function StageTrack({ current }: { current: number }) {

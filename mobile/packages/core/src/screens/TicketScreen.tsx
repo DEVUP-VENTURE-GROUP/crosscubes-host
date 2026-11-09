@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Send } from 'lucide-react-native';
-import { Button, ErrorState, Input, Screen, ScreenHeader, Skeleton, Text, useTheme, radius, space } from '@catodrive/ui';
+import { Button, ErrorState, Input, Screen, ScreenHeader, Skeleton, Text, useTheme, radius, space } from '@crosscubes/ui';
 import { supportApi } from '../web/features/support/api';
 import { useAuthStore } from '../web/features/auth/store';
 import { connectSocket } from '../web/lib/realtime/socket';
@@ -62,7 +62,7 @@ export function TicketScreen() {
             <View style={{ maxWidth: '85%', borderRadius: radius.xl, padding: space.md, backgroundColor: mine ? c.primary : c.card, borderWidth: mine ? 0 : 1, borderColor: c.border }}>
               <Text style={{ color: mine ? c.primaryForeground : c.foreground }}>{m.body}</Text>
             </View>
-            <Text variant="small" tone="muted">{mine ? 'You' : 'CatoDrive support'} · {formatDateTime(m.at)}</Text>
+            <Text variant="small" tone="muted">{mine ? 'You' : 'CrossCubes support'} · {formatDateTime(m.at)}</Text>
           </View>
         );
       })}

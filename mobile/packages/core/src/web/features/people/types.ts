@@ -1,5 +1,5 @@
 // Generated from frontend/src/features/people/types.ts by mobile/tools/sync-web.js. Edit the web file, then run `npm run sync:api`.
-/** Who someone is, as the server allows this viewer to see; contact is present for CatoDrive staff only. */
+/** Who someone is, as the server allows this viewer to see; contact is present for CrossCubes staff only. */
 export interface PersonSummary {
   id: string;
   name: string;
@@ -19,5 +19,5 @@ export interface PersonSummary {
   contact?: { fullName?: string; verifiedName?: string; email?: string; phone?: string };
 }
 
-export const PERSON_KIND_LABEL: Record<PersonSummary['kind'], string> = { guest: 'Guest', host: 'Host', asset_partner: 'Asset Partner', staff: 'CatoDrive staff' };
+export const PERSON_KIND_LABEL: Record<PersonSummary['kind'], string> = { guest: 'Guest', host: 'Host', asset_partner: 'Asset Partner', staff: 'CrossCubes staff' };
 export const IDENTITY_LABEL: Record<PersonSummary['identity'], string> = { verified: 'ID verified', pending: 'ID check in progress', not_verified: 'ID not verified' };

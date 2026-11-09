@@ -36,7 +36,7 @@ module.exports = function buildConfig(app) {
         NSLocationWhenInUseUsageDescription: app.locationReason,
         ITSAppUsesNonExemptEncryption: false,
       },
-      associatedDomains: ['applinks:www.catodrive.com'],
+      associatedDomains: ['applinks:www.crosscubes.com'],
     },
     android: {
       package: app.bundleId,

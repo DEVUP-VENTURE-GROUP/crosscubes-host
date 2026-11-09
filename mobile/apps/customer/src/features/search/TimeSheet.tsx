@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Clock } from 'lucide-react-native';
-import { BottomSheet, Text, useTheme, space } from '@catodrive/ui';
-import { formatClock } from '@catodrive/core/web/lib/utils/format';
+import { BottomSheet, Text, useTheme, space } from '@crosscubes/ui';
+import { formatClock } from '@crosscubes/core/web/lib/utils/format';
 import { HALF_HOURS } from './times';
 
 /** Pick a half-hour time of day. */

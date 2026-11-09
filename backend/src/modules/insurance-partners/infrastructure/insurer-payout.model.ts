@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
 
-/** A payout CatoDrive sent to an insurance partner, recorded by staff against its payable account. */
+/** A payout CrossCubes sent to an insurance partner, recorded by staff against its payable account. */
 export interface InsurerPayoutDoc {
   _id: string;
   insurerId: string;

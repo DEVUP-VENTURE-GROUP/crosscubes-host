@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Button, space } from '@catodrive/ui';
-import { LocationSearch } from '@catodrive/core';
-import type { DeliveryLocation, Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { Button, space } from '@crosscubes/ui';
+import { LocationSearch } from '@crosscubes/core';
+import type { DeliveryLocation, Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 import { DeliveryLocationsEditor } from './DeliveryLocationsEditor';
 
 /** Pickup address and delivery locations; sends only what this panel owns so another panel's edits are never reverted. */

@@ -2,10 +2,10 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Car, CheckCircle2, Gauge, TrendingUp } from 'lucide-react-native';
-import { BarChart, Card, RankedBars, Divider, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, StatTile, Text, space, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { hostApi } from '@catodrive/core/web/features/host/api';
-import { formatMoney, monthShort } from '@catodrive/core/web/lib/utils/format';
+import { BarChart, Card, RankedBars, Divider, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, StatTile, Text, space, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { hostApi } from '@crosscubes/core/web/features/host/api';
+import { formatMoney, monthShort } from '@crosscubes/core/web/lib/utils/format';
 
 /** The website's /host/performance: occupancy, acceptance, earnings trend and which cars earn the most. */
 function Performance() {

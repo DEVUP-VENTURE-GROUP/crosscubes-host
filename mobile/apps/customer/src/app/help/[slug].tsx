@@ -1,4 +1,4 @@
-import { HelpArticleScreen } from '@catodrive/core';
+import { HelpArticleScreen } from '@crosscubes/core';
 
 export default function HelpArticle() {
   return <HelpArticleScreen />;

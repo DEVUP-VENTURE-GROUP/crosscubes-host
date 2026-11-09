@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { FileText } from 'lucide-react-native';
-import { Badge, Card, Divider, KeyValue, Text, space, useTheme } from '@catodrive/ui';
-import type { PartnerStatement } from '@catodrive/core/web/features/asset-partners/api';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Card, Divider, KeyValue, Text, space, useTheme } from '@crosscubes/ui';
+import type { PartnerStatement } from '@crosscubes/core/web/features/asset-partners/api';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** One month on partner terms, every deduction itemised so the net can be checked against the agreement. */
 export function StatementCard({ statement, compact = false }: { statement: PartnerStatement; compact?: boolean }) {

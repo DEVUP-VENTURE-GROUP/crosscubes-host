@@ -1,9 +1,9 @@
 import { Tabs } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Car, FolderLock, LayoutDashboard, User, Wallet, Wrench } from 'lucide-react-native';
-import { fonts, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { assetPartnerApi } from '@catodrive/core/web/features/asset-partners/api';
+import { fonts, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { assetPartnerApi } from '@crosscubes/core/web/features/asset-partners/api';
 
 /** The website's Asset Partner phone bar: six tabs, Repairs badged with what waits on the partner. */
 export default function AssetPartnerTabs() {

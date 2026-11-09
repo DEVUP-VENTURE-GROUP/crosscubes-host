@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react-native';
-import { Badge, Button, Card, Chip, Input, Screen, ScreenHeader, SkeletonList, Text, space, useConfirm, useTheme } from '@catodrive/ui';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
+import { Badge, Button, Card, Chip, Input, Screen, ScreenHeader, SkeletonList, Text, space, useConfirm, useTheme } from '@crosscubes/ui';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
 
 const ROLES = [
   { value: 'employee', label: 'Employee' },

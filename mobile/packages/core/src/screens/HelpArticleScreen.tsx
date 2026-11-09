@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { LifeBuoy, ThumbsDown, ThumbsUp } from 'lucide-react-native';
-import { Button, Card, ErrorState, Screen, ScreenHeader, Skeleton, Text, useTheme, space } from '@catodrive/ui';
+import { Button, Card, ErrorState, Screen, ScreenHeader, Skeleton, Text, useTheme, space } from '@crosscubes/ui';
 import { kbApi } from '../web/features/kb/api';
 import { titleCase } from '../web/features/kb/markdown-parse';
 import { Markdown } from '../components/Markdown';

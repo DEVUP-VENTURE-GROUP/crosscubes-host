@@ -3,10 +3,10 @@ import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera } from 'lucide-react-native';
-import { Avatar, Button, DateOfBirthInput, Input, Screen, ScreenHeader, Skeleton, Text, useTheme, useToast, space } from '@catodrive/ui';
-import { PhoneInput, RequireAuth, usePhotoUpload } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Avatar, Button, DateOfBirthInput, Input, Screen, ScreenHeader, Skeleton, Text, useTheme, useToast, space } from '@crosscubes/ui';
+import { PhoneInput, RequireAuth, usePhotoUpload } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 function Profile() {
   const { c } = useTheme();

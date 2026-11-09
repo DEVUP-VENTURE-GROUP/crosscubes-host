@@ -41,7 +41,7 @@ export function PayoutReadinessCard() {
                 {blocking.length > 0
                   ? 'Payouts are on hold'
                   : d.destination.platformOwned
-                    ? 'House Fleet earnings stay with CatoDrive'
+                    ? 'House Fleet earnings stay with CrossCubes'
                     : d.destination.configured
                     ? 'You’re set up to get paid'
                     : 'Payouts ready'}

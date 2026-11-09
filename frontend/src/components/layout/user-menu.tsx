@@ -126,7 +126,7 @@ export function UserMenu() {
                 !isAssetPartner on top of that: every partner also carries a
                 verified Host record as marketplace plumbing (see the note on
                 the same check in navbar.tsx), so this would otherwise offer
-                self-serve host tools to someone CatoDrive runs 100% of
+                self-serve host tools to someone CrossCubes runs 100% of
                 operations for. */}
             {isAssetPartner && (
               <SiteLink path="/asset-partners/dashboard" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">

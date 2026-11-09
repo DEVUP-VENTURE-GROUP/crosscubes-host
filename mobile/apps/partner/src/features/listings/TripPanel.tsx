@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
-import { Button, Input, Text, space, useTheme } from '@catodrive/ui';
-import { describeCancellation, describeLead, leadMinutes, usePlatformConfig } from '@catodrive/core/web/features/platform/config';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
-import { tripPrefsForm, tripPrefsPatch, type TripPrefsForm } from '@catodrive/core/web/features/vehicles/listing-form';
+import { Button, Input, Text, space, useTheme } from '@crosscubes/ui';
+import { describeCancellation, describeLead, leadMinutes, usePlatformConfig } from '@crosscubes/core/web/features/platform/config';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
+import { tripPrefsForm, tripPrefsPatch, type TripPrefsForm } from '@crosscubes/core/web/features/vehicles/listing-form';
 
 const digits = (t: string) => t.replace(/[^\d.]/g, '');
 
@@ -36,11 +36,11 @@ export function TripPanel({ vehicle, onSave, saving }: { vehicle: Vehicle; onSav
         value={form.notice}
         onChangeText={set('notice')}
       />
-      <Input label="Miles included per day" hint="Set by CatoDrive for every car" value={`${dailyMiles} miles/day`} editable={false} />
+      <Input label="Miles included per day" hint="Set by CrossCubes for every car" value={`${dailyMiles} miles/day`} editable={false} />
       <Input label="Overage charge ($ per mile)" hint="Charged per mile driven past the daily limit" keyboardType="decimal-pad" value={form.overagePerMile} onChangeText={set('overagePerMile')} />
       <View style={{ gap: 2 }}>
         <Text variant="label">Cancellation policy</Text>
-        <Text variant="caption" tone="muted">Set by CatoDrive for every car</Text>
+        <Text variant="caption" tone="muted">Set by CrossCubes for every car</Text>
         <Text variant="caption">{describeCancellation(policy, cfg).fullDetail || 'Free cancellation up to 24 hours before the trip.'}</Text>
       </View>
       <Button title="Save trip preferences" size="sm" loading={saving} onPress={() => onSave(tripPrefsPatch(form, dailyMiles))} />

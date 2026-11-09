@@ -14,7 +14,7 @@ import { goToSite } from '@/lib/sites';
 
 const BARE = ['/sign-in', '/sign-up', '/forgot-password', '/handoff'];
 
-/** The partner site's frame: brand, a way back to catodrive.com, and sign out. */
+/** The partner site's frame: brand, a way back to crosscubes.com, and sign out. */
 export function PartnerChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '/';
   const signedIn = useAuthStore((s) => s.status === 'authenticated');
@@ -31,7 +31,7 @@ export function PartnerChrome({ children }: { children: ReactNode }) {
         <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/" className="flex shrink-0 items-center gap-2.5">
             <Logo className="h-9 w-9 shrink-0" />
-            <span className="display text-xl tracking-tight">CatoDrive</span>
+            <span className="display text-xl tracking-tight">CrossCubes</span>
             <span className="hidden rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-primary sm:inline">Partners</span>
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
@@ -40,7 +40,7 @@ export function PartnerChrome({ children }: { children: ReactNode }) {
               onClick={() => void goToSite('guest', '/')}
               className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium hover:bg-accent sm:inline-flex"
             >
-              catodrive.com <ExternalLink className="h-3.5 w-3.5" />
+              crosscubes.com <ExternalLink className="h-3.5 w-3.5" />
             </button>
             {signedIn && <NotificationBell />}
             {signedIn && (

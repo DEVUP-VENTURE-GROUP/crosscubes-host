@@ -10,9 +10,9 @@ import { emit } from '../../../shared/events/event-bus';
 import { EVENTS } from '../../../core/events/event-names';
 import { logger } from '../../../infrastructure/logging/logger';
 
-// Used until CatoDrive publishes its own rate-change text in the operations panel; the change list is always generated.
+// Used until CrossCubes publishes its own rate-change text in the operations panel; the change list is always generated.
 const DEFAULT_TITLE = 'Amendment to the Asset Partner Agreement';
-const DEFAULT_BODY = `This amendment is made between {{partner_name}} ("Partner") and CatoDrive under the Asset Partner Agreement the Partner signed.
+const DEFAULT_BODY = `This amendment is made between {{partner_name}} ("Partner") and CrossCubes under the Asset Partner Agreement the Partner signed.
 
 1. Changes. From {{changes_effective}}, the following terms change:
 
@@ -50,7 +50,7 @@ export class AssetPartnerAmendmentService {
         deepLink: '/asset-partners/dashboard',
         templateKey: 'account.asset_partner_terms_change',
         title: 'Please review a change to your terms',
-        body: 'CatoDrive has proposed new partner terms. Nothing changes until you review and sign them in your partner portal.',
+        body: 'CrossCubes has proposed new partner terms. Nothing changes until you review and sign them in your partner portal.',
         data: { versionId: version._id },
       })
       .catch((err) => logger.warn({ err, partnerId }, 'terms change notice failed'));

@@ -13,7 +13,7 @@ export interface InsurerPolicy {
   start: Date;
   end: Date;
   plan: string;
-  /** What the insurer is owed for this trip, after CatoDrive's commission. */
+  /** What the insurer is owed for this trip, after CrossCubes's commission. */
   premium: number;
   currency: string;
   vehicle: { year?: number; make?: string; model?: string; state?: string } | null;

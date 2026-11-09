@@ -1,5 +1,5 @@
 {
-  "name": "tura-backend",
+  "name": "crosscubes-api",
   "version": "0.1.0",
   "description": "TURA — Mobility Operating System (modular monolith)",
   "main": "dist/main.js",

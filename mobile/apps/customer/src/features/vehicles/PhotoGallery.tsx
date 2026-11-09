@@ -3,8 +3,8 @@ import { FlatList, Modal, Pressable, StyleSheet, View, useWindowDimensions } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
-import { Text, useTheme, radius, space } from '@catodrive/ui';
-import type { VehiclePhoto } from '@catodrive/core/web/features/vehicles/types';
+import { Text, useTheme, radius, space } from '@crosscubes/ui';
+import type { VehiclePhoto } from '@crosscubes/core/web/features/vehicles/types';
 
 /** Swipe through every photo; tap opens them full screen. */
 export function PhotoGallery({ photos, title, fallback, overlay }: { photos: VehiclePhoto[]; title: string; fallback: string; overlay?: React.ReactNode }) {

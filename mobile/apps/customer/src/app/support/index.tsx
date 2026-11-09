@@ -1,4 +1,4 @@
-import { RequireAuth, SupportScreen } from '@catodrive/core';
+import { RequireAuth, SupportScreen } from '@crosscubes/core';
 
 export default function Support() {
   return (

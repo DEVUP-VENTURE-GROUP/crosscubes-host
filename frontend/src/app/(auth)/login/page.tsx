@@ -97,7 +97,7 @@ function LoginInner() {
           </div>
 
           <p className="mt-6 text-center text-base font-medium text-muted-foreground">
-            New to CatoDrive?{' '}
+            New to CrossCubes?{' '}
             <Link href={`/register?next=${encodeURIComponent(returnTo)}`} className="font-bold text-primary hover:underline">
               Create an account
             </Link>

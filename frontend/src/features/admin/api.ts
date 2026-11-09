@@ -68,7 +68,7 @@ export interface PlatformConfig {
     payoutDayOfMonth: number;
     payoutMethod: 'check' | 'zelle';
     intakeObjectionDays?: number;
-    /** Who signs partner agreements for CatoDrive; printed on every sealed document. */
+    /** Who signs partner agreements for CrossCubes; printed on every sealed document. */
     countersignerName?: string;
     countersignerTitle?: string;
     countersignerOrganisation?: string;

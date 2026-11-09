@@ -72,7 +72,7 @@ export const guestIdentityCheckService = {
     if (!(await this.window(booking)).open) throw closed('The trip has started, so the guest\'s photo is hidden again.');
     const bytes = await guestIdentityService.photo(booking.guestId, 'selfie');
     const vehicle = await VehicleModel.findById(booking.vehicleId).select('location.state').lean<{ location?: { state?: string } }>();
-    const stamped = bytes && (await stampForView(bytes, await viewerStamp(viewer.userId, `CatoDrive booking ${booking.code}`, 'Pickup identity check only', vehicle?.location?.state)));
+    const stamped = bytes && (await stampForView(bytes, await viewerStamp(viewer.userId, `CrossCubes booking ${booking.code}`, 'Pickup identity check only', vehicle?.location?.state)));
     await auditService.record({
       actorId: viewer.userId, actorRoles: viewer.roles, action: 'guest.selfie.served', resourceType: 'booking', resourceId: bookingId,
       ip: viewer.ip, userAgent: viewer.userAgent, after: { shown: !!stamped }, status: stamped ? 200 : 422,

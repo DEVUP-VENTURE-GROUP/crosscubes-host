@@ -122,7 +122,7 @@ export const tripDocumentsService = {
     if (!doc?.key) throw new NotFoundError('Document');
 
     const vehicle = await VehicleModel.findById(booking.vehicleId).select('location.state').lean<{ location?: { state?: string } }>();
-    const stamp = await viewerStamp(viewer.userId, `CatoDrive trip ${booking.code}`, 'For a traffic stop only', vehicle?.location?.state);
+    const stamp = await viewerStamp(viewer.userId, `CrossCubes trip ${booking.code}`, 'For a traffic stop only', vehicle?.location?.state);
 
     let stamped: Awaited<ReturnType<typeof stampForView>> = null;
     try {

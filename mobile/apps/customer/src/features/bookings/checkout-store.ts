@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { EMPTY_CHOICES, type BookingChoices } from '@catodrive/core/web/features/bookings/booking-selection';
+import { EMPTY_CHOICES, type BookingChoices } from '@crosscubes/core/web/features/bookings/booking-selection';
 
 /** Stale after an hour, like the website's booking draft: old intent, not a checkout to resume. */
 const MAX_AGE_MS = 60 * 60 * 1000;

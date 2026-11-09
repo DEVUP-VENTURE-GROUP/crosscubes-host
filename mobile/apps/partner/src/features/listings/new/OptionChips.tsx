@@ -1,5 +1,5 @@
 import { ScrollView, View } from 'react-native';
-import { Chip, Text, space } from '@catodrive/ui';
+import { Chip, Text, space } from '@crosscubes/ui';
 
 type Opt = string | { value: string; label: string };
 

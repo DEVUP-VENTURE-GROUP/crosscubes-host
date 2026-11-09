@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react-native';
-import { BottomSheet, Button, DateRangeCalendar, Text, space, useConfirm, useTheme, useToast } from '@catodrive/ui';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { fmtRange, groupRanges } from '@catodrive/core/web/features/vehicles/listing-form';
+import { BottomSheet, Button, DateRangeCalendar, Text, space, useConfirm, useTheme, useToast } from '@crosscubes/ui';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { fmtRange, groupRanges } from '@crosscubes/core/web/features/vehicles/listing-form';
 
 /** Block or reopen a window of dates, and see what is blocked over the next 90 days. */
 export function AvailabilityPanel({ vehicleId, onChanged }: { vehicleId: string; onChanged: () => void }) {

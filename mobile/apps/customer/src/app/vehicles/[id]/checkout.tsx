@@ -6,22 +6,22 @@ import * as Location from 'expo-location';
 import { CalendarDays, CreditCard, Plane, Sparkles } from 'lucide-react-native';
 import {
   BottomSheet, Button, Card, Checkbox, Chip, Divider, ErrorState, Input, KeyValue, RadioCard, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, space,
-} from '@catodrive/ui';
-import { RequireAuth, openInAppBrowser, webUrl } from '@catodrive/core';
-import { useVehicle } from '@catodrive/core/web/features/vehicles/hooks';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { useCreateBooking, useQuote } from '@catodrive/core/web/features/bookings/queries';
-import { bookingInput, canQuote, freeCancellationUntil, tripDays, type BookingChoices } from '@catodrive/core/web/features/bookings/booking-selection';
-import { walletApi } from '@catodrive/core/web/features/wallet/api';
-import { usePlatformConfig, describeCancellation } from '@catodrive/core/web/features/platform/config';
-import { useMembership } from '@catodrive/core/web/features/subscriptions/hooks';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatClock, formatMoney, kmToMiles, perKmToPerMile } from '@catodrive/core/web/lib/utils/format';
+} from '@crosscubes/ui';
+import { RequireAuth, openInAppBrowser, webUrl } from '@crosscubes/core';
+import { useVehicle } from '@crosscubes/core/web/features/vehicles/hooks';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { useCreateBooking, useQuote } from '@crosscubes/core/web/features/bookings/queries';
+import { bookingInput, canQuote, freeCancellationUntil, tripDays, type BookingChoices } from '@crosscubes/core/web/features/bookings/booking-selection';
+import { walletApi } from '@crosscubes/core/web/features/wallet/api';
+import { usePlatformConfig, describeCancellation } from '@crosscubes/core/web/features/platform/config';
+import { useMembership } from '@crosscubes/core/web/features/subscriptions/hooks';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatClock, formatMoney, kmToMiles, perKmToPerMile } from '@crosscubes/core/web/lib/utils/format';
 import { useCheckout } from '@/features/bookings/checkout-store';
 import { usePayments } from '@/features/payments/usePayments';
 import { VehicleCalendar } from '@/features/vehicles/VehicleCalendar';
 import { TimeSheet } from '@/features/search/TimeSheet';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 /** Where the guest is, only if location was already allowed: the risk check is best effort and never prompts at checkout. */
 async function knownCoords(): Promise<{ lat: number; lng: number } | undefined> {
@@ -331,8 +331,8 @@ function Checkout() {
       </Section>
 
       {q && v.listing.instantBook && balance > 0 ? (
-        <Checkbox checked={choices.payWithWallet} onChange={(next) => patch({ payWithWallet: next })} label="Pay with CatoDrive Wallet">
-          <Text variant="label">Pay with CatoDrive Wallet</Text>
+        <Checkbox checked={choices.payWithWallet} onChange={(next) => patch({ payWithWallet: next })} label="Pay with CrossCubes Wallet">
+          <Text variant="label">Pay with CrossCubes Wallet</Text>
           <Text variant="caption" tone="muted">({formatMoney({ amount: balance, currency: q.total.currency })} available)</Text>
           {choices.payWithWallet ? (
             <Text variant="caption" tone="primary">
@@ -365,7 +365,7 @@ function Checkout() {
         <Text variant="caption">
           I have read, understood and agree with the{' '}
           <Text variant="caption" tone="primary" onPress={() => void openInAppBrowser(cfg?.legal?.privacyUrl || webUrl('/privacy'))}>privacy policy</Text> and all other{' '}
-          <Text variant="caption" tone="primary" onPress={() => void openInAppBrowser(cfg?.legal?.termsUrl || webUrl('/terms'))}>terms and conditions</Text> of CatoDrive Inc. I also agree to receive communication via email, phone, etc. as and when required during the rental period or till any billing/incident issues are resolved.
+          <Text variant="caption" tone="primary" onPress={() => void openInAppBrowser(cfg?.legal?.termsUrl || webUrl('/terms'))}>terms and conditions</Text> of CrossCubes Inc. I also agree to receive communication via email, phone, etc. as and when required during the rental period or till any billing/incident issues are resolved.
         </Text>
       </Checkbox>
 

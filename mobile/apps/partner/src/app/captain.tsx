@@ -2,10 +2,10 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Car, ChevronRight, Clock, ShieldCheck } from 'lucide-react-native';
-import { Card, EmptyState, ErrorState, Screen, ScreenHeader, Section, SkeletonList, Text, space, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { ABILITY_LABELS, captainApi } from '@catodrive/core/web/features/host/team-api';
-import { formatDate } from '@catodrive/core/web/lib/utils/format';
+import { Card, EmptyState, ErrorState, Screen, ScreenHeader, Section, SkeletonList, Text, space, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { ABILITY_LABELS, captainApi } from '@crosscubes/core/web/features/host/team-api';
+import { formatDate } from '@crosscubes/core/web/lib/utils/format';
 import { AccountMenu } from '@/features/workspace/AccountMenu';
 
 /** The website's /captain: the fleet a Captain works for, what they may do, and the trips due for handover. */

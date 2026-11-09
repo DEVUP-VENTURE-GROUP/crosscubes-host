@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { BarChart3, Building2, ClipboardList, Receipt, User, Users } from 'lucide-react-native';
-import { MenuRow, MenuSection, Screen, ScreenHeader, useTheme } from '@catodrive/ui';
-import { useHostMe } from '@catodrive/core/web/features/host/hooks';
+import { MenuRow, MenuSection, Screen, ScreenHeader, useTheme } from '@crosscubes/ui';
+import { useHostMe } from '@crosscubes/core/web/features/host/hooks';
 import { AccountMenu } from '@/features/workspace/AccountMenu';
 
 /** Everything in the website's host sidebar that isn't a tab, plus the account menu. */

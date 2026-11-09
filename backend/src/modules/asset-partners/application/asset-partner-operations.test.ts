@@ -135,12 +135,12 @@ describe('intake report (Exhibit A)', () => {
 
   it('counts the objection window in business days', () => {
     expect(addBusinessDays(new Date('2026-10-23T12:00:00Z'), 3).toISOString().slice(0, 10)).toBe('2026-10-28');
-    const doc = { catodriveSignature: { signedAt: new Date('2026-10-23T12:00:00Z') } } as never;
+    const doc = { crosscubesSignature: { signedAt: new Date('2026-10-23T12:00:00Z') } } as never;
     expect(intakeStatus(doc, 3, new Date('2026-10-27T12:00:00Z')).status).toBe('awaiting_partner');
     expect(intakeStatus(doc, 3, new Date('2026-10-29T12:00:00Z')).status).toBe('deemed_accepted');
   });
 
-  it('is signed by CatoDrive, then acknowledged once by the partner, with a PDF either way', async () => {
+  it('is signed by CrossCubes, then acknowledged once by the partner, with a PDF either way', async () => {
     const p = await partner();
     const draft = await assetPartnerIntakeService.draftFor(p._id);
     expect(draft).toEqual({});
@@ -159,7 +159,7 @@ describe('intake report (Exhibit A)', () => {
 
     const pdf = await assetPartnerIntakeService.pdf(p._id, intake._id);
     expect(pdf.pdf.subarray(0, 4).toString()).toBe('%PDF');
-    expect(pdf.filename).toBe('CatoDrive-Intake-Report-WBA53BJ09RWX12345.pdf');
+    expect(pdf.filename).toBe('CrossCubes-Intake-Report-WBA53BJ09RWX12345.pdf');
     await expect(assetPartnerIntakeService.pdf('another-partner', intake._id)).rejects.toThrow();
   });
 });

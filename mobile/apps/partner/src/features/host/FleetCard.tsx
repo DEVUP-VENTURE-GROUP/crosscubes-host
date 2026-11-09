@@ -2,9 +2,9 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { ImageOff } from 'lucide-react-native';
-import { Card, Text, space, useTheme } from '@catodrive/ui';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Card, Text, space, useTheme } from '@crosscubes/ui';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** One of the host's cars: cover photo with its status, rating and daily rate. Opens the listing. */
 export function FleetCard({ v }: { v: Vehicle }) {

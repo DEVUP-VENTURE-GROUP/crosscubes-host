@@ -2,8 +2,8 @@ import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CarFront, Heart, House, MessageSquare, Search, User } from 'lucide-react-native';
-import { fonts, useTheme } from '@catodrive/ui';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
+import { fonts, useTheme } from '@crosscubes/ui';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
 import { CompareBar } from '@/features/compare/CompareBar';
 
 /** The website's phone tab bar: six equal tabs, Account becomes Sign in when signed out; the compare tray floats above it. */

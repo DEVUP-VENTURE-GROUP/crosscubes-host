@@ -225,7 +225,7 @@ export interface VehicleDoc {
   verificationStatus: VerificationStatus;
   ratingAvg: number;
   ratingCount: number;
-  /** True for cars CatoDrive owns (the House Fleet); shown as a badge. */
+  /** True for cars CrossCubes owns (the House Fleet); shown as a badge. */
   fleetOwned?: boolean;
   /** A real rating the car earned on another platform, entered by an admin and always shown with its source; never blended into ratingAvg. */
   externalRating?: { source: string; rating: number; trips: number };

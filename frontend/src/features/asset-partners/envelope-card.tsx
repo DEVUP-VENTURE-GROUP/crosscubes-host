@@ -14,7 +14,7 @@ const PURPOSE: Record<SignatureEnvelope['purpose'], string> = { onboarding: 'Par
 const when = (iso: string) =>
   new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 
-/** One sealed signing: its ID, the documents with downloads, and every step. Used by the partner and by CatoDrive staff. */
+/** One sealed signing: its ID, the documents with downloads, and every step. Used by the partner and by CrossCubes staff. */
 export function EnvelopeCard({
   envelope: e,
   download,

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
 import { EyeOff, FileText, X } from 'lucide-react-native';
-import { Text, radius, space } from '@catodrive/ui';
+import { Text, radius, space } from '@crosscubes/ui';
 import { ApiError } from '../web/lib/api/types';
 
 type Loaded = { contentType: 'image/jpeg' | 'application/pdf'; data: string };
@@ -100,7 +100,7 @@ export function TimedViewer({ title, subtitle, seconds, items, load, onClose }: 
         {covered ? (
           <View style={styles.cover}>
             <EyeOff size={32} color="#fff" />
-            <Text style={styles.light}>Hidden while CatoDrive is in the background.</Text>
+            <Text style={styles.light}>Hidden while CrossCubes is in the background.</Text>
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.pages}>
@@ -112,7 +112,7 @@ export function TimedViewer({ title, subtitle, seconds, items, load, onClose }: 
                 {p.state === 'pdf' ? (
                   <View style={styles.note}>
                     <FileText size={20} color="#fff" />
-                    <Text variant="caption" style={styles.light}>This document is a PDF. Show it from your trip on catodrive.com.</Text>
+                    <Text variant="caption" style={styles.light}>This document is a PDF. Show it from your trip on crosscubes.com.</Text>
                   </View>
                 ) : null}
                 {p.state === 'error' ? <Text variant="caption" style={{ color: '#fca5a5' }}>{p.message}</Text> : null}

@@ -1,10 +1,10 @@
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
-import { Avatar, Badge, Card, Skeleton, Text, space, useTheme } from '@catodrive/ui';
+import { Avatar, Badge, Card, Skeleton, Text, space, useTheme } from '@crosscubes/ui';
 import { IDENTITY_LABEL, PERSON_KIND_LABEL, type PersonSummary } from '../web/features/people/types';
 
 const since = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : undefined);
 
-/** The app's version of the website's Person card: who is asking, their trust and history, contact only for CatoDrive staff. */
+/** The app's version of the website's Person card: who is asking, their trust and history, contact only for CrossCubes staff. */
 export function PersonCard({ person, isLoading, isError, title = 'Who’s asking' }: { person?: PersonSummary; isLoading?: boolean; isError?: boolean; title?: string }) {
   const { c } = useTheme();
   if (isLoading) return <Skeleton height={120} />;

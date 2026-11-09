@@ -1,7 +1,7 @@
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { Car } from 'lucide-react-native';
-import { useTheme } from '@catodrive/ui';
+import { useTheme } from '@crosscubes/ui';
 
 /** A partner car's cover photo, or a car mark when none is uploaded yet. */
 export function VehiclePhoto({ url, style }: { url?: string; style: StyleProp<ViewStyle> }) {

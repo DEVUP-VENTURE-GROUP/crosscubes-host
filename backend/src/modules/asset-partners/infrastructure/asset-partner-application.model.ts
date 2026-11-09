@@ -3,11 +3,11 @@ import { uuid } from '../../../shared/utils/uuid';
 import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 /**
- * A submitted Asset Partner Vehicle Intake — the lead for CatoDrive's primary
- * acquisition path (someone lists a car they already own; CatoDrive runs it).
+ * A submitted Asset Partner Vehicle Intake — the lead for CrossCubes's primary
+ * acquisition path (someone lists a car they already own; CrossCubes runs it).
  *
  * This is a LEAD/application, not an account: the applicant may not have a
- * CatoDrive login yet (the intake form never asks for a password). It captures
+ * CrossCubes login yet (the intake form never asks for a password). It captures
  * everything the six-step form collects — partner info, the vehicle, title/
  * ownership, condition, insurance, and availability — plus the required
  * acknowledgements and a typed signature, so there is a durable record of

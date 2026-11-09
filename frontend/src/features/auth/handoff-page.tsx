@@ -11,7 +11,7 @@ import { useOnAuthSuccess } from '@/features/auth/session';
 import type { AuthResult } from '@/features/auth/types';
 
 /**
- * Lands someone arriving from CatoDrive's other website: redeems the one-time
+ * Lands someone arriving from CrossCubes's other website: redeems the one-time
  * code from the URL fragment for a session here, then opens the page they were
  * heading to. The fragment is wiped from the address bar before anything else.
  */

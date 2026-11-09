@@ -82,7 +82,7 @@ export function useInquiryUnreadCount(enabled: boolean) {
   });
 }
 
-/** Who is asking: for the car's host only. CatoDrive's own team also gets their contact details. */
+/** Who is asking: for the car's host only. CrossCubes's own team also gets their contact details. */
 export function useInquiryGuest(vehicleId: string, guestId: string) {
   return useQuery({
     queryKey: ['inquiry-guest', vehicleId, guestId],

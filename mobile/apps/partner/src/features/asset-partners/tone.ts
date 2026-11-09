@@ -1,5 +1,5 @@
-import type { BadgeTone } from '@catodrive/ui';
-import type { PartnerTone } from '@catodrive/core/web/features/asset-partners/status';
+import type { BadgeTone } from '@crosscubes/ui';
+import type { PartnerTone } from '@crosscubes/core/web/features/asset-partners/status';
 
 const MAP: Record<PartnerTone, BadgeTone> = { success: 'success', warning: 'warning', destructive: 'destructive', muted: 'neutral', default: 'primary' };
 

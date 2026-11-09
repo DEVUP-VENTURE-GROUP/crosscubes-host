@@ -266,7 +266,7 @@ export function CancelOption({
                 active={choice === 'credit'}
                 onSelect={() => setChoice('credit')}
                 icon={<Gift className="h-4 w-4" aria-hidden />}
-                title={`${formatMoney(options.credit.amount)} CatoDrive credit`}
+                title={`${formatMoney(options.credit.amount)} CrossCubes credit`}
                 detail={options.credit.bonus.amount > 0 ? `Includes a ${formatMoney(options.credit.bonus)} bonus. Ready now, for any trip.` : 'Ready now, for any trip.'}
                 highlight={options.credit.bonus.amount > 0}
               />
@@ -284,7 +284,7 @@ export function CancelOption({
           className="w-full sm:w-auto"
           loading={pending}
           onClick={async () => {
-            const back = choice === 'credit' ? `${formatMoney(options.credit.amount)} goes to your CatoDrive credit now.` : nothingBack ? 'Nothing is refunded.' : `${formatMoney(options.refund)} goes back to your card.`;
+            const back = choice === 'credit' ? `${formatMoney(options.credit.amount)} goes to your CrossCubes credit now.` : nothingBack ? 'Nothing is refunded.' : `${formatMoney(options.refund)} goes back to your card.`;
             const { ok } = await confirm({ title: 'Cancel this trip?', description: `${back} This can’t be undone.`, confirmLabel: 'Cancel trip', tone: 'destructive' });
             if (ok) onCancel(choice);
           }}

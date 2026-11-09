@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Banknote, CheckCircle2, ExternalLink } from 'lucide-react-native';
-import { Badge, Button, Card, Skeleton, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { openInAppBrowser } from '@catodrive/core';
-import { connectApi, humaniseRequirement } from '@catodrive/core/web/features/host/payouts';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { Badge, Button, Card, Skeleton, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { openInAppBrowser } from '@crosscubes/core';
+import { connectApi, humaniseRequirement } from '@crosscubes/core/web/features/host/payouts';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 /** Connecting a bank account through Stripe's hosted onboarding; status is re-read when the host comes back. */
 export function PayoutConnect() {

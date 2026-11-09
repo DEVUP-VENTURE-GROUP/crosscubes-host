@@ -120,7 +120,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [partner-web, catodrive-asset-ioc]
+        app: [partner-web, crosscubes-hub]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -141,7 +141,8 @@ jobs:
         working-directory: ${{ matrix.app }}
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
-          CATODRIVE_ASSET_IOC_SLUG: ci-build-slug
+          CROSSCUBES_HUB_SLUG: ci-build-slug
+
 
   security:
     name: Dependency audit
@@ -156,7 +157,7 @@ jobs:
       - name: Audit shipped dependencies
         shell: bash
         run: |
-          for app in backend frontend admin-web partner-web catodrive-asset-ioc; do
+          for app in backend frontend admin-web partner-web crosscubes-hub; do
             echo "::group::$app"
             (cd "$app" && npm audit --omit=dev --audit-level=high) || exit 1
             echo "::endgroup::"
@@ -164,6 +165,6 @@ jobs:
       - name: Audit all dependencies (critical only)
         shell: bash
         run: |
-          for app in backend frontend admin-web partner-web catodrive-asset-ioc; do
+          for app in backend frontend admin-web partner-web crosscubes-hub; do
             (cd "$app" && npm audit --audit-level=critical) || exit 1
           done

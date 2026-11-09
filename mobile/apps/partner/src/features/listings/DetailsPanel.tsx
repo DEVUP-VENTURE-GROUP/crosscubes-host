@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Input, Text, space } from '@catodrive/ui';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
-import { detailsForm, detailsPatch, type DetailsForm } from '@catodrive/core/web/features/vehicles/listing-form';
+import { Button, Input, Text, space } from '@crosscubes/ui';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
+import { detailsForm, detailsPatch, type DetailsForm } from '@crosscubes/core/web/features/vehicles/listing-form';
 import { ColorPicker } from './ColorPicker';
 import { FeaturePicker } from './FeaturePicker';
 

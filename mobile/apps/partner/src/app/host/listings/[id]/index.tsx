@@ -4,12 +4,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { AlertTriangle, CalendarX, Camera, DollarSign, FileText, MapPin, Pencil, Power, ShieldCheck, SlidersHorizontal, Star, TrendingUp } from 'lucide-react-native';
-import { Button, Card, ErrorState, Input, MenuRow, Screen, ScreenHeader, Section, Skeleton, Text, space, useConfirm, useTheme, useToast } from '@catodrive/ui';
-import { RequireAuth, openInAppBrowser, webUrl } from '@catodrive/core';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { useVehicle } from '@catodrive/core/web/features/vehicles/hooks';
-import { listingStatusText } from '@catodrive/core/web/features/vehicles/listing-form';
-import { FUEL_LABEL, formatMoney, kmToMiles, perKmToPerMile } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, ErrorState, Input, MenuRow, Screen, ScreenHeader, Section, Skeleton, Text, space, useConfirm, useTheme, useToast } from '@crosscubes/ui';
+import { RequireAuth, openInAppBrowser, webUrl } from '@crosscubes/core';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { useVehicle } from '@crosscubes/core/web/features/vehicles/hooks';
+import { listingStatusText } from '@crosscubes/core/web/features/vehicles/listing-form';
+import { FUEL_LABEL, formatMoney, kmToMiles, perKmToPerMile } from '@crosscubes/core/web/lib/utils/format';
 import { AvailabilityPanel } from '@/features/listings/AvailabilityPanel';
 import { DetailsPanel } from '@/features/listings/DetailsPanel';
 import { LocationPanel } from '@/features/listings/LocationPanel';
@@ -81,7 +81,7 @@ function ManageListing({ id, open }: { id: string; open?: string }) {
   };
   const doDelist = async () => {
     const { ok } = await confirm({
-      title: `Remove ${v.make} ${v.model} from CatoDrive?`,
+      title: `Remove ${v.make} ${v.model} from CrossCubes?`,
       description: 'The car stops appearing in search and can no longer be booked. Trips already booked are not cancelled - handle those first.',
       confirmLabel: 'Remove listing',
       tone: 'destructive',

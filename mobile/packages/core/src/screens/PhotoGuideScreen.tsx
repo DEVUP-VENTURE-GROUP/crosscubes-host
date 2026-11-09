@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, Screen, ScreenHeader, Section, Text, space, useTheme } from '@catodrive/ui';
+import { Card, Screen, ScreenHeader, Section, Text, space, useTheme } from '@crosscubes/ui';
 import { ACCIDENT_SHOTS, PHOTO_SHOTS, PHOTO_TIPS, SHOT_ACCENT } from '../web/features/trips/photo-guide';
 
 /** The website's /help/photo-guide: what to photograph at pickup and return, and why each shot matters. */

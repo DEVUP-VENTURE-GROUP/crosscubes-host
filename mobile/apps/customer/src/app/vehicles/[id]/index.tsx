@@ -6,16 +6,16 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Award, CalendarCheck, Check, ChevronLeft, ClipboardList, DoorOpen, Flame, Fuel, Gauge, Headphones, LifeBuoy, MapPin, Share2, ShieldCheck, Sparkles, Truck, Umbrella, Users, Zap,
 } from 'lucide-react-native';
-import { Badge, Button, Card, ErrorState, Screen, Skeleton, Text, useTheme, radius, space } from '@catodrive/ui';
-import { webUrl } from '@catodrive/core';
-import { useVehicle } from '@catodrive/core/web/features/vehicles/hooks';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { usePlatformConfig, describeCancellation, bookingsOpen } from '@catodrive/core/web/features/platform/config';
-import { useHostPublicProfile } from '@catodrive/core/web/features/host/public-profile';
-import { useSearchBar } from '@catodrive/core/web/features/search/search-store';
-import { tripDays } from '@catodrive/core/web/features/bookings/booking-selection';
-import { FUEL_LABEL, formatMoney, kmToMiles, perKmToPerMile } from '@catodrive/core/web/lib/utils/format';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
+import { Badge, Button, Card, ErrorState, Screen, Skeleton, Text, useTheme, radius, space } from '@crosscubes/ui';
+import { webUrl } from '@crosscubes/core';
+import { useVehicle } from '@crosscubes/core/web/features/vehicles/hooks';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { usePlatformConfig, describeCancellation, bookingsOpen } from '@crosscubes/core/web/features/platform/config';
+import { useHostPublicProfile } from '@crosscubes/core/web/features/host/public-profile';
+import { useSearchBar } from '@crosscubes/core/web/features/search/search-store';
+import { tripDays } from '@crosscubes/core/web/features/bookings/booking-selection';
+import { FUEL_LABEL, formatMoney, kmToMiles, perKmToPerMile } from '@crosscubes/core/web/lib/utils/format';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
 import { useCheckout } from '@/features/bookings/checkout-store';
 import { PhotoGallery } from '@/features/vehicles/PhotoGallery';
 import { VehicleRating } from '@/features/vehicles/VehicleRating';
@@ -99,7 +99,7 @@ export default function VehicleScreen() {
   const cheapestDelivery = delivery.length ? Math.min(...delivery.map((l) => l.fee)) : 0;
   const d = v.listing.delivery;
   const badges = [
-    v.fleetOwned && { icon: ShieldCheck, label: 'Owned & inspected by CatoDrive' },
+    v.fleetOwned && { icon: ShieldCheck, label: 'Owned & inspected by CrossCubes' },
     v.hostIsSuperhost && { icon: Award, label: 'Superhost' },
     v.listing.instantBook && { icon: Zap, label: 'Instant Book' },
     v.listing.cancellationPolicy === 'flexible' && { icon: CalendarCheck, label: 'Flexible cancellation' },
@@ -124,7 +124,7 @@ export default function VehicleScreen() {
                 <ChevronLeft size={24} color="#fff" />
               </Pressable>
               <View style={{ flexDirection: 'row', gap: space.sm }}>
-                <Pressable accessibilityRole="button" accessibilityLabel="Share this car" onPress={() => void Share.share({ message: `${title} on CatoDrive: ${webUrl(`/vehicles/${v._id}`)}` })} style={styles.round}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Share this car" onPress={() => void Share.share({ message: `${title} on CrossCubes: ${webUrl(`/vehicles/${v._id}`)}` })} style={styles.round}>
                   <Share2 size={20} color="#fff" />
                 </Pressable>
                 <WishlistButton vehicleId={v._id} />

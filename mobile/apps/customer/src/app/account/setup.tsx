@@ -3,12 +3,12 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, ShieldCheck } from 'lucide-react-native';
-import { Avatar, Button, Card, DateOfBirthInput, Input, ScreenHeader, Section, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
-import { PhoneInput, RequireAuth, safeReturn, usePhotoUpload } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
-import { EMPTY_SETUP, onboardingInput, setupChecklist, type SetupForm } from '@catodrive/core/web/features/account/setup-form';
-import { usePlatformConfig } from '@catodrive/core/web/features/platform/config';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Avatar, Button, Card, DateOfBirthInput, Input, ScreenHeader, Section, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
+import { PhoneInput, RequireAuth, safeReturn, usePhotoUpload } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
+import { EMPTY_SETUP, onboardingInput, setupChecklist, type SetupForm } from '@crosscubes/core/web/features/account/setup-form';
+import { usePlatformConfig } from '@crosscubes/core/web/features/platform/config';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView } from 'react-native';
 

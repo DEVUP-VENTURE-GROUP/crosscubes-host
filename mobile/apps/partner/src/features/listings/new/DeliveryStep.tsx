@@ -1,6 +1,6 @@
 import { View } from 'react-native';
-import { Checkbox, Input, Text, space } from '@catodrive/ui';
-import { ADDON_PRESETS } from '@catodrive/core/web/features/vehicles/new-listing';
+import { Checkbox, Input, Text, space } from '@crosscubes/ui';
+import { ADDON_PRESETS } from '@crosscubes/core/web/features/vehicles/new-listing';
 import { DeliveryLocationsEditor } from '../DeliveryLocationsEditor';
 import { useListingDraft } from './draft-store';
 
@@ -24,7 +24,7 @@ export function DeliveryStep({ errors, dailyMiles }: { errors: Record<string, st
           {a.note ? <Text variant="caption" tone="muted">{a.note}</Text> : null}
         </Checkbox>
       ))}
-      <Input label="Daily mileage limit" hint="Set by CatoDrive for every car." value={`${dailyMiles} miles/day`} editable={false} />
+      <Input label="Daily mileage limit" hint="Set by CrossCubes for every car." value={`${dailyMiles} miles/day`} editable={false} />
       <Input
         label="Overage fee ($/mile)"
         hint="Charged per mile driven over the daily limit."

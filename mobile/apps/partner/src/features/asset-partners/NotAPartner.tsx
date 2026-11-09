@@ -1,6 +1,6 @@
 import { Car } from 'lucide-react-native';
-import { Card, EmptyState, useTheme } from '@catodrive/ui';
-import { openInAppBrowser, webUrl } from '@catodrive/core';
+import { Card, EmptyState, useTheme } from '@crosscubes/ui';
+import { openInAppBrowser, webUrl } from '@crosscubes/core';
 
 /** Every portal screen's state when the account isn't enrolled in the programme yet. */
 export function NotAPartner() {

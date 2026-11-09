@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Star } from 'lucide-react-native';
-import { Badge, Text, useTheme } from '@catodrive/ui';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { Badge, Text, useTheme } from '@crosscubes/ui';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 
 type RatingFields = Pick<Vehicle, 'ratingAvg' | 'ratingCount' | 'externalRating'>;
 

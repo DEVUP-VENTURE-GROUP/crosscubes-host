@@ -1,1 +1,1 @@
-export * from '@catodrive/core/web/features/partner/workspaces';
+export * from '@crosscubes/core/web/features/partner/workspaces';

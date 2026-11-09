@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { useColorScheme } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
-import { api } from '@catodrive/core/web/lib/api/client';
-import { usePlatformConfig } from '@catodrive/core/web/features/platform/config';
+import { api } from '@crosscubes/core/web/lib/api/client';
+import { usePlatformConfig } from '@crosscubes/core/web/features/platform/config';
 
 export type SheetResult = { ok: true } | { ok: false; cancelled: boolean; message?: string };
 
-const MERCHANT = 'CatoDrive';
+const MERCHANT = 'CrossCubes';
 
 /**
  * The website's Stripe Elements flows on the native payment sheet: pay a
@@ -18,7 +18,7 @@ export function usePayments() {
   const available = !!usePlatformConfig().data?.stripe?.publishableKey;
   const base = {
     merchantDisplayName: MERCHANT,
-    returnURL: 'catodrive://stripe-redirect',
+    returnURL: 'crosscubes://stripe-redirect',
     style: dark ? ('alwaysDark' as const) : ('alwaysLight' as const),
     googlePay: { merchantCountryCode: 'US', testEnv: __DEV__ },
     applePay: { merchantCountryCode: 'US' },
@@ -45,7 +45,7 @@ export function usePayments() {
   const confirmNextAction = useCallback(
     async (clientSecret: string): Promise<boolean> => {
       if (!available) return false;
-      const { error } = await stripe.handleNextAction(clientSecret, 'catodrive://stripe-redirect');
+      const { error } = await stripe.handleNextAction(clientSecret, 'crosscubes://stripe-redirect');
       return !error;
     },
     [stripe, available],

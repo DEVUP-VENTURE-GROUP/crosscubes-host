@@ -48,13 +48,13 @@ export function CommissionDefaults({ cfg }: { cfg: PlatformConfig }) {
   return (
     <SettingsCard
       title="Default commission"
-      about="What CatoDrive keeps from each host booking when no rule below applies. The lowest and highest stop a rule from being set to a mistaken rate."
+      about="What CrossCubes keeps from each host booking when no rule below applies. The lowest and highest stop a rule from being set to a mistaken rate."
       affects={['Hosts']}
       changes={valid ? changes : []}
       saving={save.isPending}
       onSave={() => save.mutate()}
       example={valid
-        ? <>On a <b>$100.00</b> trip: CatoDrive keeps <b>{usd(take)}</b>{n.tax > 0 && <> plus <b>{usd(tax)}</b> tax on it</>}, the host earns <b>{usd(trip - take)}</b>.</>
+        ? <>On a <b>$100.00</b> trip: CrossCubes keeps <b>{usd(take)}</b>{n.tax > 0 && <> plus <b>{usd(tax)}</b> tax on it</>}, the host earns <b>{usd(trip - take)}</b>.</>
         : <span className="text-destructive">The default must sit between the lowest and highest, and every value between 0 and 100.</span>}
     >
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

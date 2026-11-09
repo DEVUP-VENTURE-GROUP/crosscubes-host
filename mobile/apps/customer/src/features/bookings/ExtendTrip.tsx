@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Text, useConfirm, space } from '@catodrive/ui';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import type { Booking } from '@catodrive/core/web/features/bookings/types';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDateTime, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Text, useConfirm, space } from '@crosscubes/ui';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import type { Booking } from '@crosscubes/core/web/features/bookings/types';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDateTime, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { DateTimeSheet } from './DateTimeSheet';
 
 /** Extend a trip: pick a later end, see availability and price (or a swap), confirm and pay. */

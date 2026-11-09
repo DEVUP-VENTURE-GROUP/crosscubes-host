@@ -4,12 +4,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, CheckCircle2, Fuel, Gauge, KeyRound, Leaf, MapPin, ShieldAlert, TreePine } from 'lucide-react-native';
 import {
   Badge, Button, Card, ErrorState, Input, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space,
-} from '@catodrive/ui';
-import { ChatPanel, DamageReviewPanel, HandoverPanel, IncidentReport, InspectionPhotos, RequireAuth, ReviewPrompt, TrackingCard } from '@catodrive/core';
-import { tripApi } from '@catodrive/core/web/features/trips/api';
-import { useCheckIn, useCompleteTrip, useSos, useTrip } from '@catodrive/core/web/features/trips/hooks';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDate, kmToMiles } from '@catodrive/core/web/lib/utils/format';
+} from '@crosscubes/ui';
+import { ChatPanel, DamageReviewPanel, HandoverPanel, IncidentReport, InspectionPhotos, RequireAuth, ReviewPrompt, TrackingCard } from '@crosscubes/core';
+import { tripApi } from '@crosscubes/core/web/features/trips/api';
+import { useCheckIn, useCompleteTrip, useSos, useTrip } from '@crosscubes/core/web/features/trips/hooks';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDate, kmToMiles } from '@crosscubes/core/web/lib/utils/format';
 import { TripDocumentsCard } from '@/features/trips/TripDocumentsCard';
 
 function Metric({ icon: Icon, label, value }: { icon: React.ComponentType<{ size?: number; color?: string }>; label: string; value: string }) {

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ChevronDown, FileSearch, ShieldCheck } from 'lucide-react-native';
-import { Badge, Card, Skeleton, Text, space, useTheme } from '@catodrive/ui';
-import { titleUnavailableText, vehicleHistory } from '@catodrive/core/web/features/vehicles/listing-form';
+import { Badge, Card, Skeleton, Text, space, useTheme } from '@crosscubes/ui';
+import { titleUnavailableText, vehicleHistory } from '@crosscubes/core/web/features/vehicles/listing-form';
 
 /** Safety recalls (per model year - may already be fixed on this car) and title history; "not checked" is never shown as clean. */
 export function VehicleHistoryCard({ vehicleId }: { vehicleId: string }) {

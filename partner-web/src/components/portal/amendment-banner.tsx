@@ -16,7 +16,7 @@ export function AmendmentBanner() {
       <div className="flex items-start gap-3">
         <FileSignature className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
         <div className="text-sm">
-          <p className="font-semibold">CatoDrive has proposed a change to your terms</p>
+          <p className="font-semibold">CrossCubes has proposed a change to your terms</p>
           <p className="text-muted-foreground">Nothing changes until you review and sign it.</p>
         </div>
       </div>

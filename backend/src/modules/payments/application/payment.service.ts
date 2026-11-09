@@ -233,7 +233,7 @@ export class PaymentService implements IPaymentContract {
           { account: Account.userWallet(payment.userId), direction: 'credit', amount: walletPart },
         );
       }
-      // Kept as CatoDrive credit: booked as a refund to the card that is topped straight back into the wallet.
+      // Kept as CrossCubes credit: booked as a refund to the card that is topped straight back into the wallet.
       if (cardToWallet && cardPart > 0) {
         legs.push(
           { account: Account.cardFunding(), direction: 'debit', amount: cardPart },

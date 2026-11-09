@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { Card, MenuRow, Section } from '@catodrive/ui';
-import { tripDocumentsApi } from '@catodrive/core/web/features/trips/documents-api';
-import { formatDateTime } from '@catodrive/core/web/lib/utils/format';
+import { Card, MenuRow, Section } from '@crosscubes/ui';
+import { tripDocumentsApi } from '@crosscubes/core/web/features/trips/documents-api';
+import { formatDateTime } from '@crosscubes/core/web/lib/utils/format';
 
 /** When the guest opened or asked for the car's papers during the trip. Hidden until there is something to show. */
 export function TripDocumentsHistory({ bookingId }: { bookingId: string }) {

@@ -94,7 +94,7 @@ export const adminBookingOverviewService = {
     const b = await BookingModel.findById(bookingId).select('guestId code').lean<{ guestId: string; code: string }>();
     if (!b) throw new NotFoundError('Booking');
     const bytes = await guestIdentityService.photo(b.guestId, kind);
-    const stamped = bytes && (await stampForView(bytes, await viewerStamp(staff.userId, `CatoDrive booking ${b.code}`, `Staff review: ${view.context?.reason ?? ''}`)));
+    const stamped = bytes && (await stampForView(bytes, await viewerStamp(staff.userId, `CrossCubes booking ${b.code}`, `Staff review: ${view.context?.reason ?? ''}`)));
     await auditService.record({
       actorId: staff.userId, actorRoles: staff.roles, action: 'guest.id.served', resourceType: 'booking', resourceId: bookingId,
       ip: staff.ip, userAgent: staff.userAgent, after: { kind, shown: !!stamped }, status: stamped ? 200 : 422,

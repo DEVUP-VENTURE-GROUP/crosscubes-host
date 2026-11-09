@@ -23,7 +23,7 @@ export function webPortalOf(req: Request): 'ioc' | undefined {
   return req.get('x-portal') === 'ioc' ? 'ioc' : undefined;
 }
 
-/** The House Fleet account, or an active captain on its team, runs CatoDrive's operations panel. */
+/** The House Fleet account, or an active captain on its team, runs CrossCubes's operations panel. */
 async function isFleetOperator(userId: string, roles: string[]): Promise<boolean> {
   if (roles.includes(HOUSE_FLEET_ROLE)) return true;
   const hostIds = await HostStaffModel.find({ userId, status: 'active' }).distinct('hostId');
@@ -47,16 +47,16 @@ async function isPartner(userId: string, roles: string[]): Promise<boolean> {
 /** Refuses a sign-in the app or panel it came from is not for. Other websites are never affected. */
 export async function assertAppAudience(app: MobileApp | undefined, user: { id: string; roles: string[] }, portal?: 'ioc'): Promise<void> {
   if (portal === 'ioc' && (user.roles.some((r) => STAFF_ROLES.includes(r)) || !(await isFleetOperator(user.id, user.roles)))) {
-    throw new AppError({ code: 'IOC_NOT_OPERATOR', message: 'This panel is for CatoDrive operations accounts only.', httpStatus: 403 });
+    throw new AppError({ code: 'IOC_NOT_OPERATOR', message: 'This panel is for CrossCubes operations accounts only.', httpStatus: 403 });
   }
   if (!app) return;
   if (user.roles.some((r) => STAFF_ROLES.includes(r))) {
-    throw new AppError({ code: 'APP_STAFF_ACCOUNT', message: 'Staff accounts sign in on the CatoDrive admin website, not the app.', httpStatus: 403 });
+    throw new AppError({ code: 'APP_STAFF_ACCOUNT', message: 'Staff accounts sign in on the CrossCubes admin website, not the app.', httpStatus: 403 });
   }
   if (app === 'partner' && !(await isPartner(user.id, user.roles))) {
     throw new AppError({
       code: 'APP_NOT_PARTNER',
-      message: 'This app is for CatoDrive hosts and partners. To rent a car, use the CatoDrive app.',
+      message: 'This app is for CrossCubes hosts and partners. To rent a car, use the CrossCubes app.',
       httpStatus: 403,
     });
   }

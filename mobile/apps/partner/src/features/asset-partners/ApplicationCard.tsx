@@ -1,9 +1,9 @@
 import { View } from 'react-native';
 import { Clock } from 'lucide-react-native';
-import { Badge, Card, Text, space, useTheme } from '@catodrive/ui';
-import type { PartnerApplication } from '@catodrive/core/web/features/asset-partners/api';
-import { APPLICATION_STATUS, applicationStage } from '@catodrive/core/web/features/asset-partners/status';
-import { formatDate } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Card, Text, space, useTheme } from '@crosscubes/ui';
+import type { PartnerApplication } from '@crosscubes/core/web/features/asset-partners/api';
+import { APPLICATION_STATUS, applicationStage } from '@crosscubes/core/web/features/asset-partners/status';
+import { formatDate } from '@crosscubes/core/web/lib/utils/format';
 import { StageTrack } from './StageTrack';
 import { partnerBadge } from './tone';
 

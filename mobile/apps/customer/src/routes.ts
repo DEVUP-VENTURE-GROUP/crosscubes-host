@@ -1,4 +1,4 @@
-import { createRouteResolver } from '@catodrive/core';
+import { createRouteResolver } from '@crosscubes/core';
 
 /** Screens a server link (push, email) may open. Paths match the website's, so its links work unchanged. */
 export const resolveLink = createRouteResolver([

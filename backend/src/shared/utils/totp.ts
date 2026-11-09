@@ -66,7 +66,7 @@ export function verifyTotp(secret: string, token: string, window = 1): boolean {
   return false;
 }
 
-export function otpauthUrl(secret: string, account: string, issuer = 'CatoDrive'): string {
+export function otpauthUrl(secret: string, account: string, issuer = 'CrossCubes'): string {
   const label = encodeURIComponent(`${issuer}:${account}`);
   return `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&digits=6&period=30`;
 }

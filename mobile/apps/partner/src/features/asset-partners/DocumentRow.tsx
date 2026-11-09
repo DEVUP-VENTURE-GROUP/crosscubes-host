@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Badge, BottomSheet, Button, Text, space } from '@catodrive/ui';
-import { SecureImage } from '@catodrive/core';
-import type { PartnerDocument } from '@catodrive/core/web/features/documents/api';
-import { DOC_CATEGORY_LABEL, EXPIRY_WARNING_DAYS, daysUntil } from '@catodrive/core/web/features/asset-partners/status';
-import { formatDate, formatDay } from '@catodrive/core/web/lib/utils/format';
+import { Badge, BottomSheet, Button, Text, space } from '@crosscubes/ui';
+import { SecureImage } from '@crosscubes/core';
+import type { PartnerDocument } from '@crosscubes/core/web/features/documents/api';
+import { DOC_CATEGORY_LABEL, EXPIRY_WARNING_DAYS, daysUntil } from '@crosscubes/core/web/features/asset-partners/status';
+import { formatDate, formatDay } from '@crosscubes/core/web/lib/utils/format';
 
 /** One uploaded document with its expiry and verification state; View opens it in a sheet. */
 export function DocumentRow({ doc }: { doc: PartnerDocument }) {

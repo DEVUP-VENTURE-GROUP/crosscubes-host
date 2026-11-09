@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Plus } from 'lucide-react-native';
-import { Button, Chip, Input, Text, space, useTheme } from '@catodrive/ui';
-import { FEATURE_GROUPS, KNOWN_FEATURES } from '@catodrive/core/web/features/vehicles/listing-options';
+import { Button, Chip, Input, Text, space, useTheme } from '@crosscubes/ui';
+import { FEATURE_GROUPS, KNOWN_FEATURES } from '@crosscubes/core/web/features/vehicles/listing-options';
 
 /** Vehicle features as a grouped checklist, plus free-text custom ones. */
 export function FeaturePicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {

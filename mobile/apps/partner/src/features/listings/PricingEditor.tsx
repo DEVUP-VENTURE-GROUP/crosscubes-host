@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
-import { BottomSheet, Button, DateRangeCalendar, Input, Text, space, useTheme } from '@catodrive/ui';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
-import { NEW_SEASONAL_RULE, pricingForm, pricingPatch, pricingValid, type PricingField, type PricingForm } from '@catodrive/core/web/features/vehicles/pricing-form';
-import { formatDay } from '@catodrive/core/web/lib/utils/format';
+import { BottomSheet, Button, DateRangeCalendar, Input, Text, space, useTheme } from '@crosscubes/ui';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
+import { NEW_SEASONAL_RULE, pricingForm, pricingPatch, pricingValid, type PricingField, type PricingForm } from '@crosscubes/core/web/features/vehicles/pricing-form';
+import { formatDay } from '@crosscubes/core/web/lib/utils/format';
 
 const digits = (t: string) => t.replace(/[^\d.]/g, '');
 

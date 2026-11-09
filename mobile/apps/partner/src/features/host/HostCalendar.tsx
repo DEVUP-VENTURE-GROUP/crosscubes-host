@@ -3,9 +3,9 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { Card, EmptyState, Skeleton, Text, space, useTheme } from '@catodrive/ui';
-import { hostTripsApi, type HostTrip } from '@catodrive/core/web/features/host/trips.api';
-import { useMyVehicles } from '@catodrive/core/web/features/vehicles/hooks';
+import { Card, EmptyState, Skeleton, Text, space, useTheme } from '@crosscubes/ui';
+import { hostTripsApi, type HostTrip } from '@crosscubes/core/web/features/host/trips.api';
+import { useMyVehicles } from '@crosscubes/core/web/features/vehicles/hooks';
 
 const DAYS = 14;
 const ROW = 56;

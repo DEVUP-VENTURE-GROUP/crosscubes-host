@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { Image } from 'expo-image';
 import { Camera, Check, Clock, ShieldCheck } from 'lucide-react-native';
-import { Badge, Card, Skeleton, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
+import { Badge, Card, Skeleton, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
 import { tripApi, type InspectionAngle, type PhotoPhase } from '../web/features/trips/api';
 import { useInspection } from '../web/features/trips/hooks';
 import { formatDateTime } from '../web/lib/utils/format';
@@ -62,7 +62,7 @@ export function InspectionPhotos({ bookingId, phase }: { bookingId: string; phas
         if (pos) fix = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracyM: pos.coords.accuracy ?? 0 };
       }
       if (state.requireLocation && !fix) {
-        toast({ tone: 'error', title: 'Location is needed for these photos', body: 'Allow location for CatoDrive in Settings, then try again.' });
+        toast({ tone: 'error', title: 'Location is needed for these photos', body: 'Allow location for CrossCubes in Settings, then try again.' });
         return;
       }
       const shot = await pickPhotos('camera');

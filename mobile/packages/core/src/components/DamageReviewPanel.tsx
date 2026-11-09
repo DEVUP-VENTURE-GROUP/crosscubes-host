@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Eye, ScanSearch, ShieldCheck } from 'lucide-react-native';
-import { Badge, Button, Card, Skeleton, Text, useTheme, useToast, space } from '@catodrive/ui';
+import { Badge, Button, Card, Skeleton, Text, useTheme, useToast, space } from '@crosscubes/ui';
 import { aiApi, type DamageAssessment } from '../web/features/ai/api';
 import { ApiError } from '../web/lib/api/types';
 

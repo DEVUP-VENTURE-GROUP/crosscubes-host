@@ -35,7 +35,7 @@ const EVENT_LABEL: Record<SigningEventType, string> = {
   read_amendment: 'Amendment read to the end',
   consented: 'Agreed to sign electronically',
   signed: 'Signed by the partner',
-  countersigned: 'Countersigned for CatoDrive',
+  countersigned: 'Countersigned for CrossCubes',
   completed: 'Completed and sealed',
   copy_sent: 'Signed copies sent to the partner',
   declined: 'Declined by the partner',
@@ -45,7 +45,7 @@ const KIND_FILE: Record<SignedDocKind, string> = { agreement: 'Asset-Partner-Agr
 // Opening a page repeatedly is one fact, not many.
 const EVENT_DEDUPE_MS = 10 * 60_000;
 const fileName = (kind: SignedDocKind, signer: string, envelopeId: string) =>
-  `CatoDrive-${KIND_FILE[kind]}-${signer.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'partner'}-${envelopeId}.pdf`;
+  `CrossCubes-${KIND_FILE[kind]}-${signer.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'partner'}-${envelopeId}.pdf`;
 const utc = (d: Date) => `${new Date(d).toISOString().replace('T', ' ').slice(0, 19)} UTC`;
 
 function verifyBase(): string {
@@ -125,7 +125,7 @@ export class AssetPartnerEnvelopeService {
 
   private async countersigner() {
     const c = (await platformConfigService.get()).assetPartner;
-    const organisation = c.countersignerOrganisation || 'CatoDrive';
+    const organisation = c.countersignerOrganisation || 'CrossCubes';
     return { name: c.countersignerName || organisation, title: c.countersignerTitle || 'Authorised signatory', organisation };
   }
 

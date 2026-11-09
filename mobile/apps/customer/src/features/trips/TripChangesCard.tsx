@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { History } from 'lucide-react-native';
-import { Badge, Button, Card, Text, useTheme, space, type BadgeTone } from '@catodrive/ui';
-import { EXCEPTION_REASON_LABEL, EXCEPTION_STATUS_LABEL } from '@catodrive/core/web/features/bookings/status';
-import type { Booking, ExceptionReasonCode } from '@catodrive/core/web/features/bookings/types';
-import { formatDateTime, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Text, useTheme, space, type BadgeTone } from '@crosscubes/ui';
+import { EXCEPTION_REASON_LABEL, EXCEPTION_STATUS_LABEL } from '@crosscubes/core/web/features/bookings/status';
+import type { Booking, ExceptionReasonCode } from '@crosscubes/core/web/features/bookings/types';
+import { formatDateTime, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { ExceptionForm } from '@/features/bookings/ChangeTrip';
 
 const KIND_LABEL = { pickup_shift: 'Pickup time changed', move: 'Dates changed', switch_car: 'Car switched' } as const;

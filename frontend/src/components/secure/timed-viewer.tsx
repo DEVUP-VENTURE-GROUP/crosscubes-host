@@ -181,7 +181,7 @@ export function TimedViewer({ title, subtitle, seconds, items, load, onClose }: 
         {/* A live clock over the pages: any photo of this screen shows exactly when it was taken. */}
         <div aria-hidden className="pointer-events-none fixed inset-0 top-16 overflow-hidden">
           <div className="absolute -inset-1/2 flex rotate-[-30deg] flex-wrap content-start gap-x-16 gap-y-24 text-sm font-semibold text-white/10 mix-blend-difference">
-            {Array.from({ length: 120 }, (_, i) => <span key={i}>CatoDrive live view · {clock}</span>)}
+            {Array.from({ length: 120 }, (_, i) => <span key={i}>CrossCubes live view · {clock}</span>)}
           </div>
         </div>
 

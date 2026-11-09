@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { CONTACT } from '@/features/contact/content';
 
 export const metadata: Metadata = {
-  title: 'Delete your CatoDrive account',
-  description: 'How to delete your CatoDrive account and what happens to your data.',
+  title: 'Delete your CrossCubes account',
+  description: 'How to delete your CrossCubes account and what happens to your data.',
 };
 
 /** The public deletion page the app stores link to: how to delete, what is removed, what the law makes us keep. */
@@ -12,16 +12,16 @@ export default function DeleteAccountInfoPage() {
   return (
     <div className="container max-w-2xl space-y-8 py-12">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Delete your CatoDrive account</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Delete your CrossCubes account</h1>
         <p className="text-muted-foreground">
-          This applies to the CatoDrive app, the CatoDrive Partner app and catodrive.com - it is one account.
+          This applies to the CrossCubes app, the CrossCubes Partner app and crosscubes.com - it is one account.
         </p>
       </header>
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">In the app</h2>
         <ol className="list-decimal space-y-1 ps-5 text-sm">
-          <li>Open the CatoDrive or CatoDrive Partner app and sign in.</li>
+          <li>Open the CrossCubes or CrossCubes Partner app and sign in.</li>
           <li>Go to Account (or Menu in the Partner app) and tap <strong>Delete account</strong>.</li>
           <li>Confirm with your password, or with a code we send you if you signed up without one.</li>
         </ol>

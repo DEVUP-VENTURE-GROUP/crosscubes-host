@@ -9,12 +9,12 @@ import { config } from '@/lib/config';
 import { useFacets } from '@/features/vehicles/hooks';
 
 /**
- * Shared CatoDrive marketing sections, so the homepage and the About page show
+ * Shared CrossCubes marketing sections, so the homepage and the About page show
  * the same social proof and audience story from ONE source - change it once,
  * it changes everywhere. Figures are business-supplied marketing copy.
  */
 
-export const BRAND = 'CatoDrive';
+export const BRAND = 'CrossCubes';
 
 export function SectionEyebrow({ children }: { children: React.ReactNode }) {
   return (

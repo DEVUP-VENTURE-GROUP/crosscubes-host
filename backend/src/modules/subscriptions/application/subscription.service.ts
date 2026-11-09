@@ -115,7 +115,7 @@ export class SubscriptionService {
         refType: 'subscription',
         refId: intent.intentId,
         currency: 'USD',
-        description: `CatoDrive ${plan.name} membership`,
+        description: `CrossCubes ${plan.name} membership`,
         legs: [
           { account: Account.gatewayClearing(), direction: 'credit', amount: plan.priceCents },
           { account: Account.platformRevenue(), direction: 'debit', amount: plan.priceCents },

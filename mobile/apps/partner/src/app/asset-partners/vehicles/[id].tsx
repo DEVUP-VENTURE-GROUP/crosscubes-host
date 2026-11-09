@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Badge, BarChart, Card, Divider, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, StatTile, Text, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { assetPartnerApi } from '@catodrive/core/web/features/asset-partners/api';
-import { formatDate, formatDay, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, BarChart, Card, Divider, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, StatTile, Text, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { assetPartnerApi } from '@crosscubes/core/web/features/asset-partners/api';
+import { formatDate, formatDay, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { VehiclePhoto } from '@/features/asset-partners/VehiclePhoto';
 
 const currency = 'USD';

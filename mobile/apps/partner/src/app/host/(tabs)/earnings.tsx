@@ -1,11 +1,11 @@
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Clock, TrendingUp, Wallet, Zap } from 'lucide-react-native';
-import { Badge, BarChart, Button, Card, Divider, ErrorState, Screen, ScreenHeader, SkeletonList, StatTile, Text, space, useConfirm, useTheme } from '@catodrive/ui';
-import { hostApi } from '@catodrive/core/web/features/host/api';
-import { useEarnings, useInstantPayout, usePayouts } from '@catodrive/core/web/features/host/hooks';
-import { instantPayoutQuote } from '@catodrive/core/web/features/host/payouts';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, BarChart, Button, Card, Divider, ErrorState, Screen, ScreenHeader, SkeletonList, StatTile, Text, space, useConfirm, useTheme } from '@crosscubes/ui';
+import { hostApi } from '@crosscubes/core/web/features/host/api';
+import { useEarnings, useInstantPayout, usePayouts } from '@crosscubes/core/web/features/host/hooks';
+import { instantPayoutQuote } from '@crosscubes/core/web/features/host/payouts';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { EarningsInsights } from '@/features/host/EarningsInsights';
 import { PayoutConnect } from '@/features/host/PayoutConnect';
 import { PayoutReadinessCard } from '@/features/host/PayoutReadinessCard';

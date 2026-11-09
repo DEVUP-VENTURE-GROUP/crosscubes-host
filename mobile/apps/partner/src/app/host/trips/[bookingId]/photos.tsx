@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Chip, ErrorState, Screen, ScreenHeader, Skeleton, space } from '@catodrive/ui';
-import { InspectionPhotos, RequireAuth } from '@catodrive/core';
-import { hostTripsApi } from '@catodrive/core/web/features/host/trips.api';
+import { Button, Chip, ErrorState, Screen, ScreenHeader, Skeleton, space } from '@crosscubes/ui';
+import { InspectionPhotos, RequireAuth } from '@crosscubes/core';
+import { hostTripsApi } from '@crosscubes/core/web/features/host/trips.api';
 
 /** The website's trip photos: pickup photos prove the handover condition, return photos are the damage evidence. */
 function TripPhotos({ bookingId }: { bookingId: string }) {

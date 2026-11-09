@@ -10,7 +10,7 @@ import { documentsApi } from '@/features/documents/api';
 import type { OnboardingDocument, PartnerDocCategory } from '@/features/asset-partners/api';
 import { DOC_ACCEPT } from '@/lib/upload-formats';
 
-/** Agreement Exhibit E: the papers CatoDrive needs before the car can go live. */
+/** Agreement Exhibit E: the papers CrossCubes needs before the car can go live. */
 export function UploadDocuments({ documents, onChange }: { documents: OnboardingDocument[]; onChange: () => void }) {
   const [busy, setBusy] = useState<PartnerDocCategory | null>(null);
   const [error, setError] = useState<{ category: PartnerDocCategory; message: string } | null>(null);
@@ -38,7 +38,7 @@ export function UploadDocuments({ documents, onChange }: { documents: Onboarding
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold">Upload your papers</h2>
-            <p className="text-sm text-muted-foreground">PDF or a clear photo. Your dashboard opens once all five are in; CatoDrive checks each before your car goes live.</p>
+            <p className="text-sm text-muted-foreground">PDF or a clear photo. Your dashboard opens once all five are in; CrossCubes checks each before your car goes live.</p>
           </div>
           <Badge tone={done === documents.length ? 'success' : 'warning'}>{done}/{documents.length} uploaded</Badge>
         </div>

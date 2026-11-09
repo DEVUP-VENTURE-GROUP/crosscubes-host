@@ -56,11 +56,11 @@ export async function stampPdf(input: Buffer, lines: string[]): Promise<Buffer> 
     page.drawText(text, { x: size, y: size * 0.75, size: label, font, color: rgb(1, 1, 1) });
   }
   pdf.setTitle('Vehicle document');
-  pdf.setAuthor('CatoDrive');
+  pdf.setAuthor('CrossCubes');
   pdf.setSubject('');
   pdf.setKeywords([]);
-  pdf.setProducer('CatoDrive');
-  pdf.setCreator('CatoDrive');
+  pdf.setProducer('CrossCubes');
+  pdf.setCreator('CrossCubes');
   return Buffer.from(await pdf.save());
 }
 

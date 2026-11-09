@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react-native';
-import { Button, Card, Input, QueryView, Screen, ScreenHeader, Text, useTheme, useToast, space } from '@catodrive/ui';
+import { Button, Card, Input, QueryView, Screen, ScreenHeader, Text, useTheme, useToast, space } from '@crosscubes/ui';
 import { accountApi } from '../web/features/account/api';
 import { ApiError } from '../web/lib/api/types';
 import { signOutEverywhere } from '../web/features/auth/session';

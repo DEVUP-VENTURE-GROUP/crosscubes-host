@@ -58,7 +58,7 @@ router.post(
 );
 
 /** The host's side of a specific guest's thread. */
-/** Who the guest is: name, verification, trips and rating; contact details only for CatoDrive's own fleet. */
+/** Who the guest is: name, verification, trips and rating; contact details only for CrossCubes's own fleet. */
 router.get(
   '/:vehicleId/:guestId/guest',
   authenticate,

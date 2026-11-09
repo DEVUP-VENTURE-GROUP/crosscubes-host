@@ -6,7 +6,7 @@ import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import { ReviewModel } from '../../reviews/infrastructure/review.model';
 import { HOUSE_FLEET_ROLE, STAFF_ROLES } from '../../../shared/constants/rbac';
 
-/** staff: CatoDrive's own people (admin console, operations panel); host: a self-managed host answering a guest. */
+/** staff: CrossCubes's own people (admin console, operations panel); host: a self-managed host answering a guest. */
 export type Visibility = 'staff' | 'host';
 export type PersonKind = 'guest' | 'host' | 'asset_partner' | 'staff';
 
@@ -62,7 +62,7 @@ export function displayName(u: UserLite | undefined, k: KycLite | undefined, vis
   return shortName(u.firstName, u.lastName) ?? shortName(k?.verifiedFirstName, k?.verifiedLastName) ?? 'New guest (no name yet)';
 }
 
-/** Whether a viewer is CatoDrive staff (console roles or the CatoDrive fleet operator). */
+/** Whether a viewer is CrossCubes staff (console roles or the CrossCubes fleet operator). */
 export async function visibilityFor(userId: string): Promise<Visibility> {
   const u = await UserModel.findOne({ _id: userId }).select('roles').lean<{ roles?: string[] }>();
   const roles = u?.roles ?? [];

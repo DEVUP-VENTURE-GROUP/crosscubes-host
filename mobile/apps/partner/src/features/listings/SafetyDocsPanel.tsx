@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Upload } from 'lucide-react-native';
-import { Button, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { pickPhotos, uploadPhotos } from '@catodrive/core';
-import { documentsApi } from '@catodrive/core/web/features/documents/api';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { Button, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { pickPhotos, uploadPhotos } from '@crosscubes/core';
+import { documentsApi } from '@crosscubes/core/web/features/documents/api';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 
 type Category = 'registration' | 'insurance' | 'recall_receipt';
 const LABEL: Record<Category, string> = { registration: 'registration', insurance: 'insurance', recall_receipt: 'repair receipt' };

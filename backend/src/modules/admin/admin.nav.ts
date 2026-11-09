@@ -5,7 +5,7 @@ import { config } from '../../config';
  * truth for the sidebar (via GET /admin/nav), permission gating, and docs.
  *
  *  - slug:       stable identifier for the section
- *  - path:       front-end route (CatoDrive web admin panel)
+ *  - path:       front-end route (CrossCubes web admin panel)
  *  - apiPath:    primary backend endpoint that powers the section
  *  - permission: RBAC permission required to see/use the section
  */
@@ -43,7 +43,6 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { slug: 'payouts', path: A('payouts'), apiPath: '/admin/payouts', label: 'Host Payouts', group: 'Money out', permission: 'payout:manage' },
   { slug: 'asset-partners', path: A('asset-partners'), apiPath: '/admin/asset-partners/summary', label: 'Asset Partners', group: 'Money out', permission: 'admin:read' },
   { slug: 'asset-partner-terms', path: A('asset-partner-terms'), apiPath: '/admin/config', label: 'Partner Terms', group: 'Money out', permission: 'platform:manage' },
-  { slug: 'insurers', path: A('insurers'), apiPath: '/admin/insurance-partners', label: 'Insurance Partners', group: 'Money out', permission: 'admin:read' },
   { slug: 'corporate', path: A('corporate'), apiPath: '/admin/corporate/orgs', label: 'Corporate Accounts', group: 'Money out', permission: 'corporate:manage' },
 
   { slug: 'users', path: A('users'), apiPath: '/admin/users', label: 'Users', group: 'People & cars', permission: 'admin:read' },

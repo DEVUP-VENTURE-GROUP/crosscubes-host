@@ -45,7 +45,7 @@ export class PricingService implements IPricingContract {
     // windows) — one read, used throughout.
     const cfg = await platformConfigService.get();
 
-    // Membership (CatoDrive Plus) benefits — resolved once, applied throughout.
+    // Membership (CrossCubes Plus) benefits — resolved once, applied throughout.
     const member = input.guestId
       ? await subscriptionService.benefitsFor(input.guestId)
       : { bookingDiscountBps: 0, waiveSurge: false, waiveServiceFee: false, rewardsMultiplierBps: 10000 };
@@ -81,7 +81,7 @@ export class PricingService implements IPricingContract {
       const seasonalBps = seasonalMultiplierFor(day, v.pricing.seasonalRules);
       const seasonalMult = seasonalBps > 0 ? seasonalBps : 10000;
 
-      // CatoDrive Plus members never pay surge.
+      // CrossCubes Plus members never pay surge.
       const surgeMult = member.waiveSurge ? 10000 : surges[i].multiplierBps;
       if (surgeMult > 10000) {
         surgeDays++;
@@ -115,7 +115,7 @@ export class PricingService implements IPricingContract {
       discount = addMoney(discount, applyBps(base, v.pricing.promoDiscountBps));
     }
 
-    // ── Membership discount (CatoDrive Plus). Tracked separately so we can show the
+    // ── Membership discount (CrossCubes Plus). Tracked separately so we can show the
     // guest exactly what their membership saved them on this trip.
     let memberSavings = zeroMoney(currency);
     if (member.bookingDiscountBps > 0) {

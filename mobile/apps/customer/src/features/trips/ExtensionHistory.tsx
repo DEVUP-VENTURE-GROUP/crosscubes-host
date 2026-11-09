@@ -1,9 +1,9 @@
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CalendarPlus } from 'lucide-react-native';
-import { Card, Divider, Text, useTheme, space } from '@catodrive/ui';
-import type { BookingExtension } from '@catodrive/core/web/features/bookings/types';
-import { formatDateTime, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Card, Divider, Text, useTheme, space } from '@crosscubes/ui';
+import type { BookingExtension } from '@crosscubes/core/web/features/bookings/types';
+import { formatDateTime, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** Every extension on the trip, each with its own receipt. */
 export function ExtensionHistory({ bookingId, extensions }: { bookingId: string; extensions?: BookingExtension[] }) {

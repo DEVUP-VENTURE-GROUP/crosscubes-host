@@ -150,7 +150,7 @@ export interface ApplicationFormProps {
   mode: 'partner' | 'vehicle';
   /** An application to correct, or the partner's last one to copy their details from. */
   initial?: PartnerApplicationDetail;
-  /** CatoDrive's note when it sent the application back. */
+  /** CrossCubes's note when it sent the application back. */
   reviewNote?: string;
   draftKey: string;
   submitLabel?: string;
@@ -252,7 +252,7 @@ export function ApplicationForm({ mode, initial, reviewNote, draftKey, submitLab
       {reviewNote && (
         <div className="flex gap-3 rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <div><p className="font-semibold">What CatoDrive needs you to change</p><p className="mt-1 text-muted-foreground">{reviewNote}</p></div>
+          <div><p className="font-semibold">What CrossCubes needs you to change</p><p className="mt-1 text-muted-foreground">{reviewNote}</p></div>
         </div>
       )}
 
@@ -315,7 +315,7 @@ export function ApplicationForm({ mode, initial, reviewNote, draftKey, submitLab
                 <p className="flex items-center gap-2 rounded-xl bg-success/10 px-3 py-2 text-sm text-success"><CheckCircle2 className="h-4 w-4 shrink-0" /> Found: {[vin.result.decoded.year, vin.result.decoded.make, vin.result.decoded.model, vin.result.decoded.trim].filter(Boolean).join(' ')}</p>
               )}
               {vin.state === 'done' && vin.result?.alreadyWithUs && (
-                <p className="flex items-center gap-2 rounded-xl bg-warning/10 px-3 py-2 text-sm"><AlertTriangle className="h-4 w-4 shrink-0 text-warning" /> This car is already with CatoDrive. If that’s a mistake, add a note on the last step.</p>
+                <p className="flex items-center gap-2 rounded-xl bg-warning/10 px-3 py-2 text-sm"><AlertTriangle className="h-4 w-4 shrink-0 text-warning" /> This car is already with CrossCubes. If that’s a mistake, add a note on the last step.</p>
               )}
               {(vin.state === 'failed' || (vin.state === 'done' && !vin.result?.decoded)) && (
                 <p className="text-sm text-muted-foreground">We couldn’t read that VIN automatically. Fill in the details below.</p>
@@ -365,7 +365,7 @@ export function ApplicationForm({ mode, initial, reviewNote, draftKey, submitLab
                 <Field label="Insurance company" htmlFor="carrier" error={errors.carrier}><Input id="carrier" value={d.carrier} onChange={(e) => set('carrier', e.target.value)} /></Field>
                 <Field label="Policy number" htmlFor="policyNumber" error={errors.policyNumber}><Input id="policyNumber" value={d.policyNumber} onChange={(e) => set('policyNumber', e.target.value)} /></Field>
               </div>
-              <Field label="Coverage" error={errors.coverage} hint="CatoDrive’s commercial cover applies while the car is with us.">
+              <Field label="Coverage" error={errors.coverage} hint="CrossCubes’s commercial cover applies while the car is with us.">
                 <Choice value={d.coverage} onChange={(v) => set('coverage', v)} options={[{ value: 'full', label: 'Full coverage' }, { value: 'liability', label: 'Liability only' }, { value: 'unsure', label: 'Not sure' }]} />
               </Field>
             </>
@@ -386,7 +386,7 @@ export function ApplicationForm({ mode, initial, reviewNote, draftKey, submitLab
               </dl>
               <label className={cn('flex cursor-pointer gap-3 rounded-lg border p-4 text-sm', errors.confirmed ? 'border-destructive' : 'border-border')}>
                 <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-primary" checked={d.confirmed} onChange={(e) => set('confirmed', e.target.checked)} />
-                <span>I confirm these details are accurate, I can place this car with CatoDrive, and I agree to a physical inspection before it goes live.</span>
+                <span>I confirm these details are accurate, I can place this car with CrossCubes, and I agree to a physical inspection before it goes live.</span>
               </label>
               {errors.confirmed && <p className="text-xs text-destructive">{errors.confirmed}</p>}
               {submitError && <p role="alert" className="text-sm text-destructive">{submitError}</p>}

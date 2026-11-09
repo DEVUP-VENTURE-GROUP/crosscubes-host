@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SignInScreen, safeReturn } from '@catodrive/core';
-import { Text } from '@catodrive/ui';
+import { SignInScreen, safeReturn } from '@crosscubes/core';
+import { Text } from '@crosscubes/ui';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function LoginScreen() {
       forgotPath="/forgot-password"
       footer={
         <Text tone="muted" center>
-          New to CatoDrive?{' '}
+          New to CrossCubes?{' '}
           <Text variant="label" tone="primary" accessibilityRole="link" onPress={() => router.replace({ pathname: '/register', params: { returnTo: target } })}>
             Create an account
           </Text>

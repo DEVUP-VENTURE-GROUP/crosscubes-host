@@ -13,7 +13,7 @@ import { titleUnavailableText, vehicleHistory } from '../listing-form';
 /**
  * Safety recalls and title history for a car.
  *
- * Shown to the car's host and to CatoDrive staff (admin car review); never to guests.
+ * Shown to the car's host and to CrossCubes staff (admin car review); never to guests.
  *
  * Two honesty rules are load-bearing here:
  *

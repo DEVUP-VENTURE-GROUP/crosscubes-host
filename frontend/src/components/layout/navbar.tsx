@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, Car, Info, HelpCircle, FileText, ShieldCheck, Calculator, Sparkles, TrendingUp } from 'lucide-react';
+import { Search, Menu, X, Car, Info, HelpCircle, FileText, ShieldCheck, Calculator, Sparkles } from 'lucide-react';
 import { config } from '@/lib/config';
 import { Logo } from '@/components/layout/logo';
 import { useAuthStore } from '@/features/auth/store';
@@ -21,7 +21,7 @@ import { SearchBarFields } from '@/features/search/search-bar-fields';
 
 export function Navbar() {
   const { status } = useAuthStore();
-  // CatoDrive's own fleet is run from the operations panel, never the host site.
+  // CrossCubes's own fleet is run from the operations panel, never the host site.
   const isHouseFleet = useAuthStore((s) => s.user?.roles?.includes('house_fleet') ?? false);
   const pathname = usePathname();
   const authed = status === 'authenticated';
@@ -134,7 +134,7 @@ export function Navbar() {
               >
                 How it works
               </Link>
-              {/* Primary acquisition path - own the car, CatoDrive runs it. Leads
+              {/* Primary acquisition path - own the car, CrossCubes runs it. Leads
                   over the self-managed host flow. Once actually enrolled,
                   this goes straight to the partner's own dashboard rather
                   than the public pitch they no longer need. */}
@@ -166,14 +166,6 @@ export function Navbar() {
                   {isHost ? 'Host dashboard' : 'Become a host'}
                 </SiteLink>
               ) : null}
-              {/* Lower-frequency destination - only at wider widths so it
-                  doesn't crowd the primary consumer/partner links. */}
-              <Link
-                href="/investors"
-                className="hidden rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:bg-primary/10 hover:text-primary xl:block"
-              >
-                Investors
-              </Link>
             </>
           )}
 
@@ -189,7 +181,7 @@ export function Navbar() {
             </div>
           ) : (
             <div className="hidden sm:flex items-center ms-2">
-              {/* One entry point, not two - /login itself offers "New to CatoDrive?
+              {/* One entry point, not two - /login itself offers "New to CrossCubes?
                   Sign up" for anyone who isn't a returning user yet. */}
               <Link href="/login">
                 <Button size="sm" className="rounded-full px-5 font-semibold">Log in</Button>
@@ -253,10 +245,6 @@ export function Navbar() {
                     {isHost ? 'Host dashboard' : 'Become a host'}
                   </SiteLink>
                 )}
-                <Link href="/investors" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
-                  <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                  Investors
-                </Link>
                 <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
                   <Info className="h-5 w-5 text-muted-foreground" />
                   Why choose {config.appName}

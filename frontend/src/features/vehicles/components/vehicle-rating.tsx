@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils/cn';
 
 type RatingFields = Pick<Vehicle, 'ratingAvg' | 'ratingCount'> & { externalRating?: { source: string; rating: number; trips: number } };
 
-/** CatoDrive's own rating once a car has real reviews here; otherwise a rating earned elsewhere with its source named; otherwise a short "New" tag. */
+/** CrossCubes's own rating once a car has real reviews here; otherwise a rating earned elsewhere with its source named; otherwise a short "New" tag. */
 export function VehicleRating({ vehicle, className }: { vehicle: RatingFields; className?: string }) {
   const own = vehicle.ratingCount > 0;
   const ext = !own ? vehicle.externalRating : undefined;
@@ -30,7 +30,7 @@ export function VehicleRating({ vehicle, className }: { vehicle: RatingFields; c
 export function FleetBadge({ className }: { className?: string }) {
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold tracking-wide text-primary', className)}>
-      <ShieldCheck className="h-3.5 w-3.5" /> CatoDrive Fleet
+      <ShieldCheck className="h-3.5 w-3.5" /> CrossCubes Fleet
     </span>
   );
 }
@@ -39,7 +39,7 @@ export function FleetBadge({ className }: { className?: string }) {
 export function VehicleBadges({ vehicle }: { vehicle: Vehicle }) {
   const d = vehicle.listing.delivery;
   const items: { key: string; icon: typeof Zap; label: string }[] = [];
-  if (vehicle.fleetOwned) items.push({ key: 'fleet', icon: ShieldCheck, label: 'Owned & inspected by CatoDrive' });
+  if (vehicle.fleetOwned) items.push({ key: 'fleet', icon: ShieldCheck, label: 'Owned & inspected by CrossCubes' });
   if (vehicle.hostIsSuperhost) items.push({ key: 'super', icon: Award, label: 'Superhost' });
   if (vehicle.listing.instantBook) items.push({ key: 'instant', icon: Zap, label: 'Instant Book' });
   if (vehicle.listing.cancellationPolicy === 'flexible') items.push({ key: 'cancel', icon: CalendarCheck, label: 'Flexible cancellation' });

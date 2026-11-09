@@ -61,9 +61,9 @@ describe('application and review', () => {
   it('accepts only a licence file the applicant uploaded', async () => {
     await expect(insurancePartnerService.apply('u3', { ...APPLICATION, licenceDoc: { url: 'https://evil.example/licence.pdf' } })).rejects.toThrow('Upload the licence');
     await expect(
-      insurancePartnerService.apply('u3', { ...APPLICATION, licenceDoc: { url: 'https://cdn.catodrive.com/insurance/2026/10/someone-else/a.pdf' } }),
+      insurancePartnerService.apply('u3', { ...APPLICATION, licenceDoc: { url: 'https://cdn.crosscubes.com/insurance/2026/10/someone-else/a.pdf' } }),
     ).rejects.toThrow('Upload the licence');
-    const ok = await insurancePartnerService.apply('u3', { ...APPLICATION, licenceDoc: { url: 'https://cdn.catodrive.com/insurance/2026/10/u3/a.pdf' } });
+    const ok = await insurancePartnerService.apply('u3', { ...APPLICATION, licenceDoc: { url: 'https://cdn.crosscubes.com/insurance/2026/10/u3/a.pdf' } });
     expect(ok.licenceDoc?.url).toContain('/u3/');
   });
 
@@ -103,7 +103,7 @@ describe('plans at checkout', () => {
   });
 });
 
-describe('plans need CatoDrive approval', () => {
+describe('plans need CrossCubes approval', () => {
   it('a company still waiting for approval can set up plans, but guests see none', async () => {
     const applied = await insurancePartnerService.apply('ins-user', APPLICATION);
     const plan = await insurancePlanService.create('ins-user', PLAN);

@@ -116,7 +116,7 @@ function VerifyIdentity() {
 
       <PageHeader
         title="Verify your identity"
-        description="Every driver on CatoDrive is identity-verified against a government-issued ID. It's mandatory before you can book - so hosts and guests always know exactly who they're dealing with."
+        description="Every driver on CrossCubes is identity-verified against a government-issued ID. It's mandatory before you can book - so hosts and guests always know exactly who they're dealing with."
       />
 
       {/* ── Terminal & in-progress states ─────────────────────────── */}
@@ -328,7 +328,7 @@ function ManualUpload({ disabled, onSubmitted }: { disabled: boolean; onSubmitte
 
       {capturing && (
         <LiveCamera
-          stamp={{ headline: 'CatoDrive identity check', detail: capturing.label }}
+          stamp={{ headline: 'CrossCubes identity check', detail: capturing.label }}
           requireLocation={false}
           facing={capturing.id === 'selfie' ? 'user' : 'environment'}
           onUse={async (shot) => {

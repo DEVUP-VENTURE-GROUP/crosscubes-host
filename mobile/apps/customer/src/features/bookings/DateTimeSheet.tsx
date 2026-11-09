@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { BottomSheet, Button, DateRangeCalendar, Text, useTheme, space } from '@catodrive/ui';
-import { formatClock } from '@catodrive/core/web/lib/utils/format';
+import { BottomSheet, Button, DateRangeCalendar, Text, useTheme, space } from '@crosscubes/ui';
+import { formatClock } from '@crosscubes/core/web/lib/utils/format';
 import { HALF_HOURS } from '@/features/search/times';
 
 /** Pick one day and a half-hour time; returns a local "YYYY-MM-DDTHH:mm" like the website's datetime field. */

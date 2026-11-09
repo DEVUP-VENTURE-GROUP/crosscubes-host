@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { KeyRound } from 'lucide-react-native';
-import { Button, Card, Text, useTheme, space } from '@catodrive/ui';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Button, Card, Text, useTheme, space } from '@crosscubes/ui';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 /** The code the guest shows the host at the car, generated on the spot. */
 export function PickupCodeCard({ bookingId }: { bookingId: string }) {

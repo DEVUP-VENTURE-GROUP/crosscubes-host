@@ -137,9 +137,9 @@ function Receipt() {
           {pb.surgeDays ? (
             <p>Demand pricing applied on {pb.surgeDays} day{pb.surgeDays === 1 ? '' : 's'}{pb.surgeSource && pb.surgeSource !== 'none' ? ` (${pb.surgeSource})` : ''}.</p>
           ) : null}
-          {pb.memberSavings && pb.memberSavings.amount > 0 && <p>CatoDrive Plus saved you {formatMoney(pb.memberSavings)} on this trip.</p>}
+          {pb.memberSavings && pb.memberSavings.amount > 0 && <p>CrossCubes Plus saved you {formatMoney(pb.memberSavings)} on this trip.</p>}
           {b.delivery && <p>Delivered to {b.delivery.address} ({b.delivery.mode}).</p>}
-          <p className="mt-1">Prices shown are what you were quoted and charged - CatoDrive does not change a price after booking.</p>
+          <p className="mt-1">Prices shown are what you were quoted and charged - CrossCubes does not change a price after booking.</p>
         </div>
       )}
 

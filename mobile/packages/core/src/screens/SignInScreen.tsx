@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { Phone } from 'lucide-react-native';
-import { Button, Input, OtpInput, Screen, ScreenHeader, Text, useTheme, useToast, space } from '@catodrive/ui';
+import { Button, Input, OtpInput, Screen, ScreenHeader, Text, useTheme, useToast, space } from '@crosscubes/ui';
 import { authApi } from '../web/features/auth/api';
 import { STAFF_ROLES, loginWithGate, useOnAuthSuccess } from '../web/features/auth/session';
 import type { AuthResult } from '../web/features/auth/types';
@@ -22,7 +22,7 @@ export interface SignInScreenProps {
   subtitle: string;
   /** Where to land after signing in when there is nothing to return to. */
   home: string;
-  /** Shown under the form ("New to CatoDrive? Create an account"); omitted in the partner app. */
+  /** Shown under the form ("New to CrossCubes? Create an account"); omitted in the partner app. */
   footer?: React.ReactNode;
   forgotPath: string;
 }

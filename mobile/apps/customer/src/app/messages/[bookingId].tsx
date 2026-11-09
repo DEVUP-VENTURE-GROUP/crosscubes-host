@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Screen, ScreenHeader } from '@catodrive/ui';
-import { ChatPanel, RequireAuth } from '@catodrive/core';
+import { Button, Screen, ScreenHeader } from '@crosscubes/ui';
+import { ChatPanel, RequireAuth } from '@crosscubes/core';
 
 /** One conversation, full screen, with a way to the trip it belongs to. */
 export default function ConversationScreen() {

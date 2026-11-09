@@ -4,11 +4,11 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Car, Plus, Search, Star, Upload } from 'lucide-react-native';
-import { Button, Card, Chip, EmptyState, Input, Screen, ScreenHeader, SkeletonList, Text, space, useTheme } from '@catodrive/ui';
-import { hostTripsApi } from '@catodrive/core/web/features/host/trips.api';
-import { useMyVehicles } from '@catodrive/core/web/features/vehicles/hooks';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Chip, EmptyState, Input, Screen, ScreenHeader, SkeletonList, Text, space, useTheme } from '@crosscubes/ui';
+import { hostTripsApi } from '@crosscubes/core/web/features/host/trips.api';
+import { useMyVehicles } from '@crosscubes/core/web/features/vehicles/hooks';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 type TripStatus = '' | 'on_trip' | 'available';
 const TRIP_FILTERS: { value: TripStatus; label: string }[] = [

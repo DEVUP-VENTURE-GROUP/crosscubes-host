@@ -6,12 +6,12 @@ For whoever fills in the Google Play Console and App Store Connect forms. Both a
 
 | Field | Value |
 |---|---|
-| Privacy policy | https://www.catodrive.com/privacy |
-| Account deletion (web) | https://www.catodrive.com/delete-account |
-| Terms | https://www.catodrive.com/terms |
-| Support | https://www.catodrive.com/support |
+| Privacy policy | https://www.crosscubes.com/privacy |
+| Account deletion (web) | https://www.crosscubes.com/delete-account |
+| Terms | https://www.crosscubes.com/terms |
+| Support | https://www.crosscubes.com/support |
 
-In-app deletion: Account → Delete account (CatoDrive), Menu → Delete account (CatoDrive Partner). Both call the same server endpoint as the website's `/account/delete`.
+In-app deletion: Account → Delete account (CrossCubes), Menu → Delete account (CrossCubes Partner). Both call the same server endpoint as the website's `/account/delete`.
 
 ## Data safety (Google Play) / App Privacy (Apple)
 
@@ -45,8 +45,8 @@ Background location is blocked in the build (`ACCESS_BACKGROUND_LOCATION` is in 
 
 Reviewers need one signed-in account per app, with something to look at:
 
-- **CatoDrive:** a guest account with a completed past trip and verified identity.
-- **CatoDrive Partner:** a host account with at least one listed car and one past trip.
+- **CrossCubes:** a guest account with a completed past trip and verified identity.
+- **CrossCubes Partner:** a host account with at least one listed car and one past trip.
 
 These must be real accounts on production, created by the business and entered only in the store consoles - never committed here.
 

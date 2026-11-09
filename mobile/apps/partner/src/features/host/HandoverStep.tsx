@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { Check, Lock } from 'lucide-react-native';
-import { Text, radius, space, useTheme } from '@catodrive/ui';
-import type { StepStatus } from '@catodrive/core/web/features/host/trip-handover';
+import { Text, radius, space, useTheme } from '@crosscubes/ui';
+import type { StepStatus } from '@crosscubes/core/web/features/host/trip-handover';
 
 /** One numbered step of the host's pickup checklist; locked steps say why. */
 export function HandoverStep({

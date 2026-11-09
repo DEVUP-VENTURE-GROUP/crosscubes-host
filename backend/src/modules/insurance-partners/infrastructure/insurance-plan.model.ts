@@ -26,7 +26,7 @@ export interface InsurancePlanDoc {
   categories: string[];
   /** Offered at checkout. */
   active: boolean;
-  /** CatoDrive approves each plan before guests see it; an edit sends it back for review. */
+  /** CrossCubes approves each plan before guests see it; an edit sends it back for review. */
   reviewStatus: InsurancePlanReview;
   reviewNote?: string;
   reviewedAt?: Date;

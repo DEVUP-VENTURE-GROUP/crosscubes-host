@@ -13,7 +13,7 @@ const car = () => VehicleModel.create({
 });
 
 describe('external rating', () => {
-  it('is stored with its source, kept apart from the CatoDrive rating, and shown publicly', async () => {
+  it('is stored with its source, kept apart from the CrossCubes rating, and shown publicly', async () => {
     await car();
     await vehicleService.adminSetExternalRating('v1', { source: 'Turo', rating: 4.9, trips: 42 });
     const v = (await VehicleModel.findById('v1').lean())!;

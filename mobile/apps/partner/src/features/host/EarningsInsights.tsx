@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarClock, Clock, Lightbulb, PieChart, TrendingUp } from 'lucide-react-native';
-import { BarChart, Card, Chip, Divider, EmptyState, KeyValue, Section, Skeleton, Text, space, useTheme } from '@catodrive/ui';
-import { hostApi, type VehicleEconomics } from '@catodrive/core/web/features/host/api';
+import { BarChart, Card, Chip, Divider, EmptyState, KeyValue, Section, Skeleton, Text, space, useTheme } from '@crosscubes/ui';
+import { hostApi, type VehicleEconomics } from '@crosscubes/core/web/features/host/api';
 
 const money = (c: number) => `$${Math.round(c / 100).toLocaleString('en-US')}`;
 const money2 = (c: number) => `$${(c / 100).toFixed(2)}`;

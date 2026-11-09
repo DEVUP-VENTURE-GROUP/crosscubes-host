@@ -12,7 +12,7 @@ export type StaffRole = (typeof GRANTABLE_STAFF_ROLES)[number];
 
 // No look-alike characters (0/O, 1/l/I) so a password read off a screen is typed correctly.
 const PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-const STAFF_EMAIL_DOMAIN = 'staff.catodrive.com';
+const STAFF_EMAIL_DOMAIN = 'staff.crosscubes.com';
 
 const generatePassword = (length = 16): string =>
   Array.from({ length }, () => PASSWORD_ALPHABET[randomInt(PASSWORD_ALPHABET.length)]).join('');

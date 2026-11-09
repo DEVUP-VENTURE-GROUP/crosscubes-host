@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BellRing, FileText, ShieldCheck } from 'lucide-react-native';
-import { Badge, Button, Card, Text, useConfirm, useTheme, useToast, space } from '@catodrive/ui';
-import { TimedViewer } from '@catodrive/core';
-import { tripDocumentsApi, type TripDocumentsView } from '@catodrive/core/web/features/trips/documents-api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Badge, Button, Card, Text, useConfirm, useTheme, useToast, space } from '@crosscubes/ui';
+import { TimedViewer } from '@crosscubes/core';
+import { tripDocumentsApi, type TripDocumentsView } from '@crosscubes/core/web/features/trips/documents-api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 const errorText = (e: unknown) => (e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
 

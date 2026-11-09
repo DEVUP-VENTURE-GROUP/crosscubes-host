@@ -2,9 +2,9 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Car, CheckSquare, TrendingUp, Users, Wallet } from 'lucide-react-native';
-import { BarChart, Button, Card, ErrorState, RankedBars, Screen, ScreenHeader, SkeletonList, StatTile, Text, space, useTheme } from '@catodrive/ui';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
-import { formatMoney, monthShort } from '@catodrive/core/web/lib/utils/format';
+import { BarChart, Button, Card, ErrorState, RankedBars, Screen, ScreenHeader, SkeletonList, StatTile, Text, space, useTheme } from '@crosscubes/ui';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
+import { formatMoney, monthShort } from '@crosscubes/core/web/lib/utils/format';
 
 /** The website's /corporate: spend, approvals waiting, members and cost centers. */
 export default function CorporateDashboardScreen() {

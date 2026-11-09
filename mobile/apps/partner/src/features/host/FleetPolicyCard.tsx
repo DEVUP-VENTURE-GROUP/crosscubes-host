@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Chip, Input, Text, space, useToast } from '@catodrive/ui';
-import { LocationSearch, type PickedPlace } from '@catodrive/core';
-import { hostApi, type Fleet } from '@catodrive/core/web/features/host/api';
+import { Button, Card, Chip, Input, Text, space, useToast } from '@crosscubes/ui';
+import { LocationSearch, type PickedPlace } from '@crosscubes/core';
+import { hostApi, type Fleet } from '@crosscubes/core/web/features/host/api';
 
 const DELIVERY_MODES = [
   ['home', 'Guest address'],

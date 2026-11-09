@@ -32,7 +32,7 @@ const requirePartnerReady = asyncHandler(async (req, _res, next) => {
   next();
 });
 
-/** Fills the car's details from its VIN and says whether that car is already with CatoDrive. */
+/** Fills the car's details from its VIN and says whether that car is already with CrossCubes. */
 router.get(
   '/asset-partners/vin/:vin',
   authenticate,
@@ -99,7 +99,7 @@ router.post(
   }),
 );
 
-/** Who to call if CatoDrive can't reach the partner, and their ID check status. */
+/** Who to call if CrossCubes can't reach the partner, and their ID check status. */
 router.get(
   '/asset-partners/me/profile',
   authenticate,
@@ -152,7 +152,7 @@ router.post(
   }),
 );
 
-/** The offer to sign lapsed; the partner asks CatoDrive to send it again. */
+/** The offer to sign lapsed; the partner asks CrossCubes to send it again. */
 router.post(
   '/asset-partners/me/agreement/reissue-request',
   authenticate,
@@ -254,7 +254,7 @@ router.post(
   }),
 );
 
-/** Intake reports CatoDrive recorded for the partner's cars. */
+/** Intake reports CrossCubes recorded for the partner's cars. */
 router.get(
   '/asset-partners/me/intakes',
   authenticate,

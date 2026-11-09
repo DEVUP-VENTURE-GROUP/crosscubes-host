@@ -7,8 +7,8 @@
     "base": {
       "node": "20.19.4",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.catodrive.com/api/v1",
-        "EXPO_PUBLIC_WEB_URL": "https://www.catodrive.com"
+        "EXPO_PUBLIC_API_URL": "https://api.crosscubes.com/api/v1",
+        "EXPO_PUBLIC_WEB_URL": "https://www.crosscubes.com"
       }
     },
     "development": {

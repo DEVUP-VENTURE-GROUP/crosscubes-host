@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, Search } from 'lucide-react-native';
-import { Input, Text, radius, space, useTheme } from '@catodrive/ui';
+import { Input, Text, radius, space, useTheme } from '@crosscubes/ui';
 import { mapsApi } from '../web/features/maps/api';
 
 export interface PickedPlace {

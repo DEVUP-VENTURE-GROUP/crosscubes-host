@@ -36,8 +36,8 @@ export async function buildTextPdf(title: string, body: string, footer: string[]
     doc.setCreationDate(opts.date);
     doc.setModificationDate(opts.date);
   }
-  doc.setProducer('CatoDrive');
-  doc.setCreator('CatoDrive');
+  doc.setProducer('CrossCubes');
+  doc.setCreator('CrossCubes');
   doc.setTitle(title);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);

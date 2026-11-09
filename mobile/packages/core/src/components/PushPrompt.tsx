@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { BellRing } from 'lucide-react-native';
-import { Button, Card, Text, space, useTheme, useToast } from '@catodrive/ui';
+import { Button, Card, Text, space, useTheme, useToast } from '@crosscubes/ui';
 import { enablePush, notificationsModule } from '../push';
 
 /** Offers to turn on notifications while the phone hasn't granted them and can still be asked; hidden where push can't run. */

@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { Mail, Phone } from 'lucide-react-native';
-import { Card, MenuRow, Text, space, useTheme } from '@catodrive/ui';
-import { openExternal } from '@catodrive/core';
-import { CONTACT } from '@catodrive/core/web/features/contact/content';
+import { Card, MenuRow, Text, space, useTheme } from '@crosscubes/ui';
+import { openExternal } from '@crosscubes/core';
+import { CONTACT } from '@crosscubes/core/web/features/contact/content';
 
 /** The partner team's phone and email. */
 export function PartnerSupport() {

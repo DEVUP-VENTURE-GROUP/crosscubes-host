@@ -3,7 +3,7 @@ import { FlatList, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, LifeBuoy, Search } from 'lucide-react-native';
-import { Button, Card, Chip, EmptyState, Input, ScreenHeader, SkeletonList, Text, useTheme, space } from '@catodrive/ui';
+import { Button, Card, Chip, EmptyState, Input, ScreenHeader, SkeletonList, Text, useTheme, space } from '@crosscubes/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { kbApi } from '../web/features/kb/api';
 import { titleCase } from '../web/features/kb/markdown-parse';

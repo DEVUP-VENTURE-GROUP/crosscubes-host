@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { DateRangeCalendar, Skeleton } from '@catodrive/ui';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { busyDayKeys, localDayKey, minNightsOf, nightlyPrice } from '@catodrive/core/web/features/vehicles/calendar-pricing';
-import { leadMinutes, usePlatformConfig } from '@catodrive/core/web/features/platform/config';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { DateRangeCalendar, Skeleton } from '@crosscubes/ui';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { busyDayKeys, localDayKey, minNightsOf, nightlyPrice } from '@crosscubes/core/web/features/vehicles/calendar-pricing';
+import { leadMinutes, usePlatformConfig } from '@crosscubes/core/web/features/platform/config';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 
 /**
  * The car's calendar: booked or blocked days can't be picked, the first

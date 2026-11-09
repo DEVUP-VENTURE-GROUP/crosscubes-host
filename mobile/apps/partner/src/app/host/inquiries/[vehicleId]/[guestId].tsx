@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Card, Screen, ScreenHeader } from '@catodrive/ui';
-import { InquiryThreadView, PersonCard, RequireAuth } from '@catodrive/core';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
-import { useInquiryGuest, useInquiryThread } from '@catodrive/core/web/features/messaging/inquiry-hooks';
+import { Card, Screen, ScreenHeader } from '@crosscubes/ui';
+import { InquiryThreadView, PersonCard, RequireAuth } from '@crosscubes/core';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
+import { useInquiryGuest, useInquiryThread } from '@crosscubes/core/web/features/messaging/inquiry-hooks';
 
 /** The website's /host/inquiries/[vehicleId]/[guestId]: one prospective guest's questions about one car. */
 function InquiryThread({ vehicleId, guestId, name, title }: { vehicleId: string; guestId: string; name?: string; title?: string }) {

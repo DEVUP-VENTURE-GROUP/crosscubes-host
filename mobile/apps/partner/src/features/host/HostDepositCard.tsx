@@ -1,9 +1,9 @@
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, ShieldCheck } from 'lucide-react-native';
-import { Card, Text, space, useTheme } from '@catodrive/ui';
-import { depositsApi } from '@catodrive/core/web/features/payments/deposits-api';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Card, Text, space, useTheme } from '@crosscubes/ui';
+import { depositsApi } from '@crosscubes/core/web/features/payments/deposits-api';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** The guest's security deposit as the host sees it: held or not, and what that means for starting the trip. */
 export function HostDepositCard({ bookingId }: { bookingId: string }) {

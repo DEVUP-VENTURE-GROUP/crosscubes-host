@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Briefcase, Building2, Car, MapPinned, Plane, Plus, Trash2 } from 'lucide-react-native';
-import { Button, Text, space, useTheme } from '@catodrive/ui';
-import type { DeliveryLocation, DeliveryLocationKind } from '@catodrive/core/web/features/vehicles/types';
-import { ACCESS_METHOD_LABEL, DELIVERY_KIND, blankDeliveryLocation } from '@catodrive/core/web/features/vehicles/listing-options';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Text, space, useTheme } from '@crosscubes/ui';
+import type { DeliveryLocation, DeliveryLocationKind } from '@crosscubes/core/web/features/vehicles/types';
+import { ACCESS_METHOD_LABEL, DELIVERY_KIND, blankDeliveryLocation } from '@crosscubes/core/web/features/vehicles/listing-options';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { DeliveryLocationEditRow } from './DeliveryLocationEditRow';
 
 const KIND_ICON: Record<DeliveryLocationKind, typeof Plane> = { airport: Plane, hotel: Building2, business: Briefcase, custom: MapPinned };

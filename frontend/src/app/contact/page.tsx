@@ -194,7 +194,7 @@ function ContactForm() {
             </p>
           </Reveal>
           <Reveal delay={80}>
-            <LocationMap lat={DFW_AIRPORT.lat} lng={DFW_AIRPORT.lng} label="CatoDrive - Dallas/Fort Worth" zoom={9.5} className="mt-8 h-80 w-full sm:h-96" />
+            <LocationMap lat={DFW_AIRPORT.lat} lng={DFW_AIRPORT.lng} label="CrossCubes - Dallas/Fort Worth" zoom={9.5} className="mt-8 h-80 w-full sm:h-96" />
           </Reveal>
         </section>
       </div>

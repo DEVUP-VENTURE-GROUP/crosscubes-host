@@ -95,7 +95,7 @@ router.post(
   }),
 );
 
-/** A partner's signed copy, for CatoDrive's records. */
+/** A partner's signed copy, for CrossCubes's records. */
 router.get(
   '/asset-partners/:id/signed/:kind',
   authorize('admin:read'),
@@ -191,7 +191,7 @@ router.post(
   }),
 );
 
-/** The partner's onboarding papers, with whether CatoDrive has checked each one. */
+/** The partner's onboarding papers, with whether CrossCubes has checked each one. */
 router.get(
   '/asset-partners/:id/documents',
   authorize('admin:read'),
@@ -325,7 +325,7 @@ router.get(
   }),
 );
 
-/** CatoDrive records and signs the Exhibit A intake report; the partner is asked to review it. */
+/** CrossCubes records and signs the Exhibit A intake report; the partner is asked to review it. */
 router.post(
   '/asset-partners/:id/intakes',
   authorize('host:manage'),

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Check, CheckCheck, ImagePlus, MessagesSquare, Send } from 'lucide-react-native';
-import { Card, Input, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
+import { Card, Input, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
 import { useAuthStore } from '../web/features/auth/store';
 import { SYSTEM_SENDER, useMessages } from '../web/features/messaging/hooks';
 import { pickPhotos, uploadPhotos } from '../uploads';
@@ -59,7 +59,7 @@ export function ChatPanel({ bookingId, height = 420 }: { bookingId: string; heig
         {!isLoading && messages.length === 0 ? (
           <View style={styles.empty}>
             <Text variant="label">Start the conversation</Text>
-            <Text variant="caption" tone="muted" center>Coordinate pickup, drop-off and anything else. Messages stay private between you two on CatoDrive.</Text>
+            <Text variant="caption" tone="muted" center>Coordinate pickup, drop-off and anything else. Messages stay private between you two on CrossCubes.</Text>
           </View>
         ) : null}
         {messages.map((m) => {

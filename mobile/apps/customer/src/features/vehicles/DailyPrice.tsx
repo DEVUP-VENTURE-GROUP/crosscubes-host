@@ -1,7 +1,7 @@
 import { View } from 'react-native';
-import { Badge, Text, type TypeVariant } from '@catodrive/ui';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
-import { useMemberDailyPrice } from '@catodrive/core/web/features/subscriptions/hooks';
+import { Badge, Text, type TypeVariant } from '@crosscubes/ui';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
+import { useMemberDailyPrice } from '@crosscubes/core/web/features/subscriptions/hooks';
 
 /** A car's daily price; members see their own price with the normal one struck through, like the website. */
 export function DailyPrice({ amount, currency, variant = 'title' }: { amount: number; currency: string; variant?: TypeVariant }) {

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Divider, EmptyState, Input, KeyValue, Screen, ScreenHeader, Section, SkeletonList, Text, space, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { hostApi } from '@catodrive/core/web/features/host/api';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Divider, EmptyState, Input, KeyValue, Screen, ScreenHeader, Section, SkeletonList, Text, space, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { hostApi } from '@crosscubes/core/web/features/host/api';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { FleetPolicyCard } from '@/features/host/FleetPolicyCard';
 
 const usd = (amount: number) => formatMoney({ amount, currency: 'USD' });

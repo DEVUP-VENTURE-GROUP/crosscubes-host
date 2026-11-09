@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ShieldCheck, Wallet } from 'lucide-react-native';
-import { MenuRow, MenuSection, Screen, ScreenHeader, useTheme } from '@catodrive/ui';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
+import { MenuRow, MenuSection, Screen, ScreenHeader, useTheme } from '@crosscubes/ui';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
 import { AccountMenu } from '@/features/workspace/AccountMenu';
 
 /** The rest of the website's corporate sidebar, plus the account menu. */

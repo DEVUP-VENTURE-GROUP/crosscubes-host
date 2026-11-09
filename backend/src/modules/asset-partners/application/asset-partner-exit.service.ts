@@ -36,12 +36,12 @@ export const CHECKLIST: { key: ChecklistKey; label: string; hint: string; auto: 
   { key: 'no_trips', label: 'No guest trips left on the car', hint: 'Every booked or active trip has ended, been moved or been cancelled.', auto: true },
   { key: 'delisted', label: 'Taken off the marketplace', hint: 'Done automatically when the runner starts the return.', auto: true },
   { key: 'repairs_closed', label: 'Repairs closed', hint: 'No repair or service is still scheduled or in progress.', auto: true },
-  { key: 'insurance_removed', label: 'Removed from CatoDrive’s insurance', hint: 'Car taken off the fleet policy; note the confirmation number.', auto: false },
+  { key: 'insurance_removed', label: 'Removed from CrossCubes’s insurance', hint: 'Car taken off the fleet policy; note the confirmation number.', auto: false },
   { key: 'toll_tag_removed', label: 'Toll tag removed', hint: 'Tag taken off the windshield and the car removed from the hub’s toll account.', auto: false },
-  { key: 'gps_removed', label: 'GPS tracker removed', hint: 'CatoDrive’s tracker taken out of the car.', auto: false },
+  { key: 'gps_removed', label: 'GPS tracker removed', hint: 'CrossCubes’s tracker taken out of the car.', auto: false },
   { key: 'keys_returned', label: 'All keys and fobs collected', hint: 'Out of the lockbox or key safe; enter how many.', auto: false },
-  { key: 'accessories_removed', label: 'Lockbox and CatoDrive items removed', hint: 'Lockbox, phone mount, chargers, stickers and anything else CatoDrive put in.', auto: false },
-  { key: 'papers_removed', label: 'CatoDrive papers out of the glovebox', hint: 'Remove CatoDrive’s insurance card and trip papers; leave the owner’s registration.', auto: false },
+  { key: 'accessories_removed', label: 'Lockbox and CrossCubes items removed', hint: 'Lockbox, phone mount, chargers, stickers and anything else CrossCubes put in.', auto: false },
+  { key: 'papers_removed', label: 'CrossCubes papers out of the glovebox', hint: 'Remove CrossCubes’s insurance card and trip papers; leave the owner’s registration.', auto: false },
   { key: 'interior_checked', label: 'Car checked and cleaned', hint: 'Guests’ left-behind items removed, car cleaned.', auto: false },
   { key: 'condition_photos', label: 'Return photos taken', hint: 'Every side, the interior, the odometer and the fuel gauge.', auto: true },
   { key: 'odometer_fuel', label: 'Odometer and fuel recorded', hint: 'Enter the reading and the fuel level at handover.', auto: true },
@@ -170,8 +170,8 @@ export class AssetPartnerExitService {
     const filter: Record<string, unknown> = { assetPartnerId: partnerId, assetPartnerEndedAt: null, deletedAt: null };
     if (vehicleIds?.length) filter._id = { $in: vehicleIds };
     const cars = await VehicleModel.find(filter).select('_id year make model trim registrationNumber').lean<{ _id: string; year: number; make: string; model: string; trim?: string; registrationNumber?: string }[]>();
-    if (vehicleIds?.length && cars.length !== new Set(vehicleIds).size) throw new ValidationError('Pick cars that are still with CatoDrive');
-    if (cars.length === 0) throw new ConflictError('There are no cars with CatoDrive to return.', 'NO_CARS');
+    if (vehicleIds?.length && cars.length !== new Set(vehicleIds).size) throw new ValidationError('Pick cars that are still with CrossCubes');
+    if (cars.length === 0) throw new ConflictError('There are no cars with CrossCubes to return.', 'NO_CARS');
     const busy = await AssetPartnerExitModel.findOne({ status: { $in: OPEN_EXIT_STATUSES }, 'cars.vehicleId': { $in: cars.map((c) => c._id) } }).select('reference').lean<{ reference: string }>();
     if (busy) throw new ConflictError(`A return is already open for this car (${busy.reference}).`, 'EXIT_OPEN');
     return cars.map((c) => ({
@@ -316,8 +316,8 @@ export class AssetPartnerExitService {
       await this.tell(
         partner,
         'unreachable_notice',
-        'Please get in touch with CatoDrive',
-        'We haven’t been able to reach you about your car. It keeps running with CatoDrive as normal, and your earnings are safe and held for you. Sign in to your partner portal and press “I’m here”, or call us, and we’ll release them.',
+        'Please get in touch with CrossCubes',
+        'We haven’t been able to reach you about your car. It keeps running with CrossCubes as normal, and your earnings are safe and held for you. Sign in to your partner portal and press “I’m here”, or call us, and we’ll release them.',
         exit._id,
       );
       logger.warn({ exitId: exit._id, partnerId }, 'Unreachable-partner notice sent');
@@ -441,7 +441,7 @@ export class AssetPartnerExitService {
     void this.tellRunner(runner.userId, 'New car return', `${exit.reference}: ${exit.cars.map((c) => c.label).join(', ')} on ${longDate(input.scheduledFor)}.`, exitId);
     if (exit.reason !== 'deceased') {
       const partner = await assetPartnerService.getById(exit.partnerId);
-      await this.tell(partner, 'return_scheduled', 'Your car return is booked', `${exit.reference}: ${longDate(input.scheduledFor)}. ${runner.name} from CatoDrive will hand it over. Please make sure your own insurance covers the car from that day.`, exitId);
+      await this.tell(partner, 'return_scheduled', 'Your car return is booked', `${exit.reference}: ${longDate(input.scheduledFor)}. ${runner.name} from CrossCubes will hand it over. Please make sure your own insurance covers the car from that day.`, exitId);
     }
     return done;
   }
@@ -548,7 +548,7 @@ export class AssetPartnerExitService {
         status: 'submitted',
         submittedAt: new Date(),
         cars,
-        handover: { to: handover.to, receiverName: handover.to === 'storage' ? name || 'CatoDrive storage' : name, receiverSignature: tidy(handover.receiverSignature), location: tidy(handover.location), at: new Date(), ownerInsuranceConfirmed: handover.ownerInsuranceConfirmed },
+        handover: { to: handover.to, receiverName: handover.to === 'storage' ? name || 'CrossCubes storage' : name, receiverSignature: tidy(handover.receiverSignature), location: tidy(handover.location), at: new Date(), ownerInsuranceConfirmed: handover.ownerInsuranceConfirmed },
       },
       { by: userId, type: 'submitted', detail: `Handed to ${handover.to === 'storage' ? 'storage' : name}` },
     );

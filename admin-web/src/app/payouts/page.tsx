@@ -99,7 +99,7 @@ export default function AdminPayoutsPage() {
       <PageHeader
         eyebrow="Money out"
         title="Host payouts"
-        description="What CatoDrive owes hosts for finished trips, and what has already been paid out to them."
+        description="What CrossCubes owes hosts for finished trips, and what has already been paid out to them."
         actions={
           <Button loading={runDue.isPending} onClick={doRun} disabled={!data?.totals.scheduled}>
             <Play className="h-4 w-4" /> Run due payouts

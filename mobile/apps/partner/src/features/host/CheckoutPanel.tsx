@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
-import { Button, Card, Input, Text, space, useConfirm } from '@catodrive/ui';
-import { hostTripsApi, type HostTrip } from '@catodrive/core/web/features/host/trips.api';
-import { formatMoney, kmToMiles, perKmToPerMile } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Input, Text, space, useConfirm } from '@crosscubes/ui';
+import { hostTripsApi, type HostTrip } from '@crosscubes/core/web/features/host/trips.api';
+import { formatMoney, kmToMiles, perKmToPerMile } from '@crosscubes/core/web/lib/utils/format';
 
 const miles = (v: number) => `${kmToMiles(v).toLocaleString()} miles`;
 

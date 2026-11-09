@@ -11,7 +11,7 @@ import { formatMoney, formatDateRange, formatDate } from '@/lib/utils/format';
 import { ErrorState } from '@/components/ui/states';
 
 /**
- * Public receipt verification - the page a CatoDrive receipt's QR code opens.
+ * Public receipt verification - the page a CrossCubes receipt's QR code opens.
  *
  * No login required and no PII shown: it only confirms that a receipt with this
  * reference is genuine and states its dates, status and total, so anyone holding
@@ -29,7 +29,7 @@ export default function VerifyReceiptPage() {
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-4 py-10 text-center">
       <Link href="/" className="mb-8 flex items-center gap-2">
         <Logo className="h-8 w-8" />
-        <span className="display text-xl tracking-tight">CatoDrive</span>
+        <span className="display text-xl tracking-tight">CrossCubes</span>
       </Link>
 
       {isError && !data ? (
@@ -41,7 +41,7 @@ export default function VerifyReceiptPage() {
           <div className="flex flex-col items-center gap-2 border-b border-border bg-success/5 px-6 py-8">
             <BadgeCheck className="h-14 w-14 text-success" />
             <p className="text-lg font-bold text-foreground">Genuine receipt</p>
-            <p className="text-sm text-muted-foreground">This is a real CatoDrive booking.</p>
+            <p className="text-sm text-muted-foreground">This is a real CrossCubes booking.</p>
           </div>
           <dl className="divide-y divide-border px-6 text-sm">
             <Row label="Reference" value={<span className="font-mono">{data.code}</span>} />
@@ -72,7 +72,7 @@ export default function VerifyReceiptPage() {
       )}
 
       <p className="mt-6 text-xs text-muted-foreground">
-        Verified against CatoDrive’s live records. No personal details are shown here.
+        Verified against CrossCubes’s live records. No personal details are shown here.
       </p>
     </div>
   );

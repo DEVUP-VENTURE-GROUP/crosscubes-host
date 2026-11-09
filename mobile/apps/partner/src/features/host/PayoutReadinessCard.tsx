@@ -1,9 +1,9 @@
 import { Pressable, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, BadgeCheck, Building2, ChevronRight, Clock } from 'lucide-react-native';
-import { Card, Skeleton, Text, space, useTheme } from '@catodrive/ui';
-import { hostApi } from '@catodrive/core/web/features/host/api';
-import { formatDate } from '@catodrive/core/web/lib/utils/format';
+import { Card, Skeleton, Text, space, useTheme } from '@crosscubes/ui';
+import { hostApi } from '@crosscubes/core/web/features/host/api';
+import { formatDate } from '@crosscubes/core/web/lib/utils/format';
 import { useOpenHref } from '@/features/workspace/useOpenHref';
 
 /** Where the money goes and what is stopping it; every blocker opens the screen that clears it. */
@@ -17,7 +17,7 @@ export function PayoutReadinessCard() {
   const blocking = d.blockers.filter((b) => b.severity === 'blocking');
   const warnings = d.blockers.filter((b) => b.severity === 'warning');
 
-  const title = blocking.length > 0 ? 'Payouts are on hold' : d.destination.platformOwned ? 'House Fleet earnings stay with CatoDrive' : d.destination.configured ? 'You’re set up to get paid' : 'Payouts ready';
+  const title = blocking.length > 0 ? 'Payouts are on hold' : d.destination.platformOwned ? 'House Fleet earnings stay with CrossCubes' : d.destination.configured ? 'You’re set up to get paid' : 'Payouts ready';
   const detail =
     blocking.length > 0
       ? 'Your earnings keep accruing - they just can’t be sent yet.'

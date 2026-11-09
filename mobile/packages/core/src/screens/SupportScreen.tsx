@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, ChevronRight, LifeBuoy, Plus } from 'lucide-react-native';
-import { Badge, Button, Card, EmptyState, Input, Screen, ScreenHeader, SkeletonList, Text, useTheme, space } from '@catodrive/ui';
+import { Badge, Button, Card, EmptyState, Input, Screen, ScreenHeader, SkeletonList, Text, useTheme, space } from '@crosscubes/ui';
 import { supportApi } from '../web/features/support/api';
 import { bookingApi } from '../web/features/bookings/api';
 import { connectSocket } from '../web/lib/realtime/socket';

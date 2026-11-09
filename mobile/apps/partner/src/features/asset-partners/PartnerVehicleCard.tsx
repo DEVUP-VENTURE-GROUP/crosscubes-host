@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Badge, Card, KeyValue, Text, space } from '@catodrive/ui';
-import type { PartnerVehicleSummary } from '@catodrive/core/web/features/asset-partners/api';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Card, KeyValue, Text, space } from '@crosscubes/ui';
+import type { PartnerVehicleSummary } from '@crosscubes/core/web/features/asset-partners/api';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { VehiclePhoto } from './VehiclePhoto';
 
 /** One car in the programme with this month's net, gross and trips; opens the car's own page. */

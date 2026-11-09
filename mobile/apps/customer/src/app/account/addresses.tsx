@@ -3,9 +3,9 @@ import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react-native';
-import { Badge, Button, Card, Checkbox, Input, Screen, ScreenHeader, Section, Skeleton, Text, useConfirm, useTheme, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
+import { Badge, Button, Card, Checkbox, Input, Screen, ScreenHeader, Section, Skeleton, Text, useConfirm, useTheme, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
 
 const EMPTY = { line1: '', line2: '', city: '', state: '', zip: '' };
 

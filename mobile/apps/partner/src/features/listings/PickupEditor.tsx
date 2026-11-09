@@ -3,10 +3,10 @@ import { Pressable, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Camera, KeyRound, Lock, MapPin, X } from 'lucide-react-native';
-import { Button, Card, Input, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { usePhotoUpload } from '@catodrive/core';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { pickupPatch } from '@catodrive/core/web/features/vehicles/listing-form';
+import { Button, Card, Input, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { usePhotoUpload } from '@crosscubes/core';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { pickupPatch } from '@crosscubes/core/web/features/vehicles/listing-form';
 
 /** Where the car is parked and how to get in; the access code reaches the guest only once they set off. */
 export function PickupEditor({ vehicleId, initial, onSaved }: { vehicleId: string; initial?: { instructions?: string; spotPhotoUrl?: string; accessCode?: string } | null; onSaved?: () => void }) {

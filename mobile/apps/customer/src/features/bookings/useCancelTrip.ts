@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useConfirm } from '@catodrive/ui';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { useCancelBooking } from '@catodrive/core/web/features/bookings/queries';
-import { POLICY_LABEL } from '@catodrive/core/web/features/bookings/status';
-import type { Booking } from '@catodrive/core/web/features/bookings/types';
-import { formatDateTime, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { useConfirm } from '@crosscubes/ui';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { useCancelBooking } from '@crosscubes/core/web/features/bookings/queries';
+import { POLICY_LABEL } from '@crosscubes/core/web/features/bookings/status';
+import type { Booking } from '@crosscubes/core/web/features/bookings/types';
+import { formatDateTime, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** The website's cancel flow: show exactly what comes back under the policy, ask why, then cancel. */
 export function useCancelTrip() {

@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { CarFront, Clock, LocateFixed, MapPin, Navigation } from 'lucide-react-native';
-import { Badge, Card, Skeleton, Text, useTheme, space } from '@catodrive/ui';
+import { Badge, Card, Skeleton, Text, useTheme, space } from '@crosscubes/ui';
 import { handoverApi } from '../web/features/ai/api';
 import { openExternal } from '../links';
 

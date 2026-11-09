@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building2, Check, Store } from 'lucide-react-native';
-import { Button, Card, Input, RadioCard, Screen, Text, space, useTheme } from '@catodrive/ui';
-import { openInAppBrowser, useSignOut, webUrl } from '@catodrive/core';
-import { useOnboardHost } from '@catodrive/core/web/features/host/hooks';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
-import { config } from '@catodrive/core/web/lib/config';
+import { Button, Card, Input, RadioCard, Screen, Text, space, useTheme } from '@crosscubes/ui';
+import { openInAppBrowser, useSignOut, webUrl } from '@crosscubes/core';
+import { useOnboardHost } from '@crosscubes/core/web/features/host/hooks';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
+import { config } from '@crosscubes/core/web/lib/config';
 
 type Path = 'host' | 'corporate';
 

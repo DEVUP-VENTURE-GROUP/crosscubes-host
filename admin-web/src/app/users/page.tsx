@@ -108,7 +108,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="People & cars" title="Users" description="Every account on CatoDrive. Search for someone, then suspend or ban them if needed." />
+      <PageHeader eyebrow="People & cars" title="Users" description="Every account on CrossCubes. Search for someone, then suspend or ban them if needed." />
       <div className="flex flex-wrap items-center gap-3">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or phone" aria-label="Search users" className="max-w-xs" />
         <div className="flex flex-wrap gap-2">

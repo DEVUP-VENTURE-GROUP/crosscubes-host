@@ -3,11 +3,11 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownLeft, ArrowUpRight, Plus, Wallet as WalletIcon } from 'lucide-react-native';
-import { Button, Card, Chip, Divider, Input, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { walletApi } from '@catodrive/core/web/features/wallet/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Chip, Divider, Input, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { walletApi } from '@crosscubes/core/web/features/wallet/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { usePayments } from '@/features/payments/usePayments';
 
 const PRESETS = [2500, 5000, 10000, 20000];
@@ -33,7 +33,7 @@ function Wallet() {
   });
   const needsCard = topup.error instanceof ApiError && topup.error.code === 'PAYMENT_METHOD_REQUIRED';
 
-  const header = <ScreenHeader title="CatoDrive Wallet" onBack={() => router.back()} />;
+  const header = <ScreenHeader title="CrossCubes Wallet" onBack={() => router.back()} />;
   if (balance.isPending || !balance.data) return <Screen header={header}><Skeleton height={140} /></Screen>;
 
   return (

@@ -26,7 +26,7 @@ import { safeMessage } from '@/lib/utils/safe-message';
  * The partner's own paperwork: insurance, registration, title.
  *
  * Insurance is the one that matters operationally - a lapsed policy on a car
- * CatoDrive is renting out is a real exposure, and the application captured an
+ * CrossCubes is renting out is a real exposure, and the application captured an
  * expiry date that nothing ever surfaced again. An expiring policy is flagged
  * here rather than discovered at claim time.
  */

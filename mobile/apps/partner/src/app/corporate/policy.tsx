@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Input, Screen, ScreenHeader, Skeleton, Text, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { corporateApi, policyForm, policyPatch, type PolicyForm } from '@catodrive/core/web/features/corporate/api';
+import { Button, Card, Input, Screen, ScreenHeader, Skeleton, Text, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { corporateApi, policyForm, policyPatch, type PolicyForm } from '@crosscubes/core/web/features/corporate/api';
 
 const num = (t: string) => Number(t.replace(/[^\d.]/g, '')) || 0;
 

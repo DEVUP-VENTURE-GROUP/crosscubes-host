@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
 import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
-/** Money CatoDrive actually sent a partner for one month's statement. */
+/** Money CrossCubes actually sent a partner for one month's statement. */
 export interface AssetPartnerPayoutDoc {
   _id: string;
   partnerId: string;

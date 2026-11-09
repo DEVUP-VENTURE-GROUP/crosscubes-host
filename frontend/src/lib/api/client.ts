@@ -141,7 +141,7 @@ async function raw<T>(
     // fetch throws on network failure / server unreachable / CORS block.
     throw new ApiError(
       "NETWORK_ERROR",
-      "We couldn't reach CatoDrive right now. Check your connection and try again.",
+      "We couldn't reach CrossCubes right now. Check your connection and try again.",
       0,
     );
   }
@@ -235,7 +235,7 @@ export const api = {
     };
     let res = await go().catch(() => null);
     if (res?.status === 401 && (await attemptRefresh()) === "ok") res = await go().catch(() => null);
-    if (!res) throw new ApiError("NETWORK_ERROR", "We couldn't reach CatoDrive right now. Check your connection and try again.", 0);
+    if (!res) throw new ApiError("NETWORK_ERROR", "We couldn't reach CrossCubes right now. Check your connection and try again.", 0);
     if (!res.ok) throw new ApiError("DOWNLOAD_FAILED", GENERIC_ERROR, res.status);
     const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1];
     return { blob: await res.blob(), filename: name };

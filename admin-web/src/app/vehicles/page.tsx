@@ -16,7 +16,7 @@ import { adminApi } from '@/features/admin/api';
 import { adminPath } from '@/lib/admin-path';
 import { PageHeader } from '@/components/ui/page-header';
 
-/** A rating the car really earned elsewhere (e.g. Turo). Shown to guests with its source, never mixed into CatoDrive's own rating. */
+/** A rating the car really earned elsewhere (e.g. Turo). Shown to guests with its source, never mixed into CrossCubes's own rating. */
 function ExternalRatingCell({ v }: { v: any }) {
   const qc = useQueryClient();
   const toast = useToast();

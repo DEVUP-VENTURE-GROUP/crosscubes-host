@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Camera } from 'lucide-react-native';
-import { Avatar, Button, Card, Chip, Input, Screen, ScreenHeader, Section, Skeleton, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { RequireAuth, usePhotoUpload } from '@catodrive/core';
-import { useHostMe, useUpdateHostProfile } from '@catodrive/core/web/features/host/hooks';
-import { EMPTY_HOST_PROFILE, hostProfileForm, hostProfilePatch, type HostProfileForm } from '@catodrive/core/web/features/host/profile-form';
+import { Avatar, Button, Card, Chip, Input, Screen, ScreenHeader, Section, Skeleton, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { RequireAuth, usePhotoUpload } from '@crosscubes/core';
+import { useHostMe, useUpdateHostProfile } from '@crosscubes/core/web/features/host/hooks';
+import { EMPTY_HOST_PROFILE, hostProfileForm, hostProfilePatch, type HostProfileForm } from '@crosscubes/core/web/features/host/profile-form';
 
 /** The website's /host/profile: what guests see, the business profile and banking details. */
 function HostProfile() {

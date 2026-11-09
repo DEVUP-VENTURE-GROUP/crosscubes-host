@@ -73,7 +73,7 @@ export class UserService {
     if (age < config.legal.minAgeYears) {
       throw new AppError({
         code: 'UNDERAGE',
-        message: `You must be at least ${config.legal.minAgeYears} to use CatoDrive.`,
+        message: `You must be at least ${config.legal.minAgeYears} to use CrossCubes.`,
         httpStatus: 422,
       });
     }

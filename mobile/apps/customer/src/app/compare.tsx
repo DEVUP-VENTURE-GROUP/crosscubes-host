@@ -3,10 +3,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Check, Minus, Star, X } from 'lucide-react-native';
-import { Button, EmptyState, Screen, ScreenHeader, Skeleton, Text, radius, space, useTheme } from '@catodrive/ui';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { COMPARE_ROWS, type CompareValue } from '@catodrive/core/web/features/vehicles/compare';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { Button, EmptyState, Screen, ScreenHeader, Skeleton, Text, radius, space, useTheme } from '@crosscubes/ui';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { COMPARE_ROWS, type CompareValue } from '@crosscubes/core/web/features/vehicles/compare';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 import { coverOf } from '@/features/vehicles/VehicleCard';
 import { useCompareStore } from '@/features/compare/compare-store';
 

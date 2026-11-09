@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
-import { BottomSheet, Input, Text, useTheme, space, TOUCH } from '@catodrive/ui';
+import { BottomSheet, Input, Text, useTheme, space, TOUCH } from '@crosscubes/ui';
 import { PICKER_ORDER, countryByCode, flagOf, parsePhone, toE164 } from '../web/lib/data/countries';
 
 /** Country code plus number, emitted as E.164 exactly like the website's phone field. */

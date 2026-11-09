@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { Button, Card, Chip, Input, Text, radius, space, useTheme } from '@catodrive/ui';
-import { PhoneInput } from '@catodrive/core';
-import { ABILITY_LABELS, CAPTAIN_ABILITIES, DEFAULT_CAPTAIN_ABILITIES, captainInviteValid, type AssignableVehicle, type CaptainAbility, type CaptainInput } from '@catodrive/core/web/features/host/team-api';
+import { Button, Card, Chip, Input, Text, radius, space, useTheme } from '@crosscubes/ui';
+import { PhoneInput } from '@crosscubes/core';
+import { ABILITY_LABELS, CAPTAIN_ABILITIES, DEFAULT_CAPTAIN_ABILITIES, captainInviteValid, type AssignableVehicle, type CaptainAbility, type CaptainInput } from '@crosscubes/core/web/features/host/team-api';
 
 const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 

@@ -89,7 +89,7 @@ export interface PartnerOnboarding {
   emailVerified: boolean;
   application?: AssetPartnerApplicationDoc;
   partner?: { displayName: string; status: string };
-  /** Each is null while CatoDrive has not published it yet; the texts already carry the partner's details. */
+  /** Each is null while CrossCubes has not published it yet; the texts already carry the partner's details. */
   agreement?: { version: number; title: string; body: string } | null;
   nda?: { version: number; title: string; body: string } | null;
   prefill?: Record<string, string>;
@@ -162,7 +162,7 @@ export class AssetPartnerApplicationService {
     return this.insert(dto, { ...ctx, userId }, { kind: 'partner', email: user.email });
   }
 
-  /** Sends an application back after CatoDrive asked for changes. */
+  /** Sends an application back after CrossCubes asked for changes. */
   async resubmit(userId: string, id: string, dto: PortalApplicationDto): Promise<AssetPartnerApplicationDoc> {
     const user = await this.verifiedUser(userId);
     const doc = await AssetPartnerApplicationModel.findOneAndUpdate(
@@ -407,7 +407,7 @@ export class AssetPartnerApplicationService {
   /**
    * The approval gate. Approving is the admin decision the business asked
    * for: "only once approved can they onboard a vehicle." If the applicant
-   * already holds a CatoDrive account, this is where that account's host profile
+   * already holds a CrossCubes account, this is where that account's host profile
    * gets created (if missing) and VERIFIED — which is exactly the flag
    * vehicle.service checks before allowing a listing.
    *
@@ -490,7 +490,7 @@ export class AssetPartnerApplicationService {
     const copy: Record<ReviewDecision, { title: string; body: string }> = {
       approved: vehicle
         ? { title: `Your ${car} is approved`, body: 'We’ll contact you to schedule the inspection and get it listed.' }
-        : { title: 'You’re approved as a CatoDrive Asset Partner', body: 'Sign your agreement and add your payout details to open your dashboard.' },
+        : { title: 'You’re approved as a CrossCubes Asset Partner', body: 'Sign your agreement and add your payout details to open your dashboard.' },
       changes_requested: { title: 'Your application needs a few changes', body: notes ?? '' },
       rejected: {
         title: vehicle ? `We can’t take your ${car} right now` : 'We can’t approve your application right now',

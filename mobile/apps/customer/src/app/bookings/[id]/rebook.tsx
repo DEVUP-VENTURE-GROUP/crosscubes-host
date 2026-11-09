@@ -4,11 +4,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Check, Clock, SearchX, ShieldCheck, Star, Zap } from 'lucide-react-native';
-import { Button, Card, EmptyState, Screen, ScreenHeader, Skeleton, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { bookingApi, type RebookingOption } from '@catodrive/core/web/features/bookings/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, EmptyState, Screen, ScreenHeader, Skeleton, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { bookingApi, type RebookingOption } from '@crosscubes/core/web/features/bookings/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 function OptionCard({ option: o, selected, onSelect }: { option: RebookingOption; selected: boolean; onSelect: () => void }) {
   const { c } = useTheme();

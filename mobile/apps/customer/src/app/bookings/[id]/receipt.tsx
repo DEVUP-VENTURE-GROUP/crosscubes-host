@@ -2,12 +2,12 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react-native';
-import { Badge, Button, Card, Divider, ErrorState, KeyValue, Screen, ScreenHeader, Skeleton, Text, useTheme, useToast, space } from '@catodrive/ui';
-import { RequireAuth, printHtml } from '@catodrive/core';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { statusLabel } from '@catodrive/core/web/features/bookings/status';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { formatDate, formatDateRange, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Divider, ErrorState, KeyValue, Screen, ScreenHeader, Skeleton, Text, useTheme, useToast, space } from '@crosscubes/ui';
+import { RequireAuth, printHtml } from '@crosscubes/core';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { statusLabel } from '@crosscubes/core/web/features/bookings/status';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { formatDate, formatDateRange, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { receiptHtml } from '@/features/bookings/receipt-html';
 
 function Receipt({ id }: { id: string }) {
@@ -85,12 +85,12 @@ function Receipt({ id }: { id: string }) {
       {pb.surgeDays || pb.delivery?.amount || (pb.memberSavings && pb.memberSavings.amount > 0) ? (
         <Card>
           {pb.surgeDays ? <Text variant="caption" tone="muted">Demand pricing applied on {pb.surgeDays} day{pb.surgeDays === 1 ? '' : 's'}{pb.surgeSource && pb.surgeSource !== 'none' ? ` (${pb.surgeSource})` : ''}.</Text> : null}
-          {pb.memberSavings && pb.memberSavings.amount > 0 ? <Text variant="caption" tone="muted">CatoDrive Plus saved you {formatMoney(pb.memberSavings)} on this trip.</Text> : null}
+          {pb.memberSavings && pb.memberSavings.amount > 0 ? <Text variant="caption" tone="muted">CrossCubes Plus saved you {formatMoney(pb.memberSavings)} on this trip.</Text> : null}
           {b.delivery ? <Text variant="caption" tone="muted">Delivered to {b.delivery.address} ({b.delivery.mode}).</Text> : null}
-          <Text variant="caption" tone="muted">Prices shown are what you were quoted and charged - CatoDrive does not change a price after booking.</Text>
+          <Text variant="caption" tone="muted">Prices shown are what you were quoted and charged - CrossCubes does not change a price after booking.</Text>
         </Card>
       ) : null}
-      <Text variant="caption" tone="muted" center>Issued by CatoDrive. Any refundable security deposit is authorised separately and is not included in these totals.</Text>
+      <Text variant="caption" tone="muted" center>Issued by CrossCubes. Any refundable security deposit is authorised separately and is not included in these totals.</Text>
     </Screen>
   );
 }

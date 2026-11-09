@@ -20,19 +20,19 @@ import { useTrending, useFacets } from '@/features/vehicles/hooks';
 const STEPS = [
   {
     icon: CarFront,
-    image: '/catodrive/catodrive-find-the-one.webp',
+    image: '/crosscubes/crosscubes-find-the-one.webp',
     title: 'Find the one',
     body: 'Browse our premium managed fleet. Filter by price, vehicle type, or delivery - every car is operated by us.',
   },
   {
     icon: KeyRound,
-    image: '/catodrive/catodrive-book-in-seconds.webp',
+    image: '/crosscubes/crosscubes-book-in-seconds.webp',
     title: 'Book in seconds',
     body: 'Reserve instantly with Instant Book. No back-and-forth, no waiting on anyone to approve.',
   },
   {
     icon: Route,
-    image: '/catodrive/catodrive-hit-the-road.webp',
+    image: '/crosscubes/crosscubes-hit-the-road.webp',
     title: 'Hit the road',
     body: 'Pick it up or have our team deliver it - your door, hotel, or terminal. Keys in hand, on time.',
   },
@@ -63,7 +63,7 @@ const WHY_ITEMS = [
   {
     icon: ShieldCheck,
     title: 'Every car is managed by us',
-    body: 'Not a marketplace. Every vehicle is owned by CatoDrive or our Asset Partners, and insured and maintained by CatoDrive.',
+    body: 'Not a marketplace. Every vehicle is owned by CrossCubes or our Asset Partners, and insured and maintained by CrossCubes.',
   },
   {
     icon: Zap,
@@ -94,12 +94,12 @@ export default function HomePage() {
       {/* A rounded photo card that starts just below the floating navbar, so nothing in the photo hides behind it;
           the search bar sits across the card's bottom edge. */}
       <section className="full-bleed px-3 pt-[5.5rem] sm:px-5">
-        <h1 className="sr-only">CatoDrive: rent premium cars delivered to you</h1>
+        <h1 className="sr-only">CrossCubes: rent premium cars delivered to you</h1>
 
         <div className="relative mx-auto max-w-7xl">
         <div className="relative isolate aspect-[3/2] overflow-hidden rounded-lg ring-1 ring-white/10 sm:aspect-auto sm:h-[56vh] sm:min-h-[380px] sm:rounded-lg lg:h-[62vh] lg:max-h-[640px]">
           <Image
-            src="/catodrive/catodrive-hit-the-road.webp"
+            src="/crosscubes/crosscubes-hit-the-road.webp"
             alt=""
             fill
             priority
@@ -231,10 +231,10 @@ export default function HomePage() {
           </div>
         </Reveal>
 
-        {/* ── Why CatoDrive ────────────────────────────────────────────────── */}
+        {/* ── Why CrossCubes ────────────────────────────────────────────────── */}
         <Reveal as="section" className="space-y-10">
           <div className="max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Why CatoDrive</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Why CrossCubes</p>
             <h2 className="display mt-2 text-3xl text-foreground sm:text-4xl">
               A rental company that works<br className="hidden sm:block" /> the way you travel.
             </h2>
@@ -310,8 +310,8 @@ export default function HomePage() {
             <div className="relative order-first lg:order-last">
               <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-primary/15 blur-3xl" />
               <Image
-                src="/catodrive/catodrive-more-opportunities.webp"
-                alt="CatoDrive managed fleet earnings"
+                src="/crosscubes/crosscubes-more-opportunities.webp"
+                alt="CrossCubes managed fleet earnings"
                 width={1200}
                 height={800}
                 sizes="(min-width: 1024px) 50vw, 100vw"

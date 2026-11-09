@@ -1,7 +1,7 @@
 import { FlatList, View, useWindowDimensions } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton, Text, radius, space } from '@catodrive/ui';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
+import { Skeleton, Text, radius, space } from '@crosscubes/ui';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
 import { VehicleCard } from './VehicleCard';
 
 /** Other cars like this one, priced for the guest's dates when they've picked some. */

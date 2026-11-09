@@ -255,7 +255,7 @@ function GettingStarted() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="display text-3xl sm:text-4xl">{data.partner ? `Welcome, ${data.partner.displayName}` : 'Become a CatoDrive partner'}</h1>
+        <h1 className="display text-3xl sm:text-4xl">{data.partner ? `Welcome, ${data.partner.displayName}` : 'Become a CrossCubes partner'}</h1>
         <p className="text-muted-foreground">Finish these steps and your partner dashboard opens.</p>
       </header>
       <Tracker stage={data.stage} />

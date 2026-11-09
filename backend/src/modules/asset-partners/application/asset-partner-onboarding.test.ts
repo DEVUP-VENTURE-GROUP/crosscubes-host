@@ -23,8 +23,8 @@ afterAll(disconnectTestDb);
 beforeEach(clearTestDb);
 
 const OPS = 'house-fleet-1';
-const AGREEMENT = { title: 'Asset Partner Agreement', body: 'The partner places the vehicle with CatoDrive, which manages and rents it out on these terms.\nVehicle: {{vehicle}}, VIN {{vin}}, owned by {{partner_name}}.\nLicence: {{licence}}' };
-const NDA = { kind: 'nda' as const, title: 'Non-Disclosure Agreement', body: 'The recipient keeps CatoDrive’s confidential information private for three years. Signed by {{signed_name}}.' };
+const AGREEMENT = { title: 'Asset Partner Agreement', body: 'The partner places the vehicle with CrossCubes, which manages and rents it out on these terms.\nVehicle: {{vehicle}}, VIN {{vin}}, owned by {{partner_name}}.\nLicence: {{licence}}' };
+const NDA = { kind: 'nda' as const, title: 'Non-Disclosure Agreement', body: 'The recipient keeps CrossCubes’s confidential information private for three years. Signed by {{signed_name}}.' };
 const SIGN: SignInput = {
   agreementVersion: 1, ndaVersion: 2, signedName: 'Jordan Ramirez', licenceNumber: 'D12345678', licenceState: 'tx',
   payout: { method: 'zelle', zelleHandle: 'jordan@example.com', zelleName: 'Jordan Ramirez' },
@@ -134,7 +134,7 @@ describe('getting started on the partner portal', () => {
 
     const pdf = await assetPartnerAgreementService.signedPdf(signed, 'agreement');
     expect(pdf.pdf.subarray(0, 4).toString()).toBe('%PDF');
-    expect(pdf.filename).toMatch(/^CatoDrive-Asset-Partner-Agreement-Jordan-Ramirez-CD-ENV-[A-Z0-9]{4}-[A-Z0-9]{4}.pdf$/);
+    expect(pdf.filename).toMatch(/^CrossCubes-Asset-Partner-Agreement-Jordan-Ramirez-CD-ENV-[A-Z0-9]{4}-[A-Z0-9]{4}.pdf$/);
 
     const docsStep = await assetPartnerApplicationService.onboarding(userId);
     expect(docsStep.stage).toBe('documents');
@@ -147,7 +147,7 @@ describe('getting started on the partner portal', () => {
     expect((await assetPartnerApplicationService.onboarding(userId)).stage).toBe('ready');
     await expect(assetPartnerService.requirePortalReady(userId)).resolves.toBeTruthy();
 
-    // A paper CatoDrive sends back locks the dashboard again until it is replaced.
+    // A paper CrossCubes sends back locks the dashboard again until it is replaced.
     await DocumentModel.updateOne({ ownerId: userId, category: 'w9' }, { $set: { verification: { status: 'rejected', reason: 'Unsigned' } } });
     expect((await assetPartnerApplicationService.onboarding(userId)).stage).toBe('documents');
 

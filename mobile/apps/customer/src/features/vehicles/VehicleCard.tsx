@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Award, Settings2, ShieldCheck, Users, Zap } from 'lucide-react-native';
-import { Card, Text, useTheme, radius, space } from '@catodrive/ui';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { Card, Text, useTheme, radius, space } from '@crosscubes/ui';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 import { WishlistButton } from '@/features/favorites/WishlistButton';
 import { CompareButton } from '@/features/compare/CompareButton';
 import { VehicleRating } from './VehicleRating';
@@ -47,7 +47,7 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, width }: { vehic
           </View>
         )}
         <View style={styles.chips}>
-          {vehicle.fleetOwned ? <Chip icon={<ShieldCheck size={12} color="#fff" />} label="CatoDrive Fleet" /> : null}
+          {vehicle.fleetOwned ? <Chip icon={<ShieldCheck size={12} color="#fff" />} label="CrossCubes Fleet" /> : null}
           {vehicle.hostIsSuperhost ? <Chip icon={<Award size={12} color="#facc15" />} label="Superhost" /> : null}
           {vehicle.listing.instantBook ? <Chip icon={<Zap size={12} color="#fff" fill="#fff" />} label="Instant" /> : null}
         </View>

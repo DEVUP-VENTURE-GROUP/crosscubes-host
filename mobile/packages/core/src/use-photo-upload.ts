@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useToast } from '@catodrive/ui';
+import { useToast } from '@crosscubes/ui';
 import { pickPhotos, uploadPhotos, type PickSource, type UploadCategory } from './uploads';
 import { safeMessage } from './web/lib/utils/safe-message';
 

@@ -41,14 +41,14 @@ function ConfirmContact() {
             <div><h1 className="text-xl font-bold">Got it</h1><p className="text-sm text-muted-foreground">We’ve removed you and asked {v.partnerName} to name someone else. We won’t contact you about this again.</p></div>
           </div>
         ) : v.expired ? (
-          <ErrorState message={`This link has expired. Ask ${v.partnerName} to send it again from their CatoDrive profile.`} />
+          <ErrorState message={`This link has expired. Ask ${v.partnerName} to send it again from their CrossCubes profile.`} />
         ) : (
           <>
             <div className="flex items-start gap-3">
               <ShieldQuestion className="h-6 w-6 shrink-0 text-primary" />
               <div className="min-w-0">
                 <h1 className="text-xl font-bold">Hi {v.contactName}</h1>
-                <p className="text-sm text-muted-foreground">{v.partnerName} keeps a car with CatoDrive and named you as {role}. We’d only call you if something happens to their car and we can’t reach them. You won’t get marketing, and you’re not responsible for the car or any money.</p>
+                <p className="text-sm text-muted-foreground">{v.partnerName} keeps a car with CrossCubes and named you as {role}. We’d only call you if something happens to their car and we can’t reach them. You won’t get marketing, and you’re not responsible for the car or any money.</p>
               </div>
             </div>
             {answer.isError && <p role="alert" className="text-sm text-destructive">{answer.error instanceof ApiError ? answer.error.message : 'That didn’t go through. Try again.'}</p>}

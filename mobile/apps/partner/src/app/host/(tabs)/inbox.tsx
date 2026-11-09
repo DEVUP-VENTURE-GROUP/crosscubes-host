@@ -3,11 +3,11 @@ import { ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Bell, CarFront, Check, ChevronRight, Clock, FileWarning, MessageSquare } from 'lucide-react-native';
-import { Button, Card, Chip, EmptyState, Screen, ScreenHeader, SkeletonList, Text, space, useTheme } from '@catodrive/ui';
-import { hostApi, type HostActionItem } from '@catodrive/core/web/features/host/api';
-import { notificationsApi } from '@catodrive/core/web/features/notifications/api';
-import { useConversations } from '@catodrive/core/web/features/messaging/hooks';
-import { useInquiryInbox } from '@catodrive/core/web/features/messaging/inquiry-hooks';
+import { Button, Card, Chip, EmptyState, Screen, ScreenHeader, SkeletonList, Text, space, useTheme } from '@crosscubes/ui';
+import { hostApi, type HostActionItem } from '@crosscubes/core/web/features/host/api';
+import { notificationsApi } from '@crosscubes/core/web/features/notifications/api';
+import { useConversations } from '@crosscubes/core/web/features/messaging/hooks';
+import { useInquiryInbox } from '@crosscubes/core/web/features/messaging/inquiry-hooks';
 import { ThreadRow } from '@/features/host/ThreadRow';
 import { useOpenHref } from '@/features/workspace/useOpenHref';
 

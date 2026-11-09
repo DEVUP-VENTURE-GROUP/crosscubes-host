@@ -22,7 +22,6 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   hosts: BadgeCheck,
   vehicles: Car,
   insurance: Umbrella,
-  insurers: Shield,
   bookings: CalendarCheck,
   claims: ShieldAlert,
   support: LifeBuoy,

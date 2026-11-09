@@ -1,0 +1,166 @@
+# CrossCubes — Deployment Runbook
+
+CrossCubes runs on its own server, database, Redis and file storage, separate from CatoDrive.
+For now it shares two CatoDrive accounts: **Stripe** (payments) and the **email sender**.
+API on **AWS EC2**, websites on **Vercel**, DNS on **Cloudflare** (`crosscubes.com`).
+
+The API refuses to start in production with unsafe settings (wildcard CORS, short or
+placeholder secrets, half-set S3). Work through the checklist and it starts.
+
+| Piece | Where | Name |
+|---|---|---|
+| API | EC2, Ubuntu 22.04, us-east-1 | `api.crosscubes.com`, pm2 process `crosscubes-api` |
+| Database | MongoDB Atlas, its own project + cluster, US region | database `crosscubes` |
+| Redis | Upstash or ElastiCache, its own instance | key prefix `crosscubes` |
+| Files | S3 bucket of its own, Block Public Access ON | e.g. `crosscubes-media` |
+| Guest site | Vercel, root `frontend/` | `crosscubes.com`, `www.crosscubes.com` |
+| Partner portal | Vercel, root `partner-web/` | `partners.crosscubes.com` |
+| City operator panel | Vercel, root `crosscubes-hub/` | `hub.crosscubes.com/<secret>` |
+| HQ admin | Vercel, root `admin-web/` | `admin.crosscubes.com/<secret>` |
+
+---
+
+## 1. API server — EC2
+
+### 1.1 Instance
+- Ubuntu 22.04 LTS, t3.small to start (t3.medium if more than a few cities are live). Region us-east-1.
+- An Elastic IP attached, so the address never changes.
+- Security group inbound: 22 from your IP only, 80 and 443 from anywhere. Never 8080.
+- Install Node 20, nginx, certbot and pm2:
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs nginx certbot python3-certbot-nginx git fonts-dejavu-core fontconfig
+sudo npm i -g pm2
+```
+
+### 1.2 App
+```bash
+git clone https://github.com/DEVUP-VENTURE-GROUP/crosscubes-host.git && cd crosscubes-host/backend
+npm ci
+nano .env                 # paste the production settings, see 1.3; never commit this file
+npm run build
+pm2 start dist/main.js --name crosscubes-api
+pm2 save && pm2 startup   # run the command it prints, so it survives reboots
+```
+Update later: `git pull && npm ci && npm run build && pm2 restart crosscubes-api --update-env`.
+
+### 1.3 Production `.env`
+| Setting | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `APP_NAME` / `BRAND_NAME` | `CrossCubes` |
+| `APP_KEY` | `crosscubes` — tags every Stripe payment so CatoDrive's and CrossCubes' payments never mix. Never change it. |
+| `PUBLIC_API_URL` | `https://api.crosscubes.com` |
+| `WEB_URL` | `https://www.crosscubes.com` |
+| `PARTNER_WEB_URL` | `https://partners.crosscubes.com` |
+| `HUB_WEB_URL` | `https://hub.crosscubes.com/<hub slug>` |
+| `CORS_ORIGINS` | `https://crosscubes.com,https://www.crosscubes.com,https://partners.crosscubes.com,https://hub.crosscubes.com,https://admin.crosscubes.com` |
+| `ADMIN_SLUG` | your secret admin path; same as the admin site's `NEXT_PUBLIC_ADMIN_SLUG` |
+| `MONGO_URI` | the CrossCubes Atlas cluster, database `crosscubes` |
+| `REDIS_URL` | the CrossCubes Redis; `REDIS_PREFIX=crosscubes` |
+| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `PASSWORD_PEPPER`, `VISITOR_HASH_SALT` | new values, each `openssl rand -hex 32`. Never reuse CatoDrive's. |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | the first HQ login; password 12+ characters |
+| `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` | an IAM user that can only use the CrossCubes bucket |
+| `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` | CatoDrive's Stripe keys (shared for now) |
+| `STRIPE_WEBHOOK_SECRET` | from the **new** CrossCubes webhook endpoint (section 5), not CatoDrive's |
+| `EMAIL_*` / `SMTP_*`, `EMAIL_FROM` | CatoDrive's email account; `EMAIL_FROM` shows `CrossCubes <…@catodrive.com>` |
+| `SMS_*` | CatoDrive's Twilio for now |
+| `TRUST_PROXY_HOPS` | `1` with Cloudflare grey cloud, `2` once the orange cloud is on |
+| `HOST_WEB_URL`, `INSURANCE_WEB_URL`, `WHEELBASE_DEALER_ID` | leave out; CrossCubes has no host site, insurer portal or Wheelbase |
+
+### 1.4 Nginx and HTTPS
+`/etc/nginx/sites-available/crosscubes-api`:
+```nginx
+server {
+  server_name api.crosscubes.com;
+  client_max_body_size 2m;
+  location / {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+}
+```
+```bash
+sudo ln -s /etc/nginx/sites-available/crosscubes-api /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d api.crosscubes.com
+```
+
+### 1.5 Health checks
+- `GET /api/v1/system/health` → 200 when the process is up.
+- `GET /api/v1/system/ready` → 200 only when Mongo and Redis are reachable.
+
+---
+
+## 2. Websites — Vercel (four projects)
+
+Every project: `NEXT_PUBLIC_API_URL=https://api.crosscubes.com/api/v1`, `NEXT_PUBLIC_SITE_URL=https://www.crosscubes.com`,
+`NEXT_PUBLIC_PARTNER_URL=https://partners.crosscubes.com`, the Maps key, and the Stripe publishable key where payments are taken.
+
+| Project | Root | Domain | Extra settings |
+|---|---|---|---|
+| `crosscubes-web` | `frontend/` | `crosscubes.com`, `www` | — |
+| `crosscubes-partners` | `partner-web/` | `partners.crosscubes.com` | — |
+| `crosscubes-hub` | `crosscubes-hub/` | `hub.crosscubes.com` | `CROSSCUBES_HUB_SLUG` (long random secret; the build refuses to run without it) |
+| `crosscubes-admin` | `admin-web/` | `admin.crosscubes.com` | `NEXT_PUBLIC_ADMIN_SLUG` = backend `ADMIN_SLUG` |
+
+Keep the slugs out of this repo.
+
+---
+
+## 3. Cloudflare — DNS for crosscubes.com
+
+| Type | Name | Target | Proxy |
+|---|---|---|---|
+| A | `api` | EC2 Elastic IP | grey cloud until certbot has issued, then orange (and `TRUST_PROXY_HOPS=2`) |
+| CNAME | `@`, `www` | Vercel target for `crosscubes-web` | per Vercel |
+| CNAME | `partners` | Vercel target for `crosscubes-partners` | per Vercel |
+| CNAME | `hub` | Vercel target for `crosscubes-hub` | per Vercel |
+| CNAME | `admin` | Vercel target for `crosscubes-admin` | per Vercel |
+
+With the orange cloud on, set SSL/TLS to **Full (strict)**.
+
+---
+
+## 4. S3 — bucket CORS
+Browsers upload photos and papers straight to S3, so the bucket must allow the sites:
+```json
+[{
+  "AllowedOrigins": ["https://crosscubes.com", "https://www.crosscubes.com", "https://partners.crosscubes.com", "https://hub.crosscubes.com", "https://admin.crosscubes.com"],
+  "AllowedMethods": ["PUT", "GET"],
+  "AllowedHeaders": ["*"],
+  "MaxAgeSeconds": 3000
+}]
+```
+
+---
+
+## 5. Stripe — shared with CatoDrive
+- In CatoDrive's Stripe dashboard add a **second** webhook endpoint: `https://api.crosscubes.com/api/v1/payments/webhooks/stripe`,
+  with the same events as CatoDrive's endpoint. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
+- Both systems receive every event on the account. CrossCubes tags its payments `app: crosscubes` and skips
+  anything untagged or tagged for another system, so CatoDrive's payments and refunds are never booked here.
+- Card statements show CatoDrive's business name until CrossCubes has its own Stripe account.
+
+---
+
+## 6. First-boot checks
+```bash
+curl https://api.crosscubes.com/api/v1/system/ready     # {"mongo":true,"redis":true}
+```
+1. Sign in to `admin.crosscubes.com/<ADMIN_SLUG>/login`.
+2. Send a test email and text: `POST /api/v1/notifications/test` (super_admin).
+3. One city licence paid with a real card, then refunded.
+4. One partner sign-up through to the dashboard.
+
+## 7. Ops
+- Logs: `pm2 logs crosscubes-api`.
+- Rotate `JWT_*` and `ADMIN_PASSWORD` on a schedule; they are read at boot.
+- The audit log is append-only; never edit the `auditlogs` collection.
+- Scaling: `pm2 start dist/main.js -i max --name crosscubes-api` once there is real traffic; keep
+  `MONGO_MAX_POOL × workers` under the Atlas tier's connection limit.

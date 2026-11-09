@@ -20,7 +20,7 @@ export default function AssetPartnersOverviewPage() {
       <PageHeader
         eyebrow="Money out"
         title="Asset Partners at a glance"
-        description="Reviewing applications, partners and the agreement happens in the CatoDrive operations panel."
+        description="Reviewing applications, partners and the agreement happens in the CrossCubes operations panel."
       />
       {q.isLoading ? (
         <Skeleton className="h-64 w-full rounded-lg" />

@@ -50,7 +50,7 @@ export interface PriceBreakdown {
   /** How many days of the trip were surged, and why. Shown to the guest. */
   surgeDays?: number;
   surgeSource?: string;
-  /** Membership savings applied (CatoDrive Plus), in minor units. */
+  /** Membership savings applied (CrossCubes Plus), in minor units. */
   memberSavings?: Money;
   memberPlan?: string;
   /**
@@ -70,7 +70,7 @@ export interface QuoteInput {
   couponCode?: string;
   addOnCodes?: string[];
   protectionPlan?: string;
-  /** Who is booking — lets membership (CatoDrive Plus) benefits apply to the price. */
+  /** Who is booking — lets membership (CrossCubes Plus) benefits apply to the price. */
   guestId?: string;
   /** Extending or shortening an existing trip: the cleaning fee was charged once at booking and must not repeat or be refunded. */
   skipOneTimeFees?: boolean;

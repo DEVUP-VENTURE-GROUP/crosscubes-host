@@ -1,6 +1,6 @@
-import { esc, printableDocument } from '@catodrive/core';
-import type { HostTrip } from '@catodrive/core/web/features/host/trips.api';
-import { formatDate, formatDateRange, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { esc, printableDocument } from '@crosscubes/core';
+import type { HostTrip } from '@crosscubes/core/web/features/host/trips.api';
+import { formatDate, formatDateRange, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 export interface HostReceiptLine {
   label: string;
@@ -52,7 +52,7 @@ const row = (l: HostReceiptLine) => `<tr><td>${esc(l.label)}</td><td class="r">$
 export function hostReceiptHtml(t: HostTrip, verifyUrl: string): string {
   const { hasBreakdown, r, m, guest, payout, paid } = hostReceipt(t);
   return printableDocument(`
-    <p class="k">CatoDrive · Trip receipt</p><h1>${esc(t.code)}</h1>
+    <p class="k">CrossCubes · Trip receipt</p><h1>${esc(t.code)}</h1>
     <p class="muted">Issued ${esc(formatDate(r.issuedAt))} · ${esc(paid ? 'Paid' : t.status.replace(/_/g, ' '))}</p>
     <section>
       <p>${esc(`${t.vehicle.make} ${t.vehicle.model} ${t.vehicle.year}`)}${t.vehicle.plate ? ` · ${esc(t.vehicle.plate)}` : ''}</p>
@@ -62,6 +62,6 @@ export function hostReceiptHtml(t: HostTrip, verifyUrl: string): string {
     ${hasBreakdown ? `<section><p class="k">Guest charges</p><table>${guest.map(row).join('')}<tr class="t"><td>Guest total</td><td class="r">${esc(m(r.total))}</td></tr></table></section>` : ''}
     <section>${hasBreakdown ? `<p class="k">Your payout</p>` : ''}<table>${payout.map(row).join('')}<tr class="t"><td>Your earnings</td><td class="r">${esc(m(r.hostEarnings))}</td></tr></table></section>
     <p class="muted">Booking ID · ${esc(t.bookingId)}</p>
-    <p class="muted">Issued by CatoDrive. Figures are the price locked at booking and never change afterward. Any refundable security deposit is authorised separately and not included here. Confirm this receipt is genuine at ${esc(verifyUrl)}</p>
+    <p class="muted">Issued by CrossCubes. Figures are the price locked at booking and never change afterward. Any refundable security deposit is authorised separately and not included here. Confirm this receipt is genuine at ${esc(verifyUrl)}</p>
   `);
 }

@@ -1,9 +1,9 @@
 import { Switch, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react-native';
-import { Button, Card, Input, Text, space, useTheme } from '@catodrive/ui';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import type { ListingDraft } from '@catodrive/core/web/features/vehicles/new-listing';
+import { Button, Card, Input, Text, space, useTheme } from '@crosscubes/ui';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import type { ListingDraft } from '@crosscubes/core/web/features/vehicles/new-listing';
 import { useListingDraft } from './draft-store';
 
 const num = (t: string) => Number(t.replace(/[^\d.]/g, '')) || 0;

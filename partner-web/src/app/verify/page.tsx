@@ -19,7 +19,7 @@ async function fingerprint(file: File): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Public: anyone holding a CatoDrive agreement can check it is genuine and unchanged. */
+/** Public: anyone holding a CrossCubes agreement can check it is genuine and unchanged. */
 export default function VerifyPage() {
   const [id, setId] = useState('');
   const [result, setResult] = useState<(EnvelopeCheck & { documentId?: string; via: 'id' | 'file' }) | null>(null);
@@ -34,7 +34,7 @@ export default function VerifyPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-6">
-      <PageHeader eyebrow="CatoDrive" title="Check a signed document" description="Confirm that a CatoDrive partner agreement is genuine and has not been changed since it was signed." />
+      <PageHeader eyebrow="CrossCubes" title="Check a signed document" description="Confirm that a CrossCubes partner agreement is genuine and has not been changed since it was signed." />
 
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">By envelope ID</CardTitle></CardHeader>
@@ -91,7 +91,7 @@ export default function VerifyPage() {
               <p className="flex items-start gap-2 text-sm">
                 <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
                 {result.via === 'file'
-                  ? 'This file doesn’t match any document CatoDrive sealed. It may have been changed, or it may not be a CatoDrive copy.'
+                  ? 'This file doesn’t match any document CrossCubes sealed. It may have been changed, or it may not be a CrossCubes copy.'
                   : 'No envelope has that ID. Check the letters and numbers and try again.'}
               </p>
             )}

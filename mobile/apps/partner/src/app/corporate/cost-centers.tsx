@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, EmptyState, Input, Screen, ScreenHeader, SkeletonList, Text, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, EmptyState, Input, Screen, ScreenHeader, SkeletonList, Text, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** The website's /corporate/cost-centers: budget buckets for team spend. */
 function CostCenters() {

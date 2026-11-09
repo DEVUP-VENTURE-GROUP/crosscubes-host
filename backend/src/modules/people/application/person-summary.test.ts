@@ -45,9 +45,9 @@ describe('who is this person', () => {
     expect(s).toMatchObject({ name: 'Sam R.', canBook: false, trips: { completed: 2, upcoming: 1, cancelledByGuest: 1, withThisHost: 1 } });
   });
 
-  it('treats CatoDrive’s fleet operator and console staff as staff, everyone else as a host', async () => {
-    const op = await UserModel.create({ email: 'op@catodrive.test', roles: ['house_fleet'] });
-    const support = await UserModel.create({ email: 's@catodrive.test', roles: ['support'] });
+  it('treats CrossCubes’s fleet operator and console staff as staff, everyone else as a host', async () => {
+    const op = await UserModel.create({ email: 'op@crosscubes.test', roles: ['house_fleet'] });
+    const support = await UserModel.create({ email: 's@crosscubes.test', roles: ['support'] });
     const host = await UserModel.create({ email: 'h@example.com', roles: ['guest', 'host'] });
     expect(await visibilityFor(String(op._id))).toBe('staff');
     expect(await visibilityFor(String(support._id))).toBe('staff');

@@ -2,8 +2,8 @@ import { Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Heart } from 'lucide-react-native';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
-import { useFavoriteIds, useToggleFavorite } from '@catodrive/core/web/features/favorites/hooks';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
+import { useFavoriteIds, useToggleFavorite } from '@crosscubes/core/web/features/favorites/hooks';
 
 const ROSE = '#f43f5e';
 

@@ -172,7 +172,7 @@ export const hostStaffService = {
       fleetName: host?.displayName ?? 'the fleet',
       abilities: staff.abilities,
       vehicleCount: staff.vehicleIds.length,
-      // An existing CatoDrive account keeps its own password; only a brand new
+      // An existing CrossCubes account keeps its own password; only a brand new
       // one has to choose one here.
       needsPassword: !user,
     };

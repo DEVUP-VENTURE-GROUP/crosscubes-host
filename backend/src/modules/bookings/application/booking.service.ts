@@ -931,7 +931,7 @@ export class BookingService {
           txnId: `credit_bonus_${bookingId}`,
           refType: 'cancel_credit_bonus',
           refId: bookingId,
-          description: `Bonus for keeping the refund of ${booking.code} as CatoDrive credit`,
+          description: `Bonus for keeping the refund of ${booking.code} as CrossCubes credit`,
         })
         .catch((err) => {
           creditBonusCents = 0;

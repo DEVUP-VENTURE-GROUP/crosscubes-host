@@ -1,6 +1,6 @@
-import type { BookingReceipts, Receipt } from '@catodrive/core/web/features/bookings/api';
-import { esc, printableDocument } from '@catodrive/core';
-import { formatDate, formatDateRange, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import type { BookingReceipts, Receipt } from '@crosscubes/core/web/features/bookings/api';
+import { esc, printableDocument } from '@crosscubes/core';
+import { formatDate, formatDateRange, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 function card(r: Receipt, currency: string, paid: boolean): string {
   const m = (amount: number) => formatMoney({ amount: Math.abs(amount), currency });
@@ -30,6 +30,6 @@ export function receiptHtml(data: BookingReceipts, opts: { code: string; status:
     <p class="muted">Issued ${esc(formatDate(opts.createdAt))} · ${esc(opts.status.replace(/_/g, ' '))}</p>
     ${list.map((r) => card(r, data.currency, opts.paid)).join('')}
     ${summary}
-    <p class="muted">Issued by CatoDrive. Any refundable security deposit is authorised separately and is not included in these totals.</p>
+    <p class="muted">Issued by CrossCubes. Any refundable security deposit is authorised separately and is not included in these totals.</p>
   `);
 }

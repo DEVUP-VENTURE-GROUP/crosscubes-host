@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Divider, EmptyState, ErrorState, KeyValue, Screen, ScreenHeader, Section, SkeletonList, Text, space } from '@catodrive/ui';
-import { corporateApi } from '@catodrive/core/web/features/corporate/api';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Card, Divider, EmptyState, ErrorState, KeyValue, Screen, ScreenHeader, Section, SkeletonList, Text, space } from '@crosscubes/ui';
+import { corporateApi } from '@crosscubes/core/web/features/corporate/api';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 /** The website's /corporate/invoices: the consolidated invoice, by cost center and by booking. */
 export default function CorporateInvoicesScreen() {

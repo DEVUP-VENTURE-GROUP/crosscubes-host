@@ -5,13 +5,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
 import { Image } from 'expo-image';
 import { Camera, CheckCircle2, Clock, IdCard, LockKeyhole, RefreshCw, ScanFace, ShieldCheck, XCircle } from 'lucide-react-native';
-import { Badge, Button, Card, Checkbox, KeyValue, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
-import { RequireAuth, pickPhotos, safeReturn, uploadPhotos, type PickedPhoto } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
-import { kycApi, type KycStatusView } from '@catodrive/core/web/features/kyc/api';
-import { KYC_MANUAL_FIELDS, KYC_STEPS, kycReasonLabel } from '@catodrive/core/web/features/kyc/copy';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDay } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Checkbox, KeyValue, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
+import { RequireAuth, pickPhotos, safeReturn, uploadPhotos, type PickedPhoto } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
+import { kycApi, type KycStatusView } from '@crosscubes/core/web/features/kyc/api';
+import { KYC_MANUAL_FIELDS, KYC_STEPS, kycReasonLabel } from '@crosscubes/core/web/features/kyc/copy';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDay } from '@crosscubes/core/web/lib/utils/format';
 
 const STEP_ICON = { license: IdCard, selfie: ScanFace, secure: LockKeyhole };
 
@@ -113,7 +113,7 @@ function VerifyIdentity() {
 
   return (
     <Screen header={header} onRefresh={refresh} refreshing={status.isRefetching}>
-      <Text tone="muted">Every driver on CatoDrive is identity-verified against a government-issued ID. It&apos;s mandatory before you can book - so hosts and guests always know exactly who they&apos;re dealing with.</Text>
+      <Text tone="muted">Every driver on CrossCubes is identity-verified against a government-issued ID. It&apos;s mandatory before you can book - so hosts and guests always know exactly who they&apos;re dealing with.</Text>
 
       {s === 'approved' ? (
         <Card>

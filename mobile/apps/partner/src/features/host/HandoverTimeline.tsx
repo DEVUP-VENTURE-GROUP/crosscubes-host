@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Check, Lock } from 'lucide-react-native';
-import { Card, Text, space, useTheme } from '@catodrive/ui';
-import type { TimelineStep } from '@catodrive/core/web/features/host/trips.api';
+import { Card, Text, space, useTheme } from '@crosscubes/ui';
+import type { TimelineStep } from '@crosscubes/core/web/features/host/trips.api';
 
 /** The handover steps in order; renders nothing when the backend sends no timeline. */
 export function HandoverTimeline({ timeline }: { timeline?: TimelineStep[] | null }) {

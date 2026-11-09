@@ -126,7 +126,7 @@ export default function PartnerVehiclesPage() {
   );
 }
 
-/** Cars this partner has offered that CatoDrive is still reviewing or has sent back. */
+/** Cars this partner has offered that CrossCubes is still reviewing or has sent back. */
 function CarRequests() {
   const q = useQuery({ queryKey: ['asset-partner-dashboard'], queryFn: () => assetPartnerApi.dashboard() });
   const open = (q.data?.applications ?? []).filter((a) => a.kind === 'vehicle' && a.status !== 'approved');

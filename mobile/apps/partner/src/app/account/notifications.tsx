@@ -1,4 +1,4 @@
-import { NotificationSettingsScreen, RequireAuth } from '@catodrive/core';
+import { NotificationSettingsScreen, RequireAuth } from '@crosscubes/core';
 
 export default function Notifications() {
   return (

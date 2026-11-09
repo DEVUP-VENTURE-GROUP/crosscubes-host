@@ -3,11 +3,11 @@ import { Pressable, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Camera, Check, ImageIcon, Trash2 } from 'lucide-react-native';
-import { Button, Text, space, useConfirm, useTheme, useToast } from '@catodrive/ui';
-import { pickPhotos, uploadPhotos, type PickSource } from '@catodrive/core';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { Button, Text, space, useConfirm, useTheme, useToast } from '@crosscubes/ui';
+import { pickPhotos, uploadPhotos, type PickSource } from '@crosscubes/core';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 /** Add photos (camera or library), choose the cover guests see in search, and delete. */
 export function PhotosPanel({ vehicle, onChanged }: { vehicle: Vehicle; onChanged: () => void }) {

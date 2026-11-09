@@ -52,7 +52,7 @@ router.put(
       // Where public-site lead forms notify staff.
       contact: z.object({ notifyEmail: z.string().email().optional() }).optional(),
       // Verification frequency/validity policy — e.g. MVR at most once per 60
-      // days. Admin-editable so CatoDrive retunes it without a code change.
+      // days. Admin-editable so CrossCubes retunes it without a code change.
       contactVerification: z.object({ requireEmail: z.boolean().optional(), requirePhone: z.boolean().optional() }).optional(),
       checkout: z.object({ otherMethodsEnabled: z.boolean().optional() }).optional(),
       insurance: z

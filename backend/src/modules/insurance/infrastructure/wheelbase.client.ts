@@ -1,6 +1,6 @@
 import { ExternalServiceError } from '../../../core/errors/app-error';
 
-/** One Wheelbase listing, reduced to what CatoDrive uses: identity for matching, and its insurance. */
+/** One Wheelbase listing, reduced to what CrossCubes uses: identity for matching, and its insurance. */
 export interface WheelbaseListing {
   id: number;
   name: string;
@@ -12,7 +12,7 @@ export interface WheelbaseListing {
   eligible?: boolean;
   planLabel?: string;
   minRenterAge?: number;
-  /** Listing content, used to fill CatoDrive cars on import. */
+  /** Listing content, used to fill CrossCubes cars on import. */
   details: {
     photoUrls: string[];
     features: string[];
@@ -57,7 +57,7 @@ export async function fetchDealerListings(dealerId: string): Promise<WheelbaseLi
   let res: Response;
   try {
     res = await fetch(`${SEARCH}?${q}`, {
-      headers: { Accept: 'application/json', 'User-Agent': 'CatoDrive/1.0 (+https://www.catodrive.com)' },
+      headers: { Accept: 'application/json', 'User-Agent': 'CrossCubes/1.0 (+https://www.crosscubes.com)' },
       signal: AbortSignal.timeout(20_000),
     });
   } catch (err) {

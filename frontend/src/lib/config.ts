@@ -5,7 +5,7 @@ export const config = {
   // NEXT_PUBLIC_APP_NAME, because a wrong env var on one deploy (it was set
   // to "CATO") was rendering as the wordmark on the navbar, footer, auth
   // pages, admin console and receipts simultaneously. One brand, one source.
-  appName: 'CatoDrive',
+  appName: 'CrossCubes',
   /**
    * This launch goes to market on Asset Partners alone - Host self-serve,
    * Fleet management and Corporate accounts stay off every nav, footer and

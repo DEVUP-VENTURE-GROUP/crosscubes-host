@@ -166,7 +166,7 @@ export default function AdminSupportPage() {
                 {ticket.data.messages.map((m: any, i: number) => (
                   <div key={i} className={cn('rounded-lg p-3 text-sm', m.internal ? 'border border-dashed border-warning/50 bg-warning/5' : m.author?.fromCustomer ? 'bg-muted' : 'ms-8 bg-primary/10')}>
                     <span className="mb-1 flex items-baseline justify-between gap-2 text-xs">
-                      <span className="font-semibold">{m.internal ? `Internal note · ${m.author?.name ?? 'Staff'}` : m.author?.fromCustomer ? m.author.name : `${m.author?.name ?? 'Support'} (CatoDrive)`}</span>
+                      <span className="font-semibold">{m.internal ? `Internal note · ${m.author?.name ?? 'Staff'}` : m.author?.fromCustomer ? m.author.name : `${m.author?.name ?? 'Support'} (CrossCubes)`}</span>
                       {m.at && <span className="text-muted-foreground">{formatDateTime(m.at)}</span>}
                     </span>
                     {m.body}

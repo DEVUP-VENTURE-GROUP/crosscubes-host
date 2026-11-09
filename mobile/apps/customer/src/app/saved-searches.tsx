@@ -2,10 +2,10 @@ import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, BellOff, Search, Trash2 } from 'lucide-react-native';
-import { Card, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, Text, useConfirm, useTheme, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { savedSearchApi, searchParamsOf, summariseSearch, type SavedSearch } from '@catodrive/core/web/features/saved-search/api';
-import { useSearchBar } from '@catodrive/core/web/features/search/search-store';
+import { Card, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, Text, useConfirm, useTheme, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { savedSearchApi, searchParamsOf, summariseSearch, type SavedSearch } from '@crosscubes/core/web/features/saved-search/api';
+import { useSearchBar } from '@crosscubes/core/web/features/search/search-store';
 
 /** The website's /saved-searches: alerts on or off, rerun, delete. */
 function SavedSearches() {

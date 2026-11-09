@@ -2,9 +2,9 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MessageSquare } from 'lucide-react-native';
-import { Avatar, Card, EmptyState, ErrorState, ScreenHeader, SkeletonList, Text, useTheme, radius, space } from '@catodrive/ui';
-import { useConversations, type Conversation } from '@catodrive/core/web/features/messaging/hooks';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
+import { Avatar, Card, EmptyState, ErrorState, ScreenHeader, SkeletonList, Text, useTheme, radius, space } from '@crosscubes/ui';
+import { useConversations, type Conversation } from '@crosscubes/core/web/features/messaging/hooks';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
 import { SignedOutPrompt } from '@/features/account/SignedOutPrompt';
 
 function timeAgo(iso: string): string {

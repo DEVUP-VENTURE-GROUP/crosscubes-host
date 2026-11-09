@@ -168,7 +168,7 @@ export class PlatformConfigService {
         intakeObjectionDays: 3,
         countersignerName: '',
         countersignerTitle: '',
-        countersignerOrganisation: 'CatoDrive',
+        countersignerOrganisation: 'CrossCubes',
         agreementValidDays: 25,
         agreementReminderDays: 5,
         requireIdentity: true,

@@ -3,7 +3,7 @@ import { Switch, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, Mail, MessageSquare, Moon, ShieldCheck, Smartphone } from 'lucide-react-native';
-import { Button, Card, Divider, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, space } from '@catodrive/ui';
+import { Button, Card, Divider, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, space } from '@crosscubes/ui';
 import { accountApi, type NotificationCategory, type NotificationPrefs } from '../web/features/account/api';
 import { NOTIFICATION_CHANNELS, NOTIFICATION_TOPICS } from '../web/features/account/notification-options';
 import { enablePush } from '../push';
@@ -66,7 +66,7 @@ export function NotificationSettingsScreen() {
               setEnabling(true);
               try {
                 const ok = await enablePush();
-                toast(ok ? { tone: 'success', title: 'Notifications on', body: 'We’ll alert you about your trips.' } : { tone: 'error', title: 'Notifications not enabled', body: 'Allow notifications for CatoDrive in Settings.' });
+                toast(ok ? { tone: 'success', title: 'Notifications on', body: 'We’ll alert you about your trips.' } : { tone: 'error', title: 'Notifications not enabled', body: 'Allow notifications for CrossCubes in Settings.' });
               } finally {
                 setEnabling(false);
               }

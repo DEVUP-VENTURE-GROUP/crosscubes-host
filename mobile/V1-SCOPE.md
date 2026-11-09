@@ -1,4 +1,4 @@
-# CatoDrive apps: v1 scope (web parity)
+# CrossCubes apps: v1 scope (web parity)
 
 Every app screen copies a website page: same flow, same rules, same copy. Status:
 `todo` · `built` (type-checks and bundles) · `verified` (run on a device against the API) · `web` (opens the website page in the in-app browser, by design).
@@ -7,7 +7,7 @@ Shared logic is synced from `frontend/src` by `npm run sync:api` (see `tools/syn
 
 Nothing below is `verified` yet: that needs a device run against the live API with real test accounts.
 
-## App 1: CatoDrive (`apps/customer`, `com.catodrive.app`) for guests
+## App 1: CrossCubes (`apps/customer`, `com.crosscubes.app`) for guests
 
 | Web route | App screen | Status |
 |---|---|---|
@@ -41,7 +41,7 @@ Nothing below is `verified` yet: that needs a device run against the live API wi
 | `/legal`, `/terms`, `/privacy` | links from the account menu | web |
 | `/about`, `/insurance`, `/investors`, `/calculator`, `/verify/[id]` | marketing / public pages | web |
 
-## App 2: CatoDrive Partner (`apps/partner`, `com.catodrive.partner`) for hosts, captains, asset partners, corporate admins
+## App 2: CrossCubes Partner (`apps/partner`, `com.crosscubes.partner`) for hosts, captains, asset partners, corporate admins
 
 | Web route | App screen | Status |
 |---|---|---|
@@ -79,7 +79,7 @@ Nothing below is `verified` yet: that needs a device run against the live API wi
 | Maps (car location map, delivery coverage map) | Needs a Google Maps Android/iOS key in EAS; lists and address search work without it |
 | Google and Apple sign-in | Not in the apps yet: email, password and one-time code work; social sign-in needs the native client IDs first |
 | iOS push | Needs the APNs key / Firebase iOS app |
-| PDF trip documents on Android | Images show in the secure viewer; PDFs point to catodrive.com |
+| PDF trip documents on Android | Images show in the secure viewer; PDFs point to crosscubes.com |
 | Listing wizard draft | Kept while the app is open; the website also keeps it across a browser restart |
 
 ## Store readiness

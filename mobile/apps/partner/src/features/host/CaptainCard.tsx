@@ -1,7 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Car, Clock, Mail, Trash2 } from 'lucide-react-native';
-import { Avatar, Badge, Button, Card, Text, space, useTheme } from '@catodrive/ui';
-import { ABILITY_LABELS, type AssignableVehicle, type Captain } from '@catodrive/core/web/features/host/team-api';
+import { Avatar, Badge, Button, Card, Text, space, useTheme } from '@crosscubes/ui';
+import { ABILITY_LABELS, type AssignableVehicle, type Captain } from '@crosscubes/core/web/features/host/team-api';
 
 /** One Captain: status, contact, what they can do and which cars; pause or remove their access. */
 export function CaptainCard({ c, vehicles, busy, onToggle, onRemove }: { c: Captain; vehicles: AssignableVehicle[]; busy: boolean; onToggle: () => void; onRemove: () => void }) {

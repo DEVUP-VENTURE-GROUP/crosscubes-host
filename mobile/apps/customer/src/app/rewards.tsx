@@ -3,10 +3,10 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Gift, Sparkles, TrendingUp } from 'lucide-react-native';
-import { Button, Card, Divider, Input, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { rewardsApi } from '@catodrive/core/web/features/rewards/api';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Divider, Input, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, useToast, radius, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { rewardsApi } from '@crosscubes/core/web/features/rewards/api';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { ProgramGate } from '@/features/account/ProgramGate';
 
 /** The website's /rewards: tier, balance, perks, redeeming points to wallet credit, and history. */
@@ -24,7 +24,7 @@ function Rewards() {
       toast({ tone: 'success', title: 'Credited to your wallet ✓' });
     },
   });
-  const header = <ScreenHeader title="CatoDrive Rewards" onBack={() => router.back()} />;
+  const header = <ScreenHeader title="CrossCubes Rewards" onBack={() => router.back()} />;
   if (isPending || !data) return <Screen header={header}><Skeleton height={180} /></Screen>;
   const pct = data.nextTier ? Math.min(100, Math.round((data.lifetime / data.nextTier.min) * 100)) : 100;
 

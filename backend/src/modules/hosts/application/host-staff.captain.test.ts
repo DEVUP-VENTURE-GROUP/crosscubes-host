@@ -34,7 +34,7 @@ async function until(ok: () => boolean, ms = 3000) {
 
 async function fleet(roles: string[] = ['host', 'house_fleet']) {
   const owner = await userRepository.create({ email: `owner-${roles.length}@x.com`, passwordHash: 'x', firstName: 'Owner', roles } as never);
-  await HostModel.collection.insertOne({ _id: 'host-1', userId: owner._id, displayName: 'CatoDrive House Fleet', deletedAt: null } as never);
+  await HostModel.collection.insertOne({ _id: 'host-1', userId: owner._id, displayName: 'CrossCubes House Fleet', deletedAt: null } as never);
   return owner;
 }
 

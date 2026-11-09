@@ -97,7 +97,7 @@ export const assetPartnerPortfolioService = {
     const [cars, partnerCounts, intakes, payouts] = await Promise.all([
       this.cars(period),
       AssetPartnerModel.aggregate<{ _id: string; n: number }>([{ $match: { status: { $in: ['active', 'onboarding'] } } }, { $group: { _id: '$status', n: { $sum: 1 } } }]).exec(),
-      Promise.all([AssetPartnerIntakeModel.find({ partnerResponse: { $exists: false } }).select('catodriveSignature partnerResponse').lean(), objectionDays()])
+      Promise.all([AssetPartnerIntakeModel.find({ partnerResponse: { $exists: false } }).select('crosscubesSignature partnerResponse').lean(), objectionDays()])
         .then(([docs, days]) => docs.filter((d) => intakeStatus(d, days).status === 'awaiting_partner')),
       lastMonth < currentPeriod() ? assetPartnerPayoutService.month(lastMonth) : Promise.resolve(null),
     ]);

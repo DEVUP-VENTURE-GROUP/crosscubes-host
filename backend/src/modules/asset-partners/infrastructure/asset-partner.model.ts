@@ -3,11 +3,11 @@ import { uuid } from '../../../shared/utils/uuid';
 import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 /**
- * An Asset Partner — a vehicle owner in CatoDrive's managed programme.
+ * An Asset Partner — a vehicle owner in CrossCubes's managed programme.
  *
  * Deliberately its OWN entity rather than a flag on Host, because the two are
  * different businesses. A host self-manages: they set their own price, run
- * their own calendar and are paid per booking. A partner does nothing — CatoDrive
+ * their own calendar and are paid per booking. A partner does nothing — CrossCubes
  * lists, prices, delivers, cleans and services the car — and is paid a monthly
  * net after a management fee, fleet insurance and detailing.
  *
@@ -82,10 +82,10 @@ export type Residency = 'citizen' | 'permanent_resident' | 'visa' | 'other';
 /** Who to reach when the partner can't be reached; collected before signing. */
 export interface PartnerProfile {
   emergencyContacts: PartnerContact[];
-  /** Someone the partner allows to decide about their car if CatoDrive cannot reach them. */
+  /** Someone the partner allows to decide about their car if CrossCubes cannot reach them. */
   representative?: PartnerContact;
   residency?: Residency;
-  /** Asked only of visa holders, so CatoDrive can plan before they may have to leave. */
+  /** Asked only of visa holders, so CrossCubes can plan before they may have to leave. */
   visaExpiry?: Date;
   preferredContact?: 'call' | 'text' | 'email';
   completedAt?: Date;
@@ -127,7 +127,7 @@ export interface AssetPartnerDoc {
   _id: string;
   /** The franchise hub this belongs to. */
   hubId?: string;
-  /** The CatoDrive account this partner signs in with. */
+  /** The CrossCubes account this partner signs in with. */
   userId: string;
   /** Marketplace seller identity their vehicles hang off. */
   hostId: string;
@@ -171,7 +171,7 @@ export interface AssetPartnerDoc {
   profile?: PartnerProfile;
   /** Ops confirmed the partner's identity by hand when the automatic check could not be used. */
   identityOverride?: { by: string; at: Date; reason: string };
-  /** Last time the partner opened their portal; how CatoDrive notices someone has gone quiet. */
+  /** Last time the partner opened their portal; how CrossCubes notices someone has gone quiet. */
   lastSeenAt?: Date;
   /** Payouts paused while a return case is open (unreachable partner, or an estate to confirm). */
   payoutHold?: { reason: 'unresponsive' | 'deceased'; since: Date; exitId?: string };

@@ -1,4 +1,4 @@
-import { PhotoGuideScreen } from '@catodrive/core';
+import { PhotoGuideScreen } from '@crosscubes/core';
 
 export default function PhotoGuide() {
   return <PhotoGuideScreen />;

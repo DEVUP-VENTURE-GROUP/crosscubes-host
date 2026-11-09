@@ -1,4 +1,4 @@
-import { Text } from '@catodrive/ui';
+import { Text } from '@crosscubes/ui';
 import { usePlatformConfig } from '../web/features/platform/config';
 import { openInAppBrowser, webUrl } from '../links';
 
@@ -9,7 +9,7 @@ export function LegalConsent({ action = 'continuing' }: { action?: string }) {
   const privacy = cfg?.legal?.privacyUrl || webUrl('/privacy');
   return (
     <Text variant="caption" tone="muted" center>
-      By {action} you agree to CatoDrive&apos;s{' '}
+      By {action} you agree to CrossCubes&apos;s{' '}
       <Text variant="caption" tone="primary" accessibilityRole="link" onPress={() => void openInAppBrowser(terms)}>Terms of Service</Text>
       {' '}and{' '}
       <Text variant="caption" tone="primary" accessibilityRole="link" onPress={() => void openInAppBrowser(privacy)}>Privacy Policy</Text>.

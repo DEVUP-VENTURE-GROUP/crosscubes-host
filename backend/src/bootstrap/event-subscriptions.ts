@@ -86,7 +86,7 @@ async function bookingTerms(bookingId: string): Promise<string[] | undefined> {
       ? `after that the service fee is non-refundable and ${Math.round(rule.partialBps / 100)}% of the rest is refunded`
       : 'it is non-refundable after that';
     const terms = [
-      'By booking you agreed to the privacy policy and all other terms and conditions of CatoDrive Inc., and to receive communication via email, phone, etc. as and when required during the rental period or until any billing/incident issues are resolved.',
+      'By booking you agreed to the privacy policy and all other terms and conditions of CrossCubes Inc., and to receive communication via email, phone, etc. as and when required during the rental period or until any billing/incident issues are resolved.',
       `Cancellation: full refund if you cancel at least ${hoursText(rule.fullBeforeHours)} before pickup; ${partial}.`,
     ];
     if (cfg.deposit.enabled) {
@@ -246,7 +246,7 @@ export function registerEventSubscribers(): void {
       deepLink: '/search',
       actionLabel: 'Start exploring',
       templateKey: 'account.welcome',
-      title: `Welcome to CatoDrive${p.firstName ? `, ${p.firstName}` : ''}`,
+      title: `Welcome to CrossCubes${p.firstName ? `, ${p.firstName}` : ''}`,
       body: 'Your account is ready. Browse verified cars near you and book your first trip in minutes.',
       data: { userId: p.userId },
     });
@@ -402,7 +402,7 @@ export function registerEventSubscribers(): void {
       deepLink: `/bookings/${p.bookingId}`,
       templateKey: 'booking.reminder',
       title: 'Your trip is coming up',
-      body: 'Your CatoDrive trip starts within 24 hours. Bring your driver’s licence, and place your security deposit from your booking page before pickup if you haven’t yet.',
+      body: 'Your CrossCubes trip starts within 24 hours. Bring your driver’s licence, and place your security deposit from your booking page before pickup if you haven’t yet.',
       actionLabel: 'View booking',
       data: { bookingId: p.bookingId },
       facts: await tripFacts(p.bookingId, 'guest'),
@@ -863,7 +863,7 @@ export function registerEventSubscribers(): void {
     // A guest-ended return is paid out only once the host confirms it (tripService.confirmReturn schedules it).
     if (!(await TripModel.exists({ bookingId: p.bookingId, returnConfirmed: false }))) await payoutService.scheduleForBooking(p.bookingId);
 
-    // CatoDrive Rewards: 1 point per $1 spent (× tier multiplier), idempotent per booking.
+    // CrossCubes Rewards: 1 point per $1 spent (× tier multiplier), idempotent per booking.
     try {
       const booking = await bookingService.getDoc(p.bookingId);
       const basePoints = Math.floor(booking.priceBreakdown.total.amount / 100);
@@ -878,7 +878,7 @@ export function registerEventSubscribers(): void {
       userId: p.guestId,
       templateKey: 'trip.completed',
       title: 'Trip completed',
-      body: 'Thanks for riding with CatoDrive! You earned points — leave a review.',
+      body: 'Thanks for riding with CrossCubes! You earned points — leave a review.',
       data: { bookingId: p.bookingId },
     });
     realtimeEmitter.toUser(p.guestId, RT.NOTIFICATION, { kind: 'rewards', bookingId: p.bookingId });

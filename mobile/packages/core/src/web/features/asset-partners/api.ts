@@ -166,7 +166,7 @@ export interface IntakeReport {
   preExistingDamage: string;
   conditionNotes?: string;
   photos: { url: string; key?: string; label?: string }[];
-  catodriveSignature: { name: string; title: string; signedAt: string };
+  crosscubesSignature: { name: string; title: string; signedAt: string };
   partnerResponse?: { kind: 'acknowledged' | 'objected'; signedName?: string; objection?: string; at: string };
   status: IntakeStatus;
   respondBy: string;
@@ -332,7 +332,7 @@ export interface PartnerStatement {
   payoutMethod: string;
   /** False while the month is still running - figures can still move. */
   final: boolean;
-  /** Set once CatoDrive has recorded sending this month's money. */
+  /** Set once CrossCubes has recorded sending this month's money. */
   paid?: { amount: number; method: string; reference: string; paidAt: string };
 }
 
@@ -521,7 +521,7 @@ export const SIGNING_EVENT_LABEL: Record<SigningEventType, string> = {
   read_amendment: 'Change read to the end',
   consented: 'Agreed to sign electronically',
   signed: 'Signed',
-  countersigned: 'Countersigned by CatoDrive',
+  countersigned: 'Countersigned by CrossCubes',
   completed: 'Completed and sealed',
   copy_sent: 'Copy sent',
   declined: 'Declined',

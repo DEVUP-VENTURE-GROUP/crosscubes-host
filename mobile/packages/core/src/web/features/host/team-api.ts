@@ -67,7 +67,7 @@ export interface InvitePreview {
   fleetName: string;
   abilities: CaptainAbility[];
   vehicleCount: number;
-  /** False when they already have a CatoDrive account to sign in with. */
+  /** False when they already have a CrossCubes account to sign in with. */
   needsPassword: boolean;
 }
 

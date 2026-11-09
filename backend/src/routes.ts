@@ -81,7 +81,7 @@ export function buildApiRouter(): Router {
   api.use('/', riskRoutes);
   api.use('/', complianceRoutes);
   api.use('/', assetPartnerApplicationRoutes);
-  // CatoDrive's operations panel: Asset Partner applications, partners and the agreement.
+  // CrossCubes's operations panel: Asset Partner applications, partners and the agreement.
   api.use('/ioc', authenticate, requireFleetOwner, assetPartnerIocRoutes);
   api.use('/', insurancePartnerRoutes);
   api.use('/', contactInquiryRoutes);

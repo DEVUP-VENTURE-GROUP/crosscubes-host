@@ -1,9 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { config } from '@/lib/config';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.catodrive.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.crosscubes.com';
 
-const PAGES = ['', '/search', '/about', '/asset-partners', '/insurance', '/membership', '/calculator', '/help', '/contact', '/investors', '/terms', '/privacy', '/legal'];
+const PAGES = ['', '/search', '/about', '/asset-partners', '/insurance', '/membership', '/calculator', '/help', '/contact', '/terms', '/privacy', '/legal'];
 
 export const revalidate = 3600;
 

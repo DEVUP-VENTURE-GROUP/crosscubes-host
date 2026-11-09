@@ -2,7 +2,7 @@ import { platformConfigService } from '../../platform-config/application/platfor
 import { insurancePlanService, type InsurerCheckoutPlan, type PlanVehicle } from '../../insurance-partners/application/insurance-plan.service';
 
 /**
- * Protection tiers the guest chooses at checkout (Turo-style). CatoDrive's own
+ * Protection tiers the guest chooses at checkout (Turo-style). CrossCubes's own
  * tiers come from PlatformConfig; insurance partners add their own plans for
  * the cars they are licensed to cover. Nothing here is hardcoded.
  */
@@ -19,12 +19,12 @@ export interface ProtectionPlan {
   coverage?: string[];
 }
 
-/** A resolved plan with the commission CatoDrive keeps on an insurer's premium. */
+/** A resolved plan with the commission CrossCubes keeps on an insurer's premium. */
 export type ResolvedProtectionPlan = ProtectionPlan & { commissionBps?: number };
 
 const NO_PROTECTION: ProtectionPlan = { code: 'none', label: 'No protection', description: '', pricePerDay: 0 };
 
-/** CatoDrive's tiers, plus every insurer plan that may be sold on this car when one is given. */
+/** CrossCubes's tiers, plus every insurer plan that may be sold on this car when one is given. */
 export async function listProtectionPlans(vehicle?: PlanVehicle): Promise<ProtectionPlan[]> {
   const cfg = await platformConfigService.get();
   const own: ProtectionPlan[] = cfg.protection;
@@ -32,7 +32,7 @@ export async function listProtectionPlans(vehicle?: PlanVehicle): Promise<Protec
   return [...own, ...(await insurancePlanService.eligibleFor(vehicle))];
 }
 
-/** Resolve a plan by code for this car, falling back to the cheapest CatoDrive tier. */
+/** Resolve a plan by code for this car, falling back to the cheapest CrossCubes tier. */
 export async function getProtectionPlan(code?: string, vehicle?: PlanVehicle): Promise<ResolvedProtectionPlan> {
   if (vehicle) {
     const insurerPlan = await insurancePlanService.resolve(code, vehicle);

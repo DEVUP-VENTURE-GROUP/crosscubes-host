@@ -1,7 +1,7 @@
 import { View, type StyleProp, type ImageStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { Lock } from 'lucide-react-native';
-import { Skeleton, Text, useTheme } from '@catodrive/ui';
+import { Skeleton, Text, useTheme } from '@crosscubes/ui';
 import { useSecureUrl } from '../web/features/media/secure-url';
 
 /** A photo that may be private (chat, licence, claim): fetched through a short-lived signed link, like the website. */

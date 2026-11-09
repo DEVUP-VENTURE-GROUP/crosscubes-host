@@ -86,9 +86,9 @@ export default function ContactInquiryDetailPage() {
       </Card>
 
       {i.account ? (
-        <PersonCard title="Their CatoDrive account" person={i.account} />
+        <PersonCard title="Their CrossCubes account" person={i.account} />
       ) : (
-        <p className="rounded-lg border border-border p-3 text-sm text-muted-foreground">No CatoDrive account uses this email, so this is someone new.</p>
+        <p className="rounded-lg border border-border p-3 text-sm text-muted-foreground">No CrossCubes account uses this email, so this is someone new.</p>
       )}
 
       <Card>

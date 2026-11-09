@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { Text, space } from '@catodrive/ui';
+import { Text, space } from '@crosscubes/ui';
 import { parseMarkdown, type Inline } from '../web/features/kb/markdown-parse';
 import { openInAppBrowser, webUrl } from '../links';
 

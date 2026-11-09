@@ -2,9 +2,9 @@ import { FlatList, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Heart } from 'lucide-react-native';
-import { EmptyState, ErrorState, ScreenHeader, SkeletonList, useTheme, space } from '@catodrive/ui';
-import { useFavorites } from '@catodrive/core/web/features/favorites/hooks';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
+import { EmptyState, ErrorState, ScreenHeader, SkeletonList, useTheme, space } from '@crosscubes/ui';
+import { useFavorites } from '@crosscubes/core/web/features/favorites/hooks';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
 import { VehicleCard } from '@/features/vehicles/VehicleCard';
 import { SignedOutPrompt } from '@/features/account/SignedOutPrompt';
 

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Plus, Receipt, X } from 'lucide-react-native';
-import { Button, Card, Chip, Input, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { FREEFORM, NEW_INCIDENTAL, RATED, applyIncidentals, incidentalsValid, isFreeform, type IncidentalKind, type IncidentalLine } from '@catodrive/core/web/features/host/incidentals';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Button, Card, Chip, Input, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { FREEFORM, NEW_INCIDENTAL, RATED, applyIncidentals, incidentalsValid, isFreeform, type IncidentalKind, type IncidentalLine } from '@crosscubes/core/web/features/host/incidentals';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 const KINDS: { value: IncidentalKind; label: string }[] = [
   ...Object.entries(RATED).map(([k, v]) => ({ value: k as IncidentalKind, label: v.label })),

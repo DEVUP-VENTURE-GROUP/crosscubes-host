@@ -21,7 +21,7 @@ export async function viewerStamp(viewerId: string, headline: string, use: strin
   const user = await UserModel.findById(viewerId).select('firstName lastName').lean<{ firstName?: string; lastName?: string }>();
   const timeZone = timezoneForState(state) ?? 'America/Chicago';
   const when = new Intl.DateTimeFormat('en-US', { timeZone, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date());
-  const name = [user?.firstName, user?.lastName ? `${user.lastName[0]}.` : ''].filter(Boolean).join(' ') || 'CatoDrive user';
+  const name = [user?.firstName, user?.lastName ? `${user.lastName[0]}.` : ''].filter(Boolean).join(' ') || 'CrossCubes user';
   return [headline, `Viewed by ${name}`, when, use];
 }
 

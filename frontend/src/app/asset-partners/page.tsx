@@ -14,8 +14,8 @@ import { SiteLink } from '@/components/layout/site-link';
 import { CONTACT } from '@/features/contact/content';
 
 /**
- * Asset Partners - CatoDrive's primary acquisition page (v1 priority, per the
- * business). Someone who already owns an eligible car lists it here; CatoDrive runs
+ * Asset Partners - CrossCubes's primary acquisition page (v1 priority, per the
+ * business). Someone who already owns an eligible car lists it here; CrossCubes runs
  * 100% of operations and pays them a monthly share. Host (self-managed listing)
  * and Corporate/Fleet remain as v2/v3 surfaces, unchanged by this page.
  *
@@ -33,9 +33,9 @@ const STATS = [
 ] as const;
 
 const STEPS = [
-  { n: '01', icon: Car, title: 'List the Car You Own', body: 'You already own an eligible vehicle - CatoDrive lists it, photographs it, and prices it dynamically. No purchase or financing required.' },
+  { n: '01', icon: Car, title: 'List the Car You Own', body: 'You already own an eligible vehicle - CrossCubes lists it, photographs it, and prices it dynamically. No purchase or financing required.' },
   { n: '02', icon: Camera, title: `${BRAND} Lists It`, body: 'We photograph, list, price dynamically, and manage your car. You do nothing. $0 additional effort.' },
-  { n: '03', icon: ClipboardCheck, title: 'Guest Books Online', body: 'A vetted traveler books. CatoDrive screens every trip. You’re never involved.' },
+  { n: '03', icon: ClipboardCheck, title: 'Guest Books Online', body: 'A vetted traveler books. CrossCubes screens every trip. You’re never involved.' },
   { n: '04', icon: Settings2, title: 'We Manage Everything', body: 'Valet pickup, terminal delivery, cleaning, maintenance coordination. Full white-glove service.' },
   { n: '05', icon: Wallet, title: 'You Get Paid', body: 'Your share of every booking hits your account monthly - check on the 5th or Zelle. No invoices. No chasing.', tag: 'Net $1,029–$1,841 / month' },
 ] as const;
@@ -70,15 +70,15 @@ const REQUIREMENTS = [
 ] as const;
 
 const RISKS = [
-  { scenario: 'Renter damages the vehicle', detail: 'Roamly commercial fleet insurance covers the vehicle during all non-trip periods in CatoDrive custody. Your deductible is capped at $1,000 per incident (Addendum No. 1) - CatoDrive absorbs any unrecovered deductible above that cap.', owner: 'CatoDrive' as const },
-  { scenario: 'The car sits empty', detail: 'We manage pricing, listing optimization and the booking pipeline 24/7. Your exposure is zero.', owner: 'CatoDrive' as const },
-  { scenario: 'Guest no-show or late return', detail: 'Our operations team handles all guest issues, rescheduling and late-fee recovery.', owner: 'CatoDrive' as const },
+  { scenario: 'Renter damages the vehicle', detail: 'Roamly commercial fleet insurance covers the vehicle during all non-trip periods in CrossCubes custody. Your deductible is capped at $1,000 per incident (Addendum No. 1) - CrossCubes absorbs any unrecovered deductible above that cap.', owner: 'CrossCubes' as const },
+  { scenario: 'The car sits empty', detail: 'We manage pricing, listing optimization and the booking pipeline 24/7. Your exposure is zero.', owner: 'CrossCubes' as const },
+  { scenario: 'Guest no-show or late return', detail: 'Our operations team handles all guest issues, rescheduling and late-fee recovery.', owner: 'CrossCubes' as const },
   { scenario: 'Routine maintenance', detail: 'Routine maintenance under $500 is handled without interrupting you. Anything above $500 requires your approval first.', owner: 'Shared' as const },
-  { scenario: 'Regulatory / platform changes', detail: 'We monitor TOS, airport concession rules and P2P regulations proactively.', owner: 'CatoDrive' as const },
+  { scenario: 'Regulatory / platform changes', detail: 'We monitor TOS, airport concession rules and P2P regulations proactively.', owner: 'CrossCubes' as const },
 ] as const;
 
 /**
- * The four things every prospective partner asks, answered in CatoDrive's own
+ * The four things every prospective partner asks, answered in CrossCubes's own
  * voice.
  *
  * This section used to be four testimonials - quotes attributed to a
@@ -99,7 +99,7 @@ const RISKS = [
 const PARTNER_ANSWERS = [
   {
     q: 'Do I have to do anything?',
-    a: 'No. CatoDrive photographs the car, lists it, prices it, screens every guest, handles delivery and collection, and coordinates cleaning and maintenance. Your involvement after handover is approving anything over the maintenance threshold.',
+    a: 'No. CrossCubes photographs the car, lists it, prices it, screens every guest, handles delivery and collection, and coordinates cleaning and maintenance. Your involvement after handover is approving anything over the maintenance threshold.',
   },
   {
     q: 'What does it actually pay?',
@@ -107,7 +107,7 @@ const PARTNER_ANSWERS = [
   },
   {
     q: 'What if a renter damages it?',
-    a: 'Your exposure is capped per incident under Addendum No. 1 of the partner agreement, and CatoDrive absorbs unrecovered damage above that cap. The cap is stated in your agreement before you sign.',
+    a: 'Your exposure is capped per incident under Addendum No. 1 of the partner agreement, and CrossCubes absorbs unrecovered damage above that cap. The cap is stated in your agreement before you sign.',
   },
   {
     q: 'Can I get my car back?',
@@ -116,13 +116,13 @@ const PARTNER_ANSWERS = [
 ] as const;
 
 const FAQ = [
-  { q: 'What vehicles do you accept?', a: 'A 2018-or-newer model with a clean title, under 130,000 miles, no major body, structural or cosmetic damage, and it must be smoke-free, pet-free, with at least 4/32" of tread. AWD SUVs and crossovers with 5–7 seats, leather and Apple CarPlay are strongly preferred - that’s what performs best in the airport market. CatoDrive reserves the right to decline any vehicle that doesn’t meet these standards, which is what keeps quality consistent across every partner’s car.' },
+  { q: 'What vehicles do you accept?', a: 'A 2018-or-newer model with a clean title, under 130,000 miles, no major body, structural or cosmetic damage, and it must be smoke-free, pet-free, with at least 4/32" of tread. AWD SUVs and crossovers with 5–7 seats, leather and Apple CarPlay are strongly preferred - that’s what performs best in the airport market. CrossCubes reserves the right to decline any vehicle that doesn’t meet these standards, which is what keeps quality consistent across every partner’s car.' },
   { q: 'How much will I actually earn?', a: 'Based on the active fleet, partners net $1,029–$1,841 per vehicle per month after the management fee, insurance and detailing are deducted - roughly $65–$120/day at 70–80% utilization. Where a specific car lands in that range depends mostly on the model: conservative performers like a Kia Sportage sit around $1,029/mo, mid-range vehicles like a VW Tiguan around $1,400/mo, and top performers like a VW Atlas or Nissan Pathfinder around $1,841/mo. These are illustrative examples from the real fleet, not a guarantee.' },
-  { q: 'What does CatoDrive charge?', a: 'A 20% management fee on gross booking revenue - that covers listing, dynamic pricing, guest screening, valet delivery, cleaning coordination and 24/7 operations. Fleet insurance (Roamly) and professional detailing are itemized separately in your monthly statement.' },
-  { q: 'What about insurance?', a: 'Every vehicle is covered by Roamly commercial fleet insurance for the entire time it’s in CatoDrive’s custody - not just during trips. If a renter causes damage, your out-of-pocket exposure is capped at $1,000 per incident; CatoDrive absorbs anything above that cap.' },
+  { q: 'What does CrossCubes charge?', a: 'A 20% management fee on gross booking revenue - that covers listing, dynamic pricing, guest screening, valet delivery, cleaning coordination and 24/7 operations. Fleet insurance (Roamly) and professional detailing are itemized separately in your monthly statement.' },
+  { q: 'What about insurance?', a: 'Every vehicle is covered by Roamly commercial fleet insurance for the entire time it’s in CrossCubes’s custody - not just during trips. If a renter causes damage, your out-of-pocket exposure is capped at $1,000 per incident; CrossCubes absorbs anything above that cap.' },
   { q: 'Do I need to buy a car to join?', a: 'No. The program is built for vehicles you already own. There’s no purchase or financing requirement to become an asset partner - your only ongoing responsibility is financing you may already carry on the car itself.' },
-  { q: 'What are the program terms?', a: 'CatoDrive handles listing, pricing, guest screening, delivery, cleaning and maintenance coordination under the management fee described above. Maintenance decisions above $500 always come to you for approval first. Full terms are covered in your partner agreement at signup.' },
-  { q: 'Can I still use my car?', a: 'Yes - CatoDrive works around blackout dates you set, so you can block off the days you need the car and it simply won’t be booked during those windows.' },
+  { q: 'What are the program terms?', a: 'CrossCubes handles listing, pricing, guest screening, delivery, cleaning and maintenance coordination under the management fee described above. Maintenance decisions above $500 always come to you for approval first. Full terms are covered in your partner agreement at signup.' },
+  { q: 'Can I still use my car?', a: 'Yes - CrossCubes works around blackout dates you set, so you can block off the days you need the car and it simply won’t be booked during those windows.' },
   { q: 'How fast do I get my first payout?', a: 'Payouts run monthly - on the 5th, by check or Zelle - covering trips completed the prior month. Most partners see their first payout within 30–45 days of their car going live, depending on when it starts booking.' },
 ] as const;
 
@@ -512,9 +512,9 @@ function TierRow({ tier, amount, vehicles, tone }: { tier: string; amount: strin
 }
 
 function RiskRow({ scenario, detail, owner, first }: {
-  scenario: string; detail: string; owner: 'CatoDrive' | 'Shared'; first: boolean;
+  scenario: string; detail: string; owner: 'CrossCubes' | 'Shared'; first: boolean;
 }) {
-  const isCato = owner === 'CatoDrive';
+  const isCato = owner === 'CrossCubes';
   return (
     <div className={`flex flex-col gap-4 bg-card p-6 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:gap-6 sm:p-7 ${first ? '' : 'border-t border-border'}`}>
       <div className="flex-1">
@@ -535,7 +535,7 @@ function RiskRow({ scenario, detail, owner, first }: {
 }
 
 /**
- * A question and CatoDrive's answer to it. Replaces the old TestimonialCard,
+ * A question and CrossCubes's answer to it. Replaces the old TestimonialCard,
  * which framed company claims as quotes from partners who do not exist.
  *
  * The card is quieter than the one it replaces: no hover lift, no coloured

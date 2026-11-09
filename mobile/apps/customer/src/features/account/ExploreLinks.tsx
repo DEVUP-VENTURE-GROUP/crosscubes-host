@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
 import { BarChart3, Building2, Car, GitCompare, Info, LayoutDashboard, Store } from 'lucide-react-native';
-import { MenuRow, MenuSection, useTheme } from '@catodrive/ui';
-import { openInAppBrowser, openPartner, webUrl } from '@catodrive/core';
-import { useIsHost } from '@catodrive/core/web/features/host/hooks';
-import { useIsAssetPartner } from '@catodrive/core/web/features/asset-partners/hooks';
-import { config } from '@catodrive/core/web/lib/config';
+import { MenuRow, MenuSection, useTheme } from '@crosscubes/ui';
+import { openInAppBrowser, openPartner, webUrl } from '@crosscubes/core';
+import { useIsHost } from '@crosscubes/core/web/features/host/hooks';
+import { useIsAssetPartner } from '@crosscubes/core/web/features/asset-partners/hooks';
+import { config } from '@crosscubes/core/web/lib/config';
 
 /** The website's navbar and footer links that are not app tabs: explore, hosting and business, with the same visibility rules. */
 export function ExploreLinks() {

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { CarFront, LayoutDashboard, Menu, MessageSquare, Route, Wallet } from 'lucide-react-native';
-import { ErrorState, Screen, SkeletonList, fonts, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { isNotAHost, useHostMe } from '@catodrive/core/web/features/host/hooks';
-import { useIsAssetPartner } from '@catodrive/core/web/features/asset-partners/hooks';
+import { ErrorState, Screen, SkeletonList, fonts, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { isNotAHost, useHostMe } from '@crosscubes/core/web/features/host/hooks';
+import { useIsAssetPartner } from '@crosscubes/core/web/features/asset-partners/hooks';
 
 /** The host workspace: five daily tabs, everything else under Menu. Partners and non-hosts are sent back to the start. */
 function HostTabs() {

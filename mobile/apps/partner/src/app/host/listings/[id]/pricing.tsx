@@ -3,13 +3,13 @@ import { ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Route, ShieldCheck } from 'lucide-react-native';
-import { Button, Card, ErrorState, Screen, ScreenHeader, Section, Skeleton, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { useVehicle } from '@catodrive/core/web/features/vehicles/hooks';
-import { PRICING_FIELD_HINT, competitiveness, fieldForDays, type PricingField } from '@catodrive/core/web/features/vehicles/pricing-form';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, ErrorState, Screen, ScreenHeader, Section, Skeleton, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { useVehicle } from '@crosscubes/core/web/features/vehicles/hooks';
+import { PRICING_FIELD_HINT, competitiveness, fieldForDays, type PricingField } from '@crosscubes/core/web/features/vehicles/pricing-form';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { PricingEditor } from '@/features/listings/PricingEditor';
 
 /** The website's /host/listings/[id]/pricing: take-home per trip length, how competitive the rate is, and the pricing editor. */
@@ -84,7 +84,7 @@ function Pricing({ id }: { id: string }) {
             <Text variant="label">Non-refundable discount</Text>
           </View>
           <Text variant="caption" tone="muted" style={{ marginTop: 4 }}>
-            Every listing offers a discount for trips booked at least 4 days in advance (your early-bird rate, set below). It protects your earnings if a guest cancels close to the trip - the discount is what they paid for booking ahead, not a refund CatoDrive owes back.
+            Every listing offers a discount for trips booked at least 4 days in advance (your early-bird rate, set below). It protects your earnings if a guest cancels close to the trip - the discount is what they paid for booking ahead, not a refund CrossCubes owes back.
           </Text>
         </Card>
       </Section>

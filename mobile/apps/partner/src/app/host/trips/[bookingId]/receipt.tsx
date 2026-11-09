@@ -2,10 +2,10 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Printer, ShieldCheck } from 'lucide-react-native';
-import { Badge, Button, Card, Divider, ErrorState, KeyValue, Screen, ScreenHeader, Skeleton, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { RequireAuth, openInAppBrowser, printHtml, webUrl } from '@catodrive/core';
-import { hostTripsApi } from '@catodrive/core/web/features/host/trips.api';
-import { formatDate, formatDateRange, kmToMiles, perKmToPerMile } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Divider, ErrorState, KeyValue, Screen, ScreenHeader, Skeleton, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { RequireAuth, openInAppBrowser, printHtml, webUrl } from '@crosscubes/core';
+import { hostTripsApi } from '@crosscubes/core/web/features/host/trips.api';
+import { formatDate, formatDateRange, kmToMiles, perKmToPerMile } from '@crosscubes/core/web/lib/utils/format';
 import { hostReceipt, hostReceiptHtml } from '@/features/host/host-receipt-html';
 
 /** The website's host trip receipt: what the guest paid, the commission, and the host's earnings. */
@@ -29,7 +29,7 @@ function HostReceipt({ bookingId }: { bookingId: string }) {
   return (
     <Screen header={header}>
       <Card>
-        <Text variant="small" tone="primary">CATODRIVE · TRIP RECEIPT</Text>
+        <Text variant="small" tone="primary">CROSSCUBES · TRIP RECEIPT</Text>
         <Text variant="title" style={{ marginTop: 4 }}>{t.code}</Text>
         <Text variant="caption" tone="muted">Issued {formatDate(r.issuedAt)}</Text>
         <View style={{ marginTop: space.sm }}>
@@ -66,7 +66,7 @@ function HostReceipt({ bookingId }: { bookingId: string }) {
       </Card>
       <Text variant="caption" tone="muted">Booking ID · {t.bookingId}</Text>
       <Text variant="caption" tone="muted">
-        Issued by CatoDrive. Figures are the price locked at booking and never change afterward. Any refundable security deposit is authorised separately and not included here.
+        Issued by CrossCubes. Figures are the price locked at booking and never change afterward. Any refundable security deposit is authorised separately and not included here.
       </Text>
       <Button title="Verify this receipt" variant="ghost" icon={<ShieldCheck size={16} color={c.foreground} />} onPress={() => void openInAppBrowser(verifyUrl)} />
     </Screen>

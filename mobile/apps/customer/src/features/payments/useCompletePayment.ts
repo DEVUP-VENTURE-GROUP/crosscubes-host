@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@catodrive/ui';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { useToast } from '@crosscubes/ui';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 import { usePayments } from './usePayments';
 
 /** Finishes a held booking's payment: pay on the sheet, pass the bank check, or save a card first. */

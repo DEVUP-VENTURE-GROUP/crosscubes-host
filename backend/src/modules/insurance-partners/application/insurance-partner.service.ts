@@ -24,7 +24,7 @@ export interface InsurerPayoutDetailsInput {
   accountNumber: string;
 }
 
-/** The licence must be a file this account uploaded through CatoDrive, never an outside link. */
+/** The licence must be a file this account uploaded through CrossCubes, never an outside link. */
 function assertOwnLicence(url: string, userId: string): void {
   let raw: string;
   try {
@@ -110,7 +110,7 @@ export class InsurancePartnerService {
     return doc!;
   }
 
-  /** CatoDrive's commission on this insurer's premiums: the negotiated rate, else the platform default. */
+  /** CrossCubes's commission on this insurer's premiums: the negotiated rate, else the platform default. */
   async commissionBps(insurer: Pick<InsurancePartnerDoc, 'commissionBps'>): Promise<number> {
     if (typeof insurer.commissionBps === 'number') return insurer.commissionBps;
     const cfg = await platformConfigService.get();
@@ -152,7 +152,7 @@ export class InsurancePartnerService {
         title: decision === 'approved' ? 'You’re approved as an insurance partner' : 'Your insurance partner application',
         body:
           decision === 'approved'
-            ? 'Your company is approved. Guests see each of your plans at checkout once CatoDrive has approved it.'
+            ? 'Your company is approved. Guests see each of your plans at checkout once CrossCubes has approved it.'
             : `We couldn’t approve the application${notes ? `: ${notes}` : '.'} You can update it and apply again.`,
         data: { insurerId: doc._id, decision },
       })

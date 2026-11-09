@@ -324,7 +324,7 @@ function TripChangesCard({ draft, set }: TabProps) {
         <CardTitle className="flex items-center gap-2"><Car className="h-5 w-5 text-primary" /> Cancel &amp; change trip</CardTitle>
         <p className="mt-1 text-sm text-muted-foreground">
           What guests see before they cancel: a free undo right after booking, moving the pickup, new dates, a
-          similar car, CatoDrive credit, and a review for late cancellations outside their control. 0 turns a
+          similar car, CrossCubes credit, and a review for late cancellations outside their control. 0 turns a
           number off.
         </p>
       </CardHeader>
@@ -350,7 +350,7 @@ function TripChangesCard({ draft, set }: TabProps) {
         <Field label="Changes close (hours before pickup)">
           <Input type="number" min={0} max={168} value={t.moveMinLeadHours} onChange={num('moveMinLeadHours')} />
         </Field>
-        <Field label="Credit bonus %" hint="Extra value when a guest keeps the refund as CatoDrive credit.">
+        <Field label="Credit bonus %" hint="Extra value when a guest keeps the refund as CrossCubes credit.">
           <Input type="number" step="0.5" min={0} max={50} value={toPct(t.creditBonusBps)}
             onChange={(e) => set((d) => { d.tripChanges!.creditBonusBps = toBps(e.target.value); })} />
         </Field>
@@ -362,7 +362,7 @@ function TripChangesCard({ draft, set }: TabProps) {
         </Field>
         <div className="flex flex-col justify-end gap-2 text-sm font-medium sm:col-span-2">
           <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-primary" checked={t.switchCarEnabled} onChange={flag('switchCarEnabled')} /> Guests may switch to a similar car</label>
-          <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-primary" checked={t.creditEnabled} onChange={flag('creditEnabled')} /> Offer CatoDrive credit instead of a card refund</label>
+          <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-primary" checked={t.creditEnabled} onChange={flag('creditEnabled')} /> Offer CrossCubes credit instead of a card refund</label>
           <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-primary" checked={t.exceptionsEnabled} onChange={flag('exceptionsEnabled')} /> Guests may ask for a review of a late cancellation</label>
           <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-primary" checked={t.exceptionProofRequired} onChange={flag('exceptionProofRequired')} /> Proof is required for a review</label>
         </div>

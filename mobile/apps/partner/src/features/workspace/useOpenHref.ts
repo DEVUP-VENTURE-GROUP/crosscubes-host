@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { openInAppBrowser, webUrl } from '@catodrive/core';
+import { openInAppBrowser, webUrl } from '@crosscubes/core';
 import { resolveLink } from '@/routes';
 
 /** Opens a website path the server handed us: the app's own screen when there is one, else the website in-app. */

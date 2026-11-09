@@ -1,7 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { Text, space, useTheme } from '@catodrive/ui';
-import { CAR_COLORS, LIGHT_COLORS } from '@catodrive/core/web/features/vehicles/listing-options';
+import { Text, space, useTheme } from '@crosscubes/ui';
+import { CAR_COLORS, LIGHT_COLORS } from '@crosscubes/core/web/features/vehicles/listing-options';
 
 const OTHER = ['#DC2626', '#EAB308', '#15803D', '#1D4ED8'];
 

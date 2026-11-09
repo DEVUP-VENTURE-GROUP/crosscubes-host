@@ -1,5 +1,5 @@
 {
-  "name": "@catodrive/core",
+  "name": "@crosscubes/core",
   "version": "1.0.0",
   "private": true,
   "main": "src/index.ts",
@@ -11,6 +11,6 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@catodrive/ui": "*"
+    "@crosscubes/ui": "*"
   }
 }

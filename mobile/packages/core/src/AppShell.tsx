@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ConfirmProvider, I18nProvider, ThemeProvider, ToastProvider, useAppFonts, useTheme, useToast } from '@catodrive/ui';
+import { ConfirmProvider, I18nProvider, ThemeProvider, ToastProvider, useAppFonts, useTheme, useToast } from '@crosscubes/ui';
 import { hydrateTokens } from './web/lib/api/token-store';
 import { createQueryClient } from './query-client';
 import { installGlobalErrorHandlers, setErrorNotifier } from './errors';

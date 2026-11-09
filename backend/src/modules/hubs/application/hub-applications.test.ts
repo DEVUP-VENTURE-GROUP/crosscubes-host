@@ -8,6 +8,7 @@ import { HubApplicationModel } from '../infrastructure/hub-application.model';
 import { UserModel } from '../../users/infrastructure/user.model';
 import { WebhookEventModel } from '../../payments/infrastructure/webhook-event.model';
 import { runStripeEvent } from '../../payments/application/stripe-event.handler';
+import { dashboardRefundService } from '../../payments/application/dashboard-refund.service';
 import { config } from '../../../config';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
 
@@ -86,7 +87,7 @@ describe('applying to run a city', () => {
   });
 });
 
-describe('a Stripe account shared with CatoDrive', () => {
+describe('a Stripe account shared with CrossCubes', () => {
   it('records a licence paid through the webhook and leaves the other system’s payments alone', async () => {
     const userId = await applicant();
     const app = await hubApplicationService.apply(userId, form());
@@ -97,6 +98,16 @@ describe('a Stripe account shared with CatoDrive', () => {
     await runStripeEvent(event('evt_other', 'catodrive'));
     expect((await HubModel.findById(approved.hubId).lean())!.licence.terms).toHaveLength(0);
     expect((await WebhookEventModel.findById('evt_other').lean())!.status).toBe('processed');
+
+    // The other system's refunds carry its tag on the charge and are skipped too.
+    const reconcile = jest.spyOn(dashboardRefundService, 'reconcile');
+    await WebhookEventModel.create({ _id: 'evt_other_refund', type: 'charge.refunded' });
+    await runStripeEvent({ id: 'evt_other_refund', type: 'charge.refunded', data: { object: { id: 'ch_1', payment_intent: 'pi_other', amount_refunded: 500, metadata: { app: 'catodrive' } } } });
+    await WebhookEventModel.create({ _id: 'evt_untagged_refund', type: 'charge.refunded' });
+    await runStripeEvent({ id: 'evt_untagged_refund', type: 'charge.refunded', data: { object: { id: 'ch_2', payment_intent: 'pi_untagged', amount_refunded: 500 } } });
+    expect(reconcile).not.toHaveBeenCalled();
+    expect((await WebhookEventModel.findById('evt_other_refund').lean())!.status).toBe('processed');
+    reconcile.mockRestore();
 
     await WebhookEventModel.create({ _id: 'evt_ours', type: 'payment_intent.succeeded' });
     await runStripeEvent(event('evt_ours', config.app.key));

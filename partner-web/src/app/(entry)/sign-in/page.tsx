@@ -55,7 +55,7 @@ function SignIn() {
         </Button>
       </form>
       <p className="mt-6 text-sm text-muted-foreground">
-        New to CatoDrive? <Link href="/sign-up" className="font-bold text-primary hover:underline">Become a partner</Link>
+        New to CrossCubes? <Link href="/sign-up" className="font-bold text-primary hover:underline">Become a partner</Link>
       </p>
     </div>
   );

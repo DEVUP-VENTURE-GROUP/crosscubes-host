@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { useRouter } from 'expo-router';
 import { PauseCircle } from 'lucide-react-native';
-import { EmptyState, Screen, ScreenHeader, Skeleton, useTheme } from '@catodrive/ui';
-import { usePlatformConfig, usePrograms } from '@catodrive/core/web/features/platform/config';
+import { EmptyState, Screen, ScreenHeader, Skeleton, useTheme } from '@crosscubes/ui';
+import { usePlatformConfig, usePrograms } from '@crosscubes/core/web/features/platform/config';
 
 /** A guest programme the admin can pause: shown as the website's "paused for now" notice while off. */
 export function ProgramGate({ program, name, children }: { program: 'rewards' | 'referral' | 'membership'; name: string; children: ReactNode }) {

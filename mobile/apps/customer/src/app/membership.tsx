@@ -2,11 +2,11 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Check, CreditCard, Sparkles } from 'lucide-react-native';
-import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, SkeletonList, Text, useConfirm, useTheme, useToast, space } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { describeBenefits, subscriptionApi, type Plan } from '@catodrive/core/web/features/subscriptions/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDate } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, SkeletonList, Text, useConfirm, useTheme, useToast, space } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { describeBenefits, subscriptionApi, type Plan } from '@crosscubes/core/web/features/subscriptions/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDate } from '@crosscubes/core/web/lib/utils/format';
 import { ProgramGate } from '@/features/account/ProgramGate';
 
 const money = (cents: number) => `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;

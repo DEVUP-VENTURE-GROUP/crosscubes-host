@@ -27,13 +27,13 @@ export async function openInAppBrowser(url: string): Promise<void> {
   }
 }
 
-export const WEB_ORIGIN = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://www.catodrive.com';
+export const WEB_ORIGIN = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://www.crosscubes.com';
 
 /** A page on the website, for features that stay web-only. */
 export const webUrl = (path: string) => `${WEB_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
 
-export const PARTNER_ORIGIN = process.env.EXPO_PUBLIC_PARTNER_URL ?? 'https://partners.catodrive.com';
-export const HOST_ORIGIN = process.env.EXPO_PUBLIC_HOST_URL ?? 'https://host.catodrive.com';
+export const PARTNER_ORIGIN = process.env.EXPO_PUBLIC_PARTNER_URL ?? 'https://partners.crosscubes.com';
+export const HOST_ORIGIN = process.env.EXPO_PUBLIC_HOST_URL ?? 'https://host.crosscubes.com';
 
 /** A page on the website that serves it: host and captain pages on the host site, the rest of the partner area on the partner site. */
 export const partnerWebUrl = (path: string) => {
@@ -44,7 +44,7 @@ export const partnerWebUrl = (path: string) => {
 /** Opens a partner page in the Partner app when it is installed, otherwise on the partner website. */
 export async function openPartner(path: string): Promise<void> {
   try {
-    await Linking.openURL(`catodrive-partner://${path.replace(/^\//, '')}`);
+    await Linking.openURL(`crosscubes-partner://${path.replace(/^\//, '')}`);
   } catch {
     await openInAppBrowser(partnerWebUrl(path));
   }

@@ -15,7 +15,7 @@ export interface ListingInput {
   bodyType?: string;
 }
 
-/** Puts an approved partner car on CatoDrive's own fleet as a draft, tagged to its partner so statements, repairs and their dashboard follow it. */
+/** Puts an approved partner car on CrossCubes's own fleet as a draft, tagged to its partner so statements, repairs and their dashboard follow it. */
 export const assetPartnerCarService = {
   async createListing(applicationId: string, operatorUserId: string, input: ListingInput = {}): Promise<{ vehicleId: string; created: boolean }> {
     const app = await AssetPartnerApplicationModel.findById(applicationId).lean<AssetPartnerApplicationDoc>();
@@ -66,7 +66,7 @@ export const assetPartnerCarService = {
     return { vehicleId, created: result?.status === 'created' };
   },
 
-  /** Records who owns a car already on CatoDrive's fleet, for cars that were placed before the portal existed. */
+  /** Records who owns a car already on CrossCubes's fleet, for cars that were placed before the portal existed. */
   async assign(operatorUserId: string, vehicleId: string, partnerId: string): Promise<void> {
     const host = await hostService.requireHostForUser(operatorUserId);
     const car = await VehicleModel.findOne({ _id: vehicleId, hostId: host._id, deletedAt: null }).select('assetPartnerId assetPartnerEndedAt').lean<{ assetPartnerId?: string; assetPartnerEndedAt?: Date }>();

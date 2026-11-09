@@ -35,19 +35,19 @@ const fontMono = IBM_Plex_Mono({
 });
 
 /*
- * Owned, on-brand metadata for CatoDrive.
+ * Owned, on-brand metadata for CrossCubes.
  *
  * Every field is filled with the product's own identity rather than left to a
  * framework default, so search engines, link previews and site scanners see
- * "CatoDrive", not a generic scaffold. Nothing here advertises the build tool
+ * "CrossCubes", not a generic scaffold. Nothing here advertises the build tool
  * (and poweredByHeader is off in next.config, so no X-Powered-By header ships).
  */
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.catodrive.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.crosscubes.com';
 // The company name, not a runtime config value - hardcoded so it can never
 // drift from whatever NEXT_PUBLIC_APP_NAME happens to be set to in a given
 // environment (this is exactly how it once rendered "CATO Drive" in
 // production: the env var was "CATO", and " Drive" got appended onto it).
-const BRAND = 'CatoDrive';
+const BRAND = 'CrossCubes';
 const TAGLINE = `${BRAND} - rent the perfect car from local hosts`;
 const DESCRIPTION =
   `${BRAND} is a peer-to-peer car rental marketplace: book a car from a trusted local host, ` +
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   // Don't announce the generator/build tool.
   generator: null,
   keywords: [
-    'CatoDrive', 'car rental', 'rent a car', 'peer to peer car rental',
+    'CrossCubes', 'car rental', 'rent a car', 'peer to peer car rental',
     'car sharing', 'book a car', 'local car rental', 'host your car', 'car hire',
   ],
   category: 'travel',
@@ -79,8 +79,8 @@ export const metadata: Metadata = {
   },
   icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/icons/apple-touch-icon.png' },
   manifest: '/manifest.webmanifest',
-  // Makes iOS treat an added-to-home-screen CatoDrive like a standalone app.
-  appleWebApp: { capable: true, title: 'CatoDrive', statusBarStyle: 'default' },
+  // Makes iOS treat an added-to-home-screen CrossCubes like a standalone app.
+  appleWebApp: { capable: true, title: 'CrossCubes', statusBarStyle: 'default' },
   openGraph: {
     type: 'website',
     siteName: BRAND,

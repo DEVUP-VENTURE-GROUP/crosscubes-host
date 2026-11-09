@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import { Star, Zap } from 'lucide-react-native';
-import { BottomSheet, Button, Chip, Input, Text, useTheme, space } from '@catodrive/ui';
-import { FUELS, SEAT_OPTIONS, EMPTY_FILTERS, type SearchFilters } from '@catodrive/core/web/features/search/search-params';
-import type { FilterCounts } from '@catodrive/core/web/features/vehicles/api';
-import type { CategoryFacet } from '@catodrive/core/web/features/vehicles/api';
-import { FUEL_LABEL } from '@catodrive/core/web/lib/utils/format';
+import { BottomSheet, Button, Chip, Input, Text, useTheme, space } from '@crosscubes/ui';
+import { FUELS, SEAT_OPTIONS, EMPTY_FILTERS, type SearchFilters } from '@crosscubes/core/web/features/search/search-params';
+import type { FilterCounts } from '@crosscubes/core/web/features/vehicles/api';
+import type { CategoryFacet } from '@crosscubes/core/web/features/vehicles/api';
+import { FUEL_LABEL } from '@crosscubes/core/web/lib/utils/format';
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (

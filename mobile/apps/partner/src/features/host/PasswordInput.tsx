@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { Input, useTheme } from '@catodrive/ui';
+import { Input, useTheme } from '@crosscubes/ui';
 
 /** A password field with a show/hide toggle; never autofilled from the phone's saved passwords. */
 export function PasswordInput({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {

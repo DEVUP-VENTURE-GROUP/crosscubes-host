@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { KeyRound, ShieldAlert, ShieldCheck } from 'lucide-react-native';
-import { Button, OtpInput, Text, space, useTheme } from '@catodrive/ui';
-import { tripApi } from '@catodrive/core/web/features/trips/api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Button, OtpInput, Text, space, useTheme } from '@crosscubes/ui';
+import { tripApi } from '@crosscubes/core/web/features/trips/api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 /** The host types the six-digit code the guest shows in their app; a wrong-code lock asks the guest for a new one. */
 export function VerifyPickup({ tripId, bookingId, locked = false, onVerified }: { tripId?: string; bookingId?: string; locked?: boolean; onVerified?: () => void }) {

@@ -97,7 +97,7 @@ export class InsurancePlanService {
     return doc;
   }
 
-  /** CatoDrive's decision on one plan; only approved plans of approved insurers reach checkout. */
+  /** CrossCubes's decision on one plan; only approved plans of approved insurers reach checkout. */
   async review(insurerId: string, planId: string, decision: 'approved' | 'rejected', note?: string): Promise<InsurancePlanDoc> {
     const doc = await InsurancePlanModel.findOneAndUpdate(
       { _id: planId, insurerId },
@@ -116,7 +116,7 @@ export class InsurancePlanService {
           deepLink: '/insurers/portal',
           templateKey: decision === 'approved' ? 'account.insurer_plan_approved' : 'account.insurer_plan_rejected',
           title: decision === 'approved' ? `Your plan ${doc.name} is approved` : `Your plan ${doc.name} needs changes`,
-          body: decision === 'approved' ? 'Guests can choose it at checkout.' : `CatoDrive couldn't approve it${note ? `: ${note}` : '.'} Edit the plan to send it again.`,
+          body: decision === 'approved' ? 'Guests can choose it at checkout.' : `CrossCubes couldn't approve it${note ? `: ${note}` : '.'} Edit the plan to send it again.`,
           data: { insurerId, planId, decision },
         })
         .catch((err) => logger.warn({ err, planId }, 'plan review notice failed'));

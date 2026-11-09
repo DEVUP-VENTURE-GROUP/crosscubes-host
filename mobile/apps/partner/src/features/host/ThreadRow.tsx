@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { Avatar, Card, Text, radius, space, useTheme } from '@catodrive/ui';
+import { Avatar, Card, Text, radius, space, useTheme } from '@crosscubes/ui';
 
 /** One conversation in the host inbox: who, which car, the last line, and the unread count. */
 export function ThreadRow({ name, avatar, title, preview, fromMe, unread, onPress }: { name: string; avatar?: string; title: string; preview: string; fromMe: boolean; unread: number; onPress: () => void }) {

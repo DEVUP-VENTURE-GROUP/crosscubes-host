@@ -60,7 +60,7 @@ function ContactFields({ id, value, onChange, legend }: { id: string; value: Par
   );
 }
 
-/** Who to call if CatoDrive can't reach the partner; used before signing and on the profile page. */
+/** Who to call if CrossCubes can't reach the partner; used before signing and on the profile page. */
 export function ProfileForm({ initial, ownPhone, submitLabel = 'Save and continue', onSaved }: { initial?: Partial<PartnerProfile>; ownPhone?: string; submitLabel?: string; onSaved: () => void }) {
   const [contacts, setContacts] = useState<PartnerContact[]>(initial?.emergencyContacts?.length ? initial.emergencyContacts : [blank()]);
   const [hasRep, setHasRep] = useState(!!initial?.representative);

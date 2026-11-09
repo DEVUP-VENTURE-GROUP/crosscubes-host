@@ -10,14 +10,14 @@ import { Reveal } from '@/components/ui/reveal';
 import { SectionEyebrow, TractionStats, AudienceSection, BRAND } from '@/features/marketing/sections';
 
 /**
- * About CatoDrive - the brand story, the traction, and the owner economics.
+ * About CrossCubes - the brand story, the traction, and the owner economics.
  *
  * The booking experience is the homepage; this is where the pitch lives. Built
  * on the same dark hero-mesh / display-type / Reveal system as the homepage so
  * the two read as one brand. The traction and audience blocks come from the
  * shared marketing module, so they stay identical to the ones on the homepage.
  *
- * Every figure here is CatoDrive marketing copy supplied by the business.
+ * Every figure here is CrossCubes marketing copy supplied by the business.
  * Confirm current numbers before each campaign - stale claims on a rental site
  * are a trust and legal risk.
  */
@@ -38,10 +38,10 @@ const STEPS = [
 ] as const;
 
 const RISKS = [
-  { scenario: 'Renter damages the vehicle', detail: '$750K liability + collision coverage per trip. The owner does not pay and never files directly.', owner: 'CatoDrive' as const },
-  { scenario: 'The car sits empty', detail: 'We manage pricing, listing optimization and the booking pipeline 24/7. Your exposure is zero.', owner: 'CatoDrive' as const },
+  { scenario: 'Renter damages the vehicle', detail: '$750K liability + collision coverage per trip. The owner does not pay and never files directly.', owner: 'CrossCubes' as const },
+  { scenario: 'The car sits empty', detail: 'We manage pricing, listing optimization and the booking pipeline 24/7. Your exposure is zero.', owner: 'CrossCubes' as const },
   { scenario: 'Routine maintenance', detail: 'The owner’s only cost: ~$100–200/month for oil, tires and washes - offset many times over by net income.', owner: 'Owner' as const },
-  { scenario: 'Guest no-show or late return', detail: 'Our operations team handles all guest issues, rescheduling and late-fee recovery.', owner: 'CatoDrive' as const },
+  { scenario: 'Guest no-show or late return', detail: 'Our operations team handles all guest issues, rescheduling and late-fee recovery.', owner: 'CrossCubes' as const },
 ] as const;
 
 export default function AboutPage() {
@@ -93,7 +93,7 @@ export default function AboutPage() {
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border sm:aspect-[16/9] lg:aspect-[21/9]">
             <Image
               src="/newsections/cato-hero-people.webp"
-              alt="CatoDrive concierge delivering a car to a traveler at the terminal"
+              alt="CrossCubes concierge delivering a car to a traveler at the terminal"
               fill
               priority
               sizes="(min-width: 1152px) 1100px, 100vw"
@@ -260,9 +260,9 @@ function StepRow({ n, icon: Icon, title, body, tag, last }: {
 }
 
 function RiskRow({ scenario, detail, owner, first }: {
-  scenario: string; detail: string; owner: 'CatoDrive' | 'Owner'; first: boolean;
+  scenario: string; detail: string; owner: 'CrossCubes' | 'Owner'; first: boolean;
 }) {
-  const isCato = owner === 'CatoDrive';
+  const isCato = owner === 'CrossCubes';
   return (
     <div className={`flex flex-col gap-4 bg-card p-6 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:gap-6 sm:p-7 ${first ? '' : 'border-t border-border'}`}>
       <div className="flex-1">

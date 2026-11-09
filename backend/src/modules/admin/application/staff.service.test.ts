@@ -10,7 +10,7 @@ beforeEach(clearTestDb);
 describe('staffService', () => {
   it('creates a staff login whose generated password works and is never stored in plain text', async () => {
     const r = await staffService.create({ name: 'Asha Rao', role: 'support' });
-    expect(r.username).toMatch(/^asha\.rao\.\d{4}@staff\.catodrive\.com$/);
+    expect(r.username).toMatch(/^asha\.rao\.\d{4}@staff.crosscubes.com$/);
     expect(r.password).toHaveLength(16);
     const u = await UserModel.findById(r.id).select('+passwordHash').lean();
     expect(u!.roles).toEqual(['support']);

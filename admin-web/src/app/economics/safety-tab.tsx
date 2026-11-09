@@ -19,7 +19,7 @@ export function SafetyTab({ draft, set }: TabProps) {
           <CardContent className="grid gap-6 sm:grid-cols-2">
             {(['customer', 'partner'] as const).map((app) => (
               <div key={app} className="space-y-3">
-                <p className="font-semibold">{app === 'customer' ? 'CatoDrive (guests)' : 'CatoDrive Partner (hosts and partners)'}</p>
+                <p className="font-semibold">{app === 'customer' ? 'CrossCubes (guests)' : 'CrossCubes Partner (hosts and partners)'}</p>
                 <Field label="Minimum version" hint="Like 1.2.0. Older apps are blocked until updated.">
                   <Input value={draft.appRelease![app].minVersion}
                     onChange={(e) => set((d) => { d.appRelease![app].minVersion = e.target.value.trim(); })} />

@@ -149,7 +149,7 @@ export class PayoutService {
     const net = payout.amount - fee;
     try {
       let providerRef: string | undefined;
-      // The House Fleet's earnings are CatoDrive's own money, already in its Stripe balance: settle on the books, send nothing.
+      // The House Fleet's earnings are CrossCubes's own money, already in its Stripe balance: settle on the books, send nothing.
       if (await this.isHouseFleet(payout.hostId)) {
         await ledgerService.post({
           txnId: `payout_${payout._id}`,

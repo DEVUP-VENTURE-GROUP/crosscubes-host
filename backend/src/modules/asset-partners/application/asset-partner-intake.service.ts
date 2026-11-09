@@ -41,8 +41,8 @@ export function addBusinessDays(from: Date, days: number): Date {
   return d;
 }
 
-export function intakeStatus(doc: Pick<AssetPartnerIntakeDoc, 'partnerResponse' | 'catodriveSignature'>, objectionDays: number, now = new Date()): { status: IntakeStatus; respondBy: Date } {
-  const respondBy = addBusinessDays(new Date(doc.catodriveSignature.signedAt), objectionDays);
+export function intakeStatus(doc: Pick<AssetPartnerIntakeDoc, 'partnerResponse' | 'crosscubesSignature'>, objectionDays: number, now = new Date()): { status: IntakeStatus; respondBy: Date } {
+  const respondBy = addBusinessDays(new Date(doc.crosscubesSignature.signedAt), objectionDays);
   if (doc.partnerResponse) return { status: doc.partnerResponse.kind, respondBy };
   return { status: now > respondBy ? 'deemed_accepted' : 'awaiting_partner', respondBy };
 }
@@ -52,7 +52,7 @@ export const objectionDays = async () => (await platformConfigService.get()).ass
 const withStatus = (doc: AssetPartnerIntakeDoc, days: number) => ({ ...doc, ...intakeStatus(doc, days) });
 
 export const assetPartnerIntakeService = {
-  /** Fields CatoDrive can start from: the partner's own application for that car. */
+  /** Fields CrossCubes can start from: the partner's own application for that car. */
   async draftFor(partnerId: string, applicationId?: string): Promise<Partial<IntakeInput>> {
     const filter = applicationId ? { _id: applicationId } : { partnerId };
     const app = await AssetPartnerApplicationModel.findOne(filter).sort({ createdAt: -1 }).lean<AssetPartnerApplicationDoc>();
@@ -66,7 +66,7 @@ export const assetPartnerIntakeService = {
     };
   },
 
-  /** CatoDrive records and signs the intake report; the partner is asked to review it. */
+  /** CrossCubes records and signs the intake report; the partner is asked to review it. */
   async create(partnerId: string, operatorUserId: string, input: IntakeInput) {
     const partner = await assetPartnerService.getById(partnerId);
     if (!input.preExistingDamage.trim()) throw new ValidationError('Describe any pre-existing damage, or write “None”');
@@ -85,11 +85,11 @@ export const assetPartnerIntakeService = {
       preExistingDamage: input.preExistingDamage.trim(),
       conditionNotes: input.conditionNotes?.trim() || undefined,
       photos: input.photos ?? [],
-      catodriveSignature: { name: input.signedName.trim(), title: input.signedTitle.trim(), signedAt: new Date(), userId: operatorUserId },
+      crosscubesSignature: { name: input.signedName.trim(), title: input.signedTitle.trim(), signedAt: new Date(), userId: operatorUserId },
     });
     const days = await objectionDays();
     const { respondBy } = intakeStatus(doc.toObject(), days);
-    logger.info({ partnerId, intakeId: doc._id }, 'Asset Partner intake report signed by CatoDrive');
+    logger.info({ partnerId, intakeId: doc._id }, 'Asset Partner intake report signed by CrossCubes');
     void notificationService
       .send({
         userId: partner.userId,
@@ -97,7 +97,7 @@ export const assetPartnerIntakeService = {
         deepLink: '/asset-partners/documents',
         templateKey: 'account.asset_partner_intake_ready',
         title: 'Please review your car’s intake report',
-        body: `CatoDrive recorded your ${input.vehicle.year} ${input.vehicle.make} ${input.vehicle.model}’s condition at intake. Review it by ${day(respondBy)}; after that it stands as written.`,
+        body: `CrossCubes recorded your ${input.vehicle.year} ${input.vehicle.make} ${input.vehicle.model}’s condition at intake. Review it by ${day(respondBy)}; after that it stands as written.`,
         data: { intakeId: doc._id },
       })
       .catch(() => undefined);
@@ -169,9 +169,9 @@ export const assetPartnerIntakeService = {
           ? `No written objection was received by ${day(respondBy)}; the report is deemed accepted under Section 2.5.`
           : `Awaiting the Asset Partner’s review until ${day(respondBy)}.`;
     const pdf = await buildTextPdf('Exhibit A: Enrolled Vehicle Addendum (Intake Report)', lines, [
-      `CatoDrive representative: ${d.catodriveSignature.name}, ${d.catodriveSignature.title}. Signed ${new Date(d.catodriveSignature.signedAt).toUTCString()}.`,
+      `CrossCubes representative: ${d.crosscubesSignature.name}, ${d.crosscubesSignature.title}. Signed ${new Date(d.crosscubesSignature.signedAt).toUTCString()}.`,
       partnerLine,
     ]);
-    return { pdf, filename: `CatoDrive-Intake-Report-${v.vin}.pdf` };
+    return { pdf, filename: `CrossCubes-Intake-Report-${v.vin}.pdf` };
   },
 };

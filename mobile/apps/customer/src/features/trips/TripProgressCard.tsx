@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { Button, Card, Text, useTheme, space } from '@catodrive/ui';
-import { TRIP_STAGE, TRIP_STEPS } from '@catodrive/core/web/features/bookings/status';
+import { Button, Card, Text, useTheme, space } from '@crosscubes/ui';
+import { TRIP_STAGE, TRIP_STEPS } from '@crosscubes/core/web/features/bookings/status';
 
 /** The trip, step by step, with the current step and the next one explained. */
 export function TripProgressCard({ status, pickupAt, onVerify }: { status: string; pickupAt: string; onVerify: () => void }) {

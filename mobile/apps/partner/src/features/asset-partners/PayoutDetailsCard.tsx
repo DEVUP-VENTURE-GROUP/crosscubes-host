@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Wallet } from 'lucide-react-native';
-import { Button, Card, Input, Text, space, useTheme } from '@catodrive/ui';
+import { Button, Card, Input, Text, space, useTheme } from '@crosscubes/ui';
 
 /** Where the monthly payout goes: a mailing address for checks, or a Zelle handle. */
 export function PayoutDetailsCard({

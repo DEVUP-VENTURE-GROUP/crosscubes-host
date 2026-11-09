@@ -1,13 +1,13 @@
 import { View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Receipt } from 'lucide-react-native';
-import { Badge, Button, Card, Divider, Text, useConfirm, useTheme, useToast, space } from '@catodrive/ui';
-import { openInAppBrowser } from '@catodrive/core';
-import { bookingApi } from '@catodrive/core/web/features/bookings/api';
-import { INCIDENTAL_LABEL } from '@catodrive/core/web/features/bookings/status';
-import type { Booking } from '@catodrive/core/web/features/bookings/types';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { formatDate, formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Badge, Button, Card, Divider, Text, useConfirm, useTheme, useToast, space } from '@crosscubes/ui';
+import { openInAppBrowser } from '@crosscubes/core';
+import { bookingApi } from '@crosscubes/core/web/features/bookings/api';
+import { INCIDENTAL_LABEL } from '@crosscubes/core/web/features/bookings/status';
+import type { Booking } from '@crosscubes/core/web/features/bookings/types';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { formatDate, formatMoney } from '@crosscubes/core/web/lib/utils/format';
 
 type Incidental = NonNullable<Booking['incidentals']>[number];
 

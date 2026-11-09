@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Text, useTheme, radius, space } from '@catodrive/ui';
-import { reviewsApi } from '@catodrive/core/web/features/reviews/api';
-import { formatDate } from '@catodrive/core/web/lib/utils/format';
-import type { Vehicle } from '@catodrive/core/web/features/vehicles/types';
+import { Card, Text, useTheme, radius, space } from '@crosscubes/ui';
+import { reviewsApi } from '@crosscubes/core/web/features/reviews/api';
+import { formatDate } from '@crosscubes/core/web/lib/utils/format';
+import type { Vehicle } from '@crosscubes/core/web/features/vehicles/types';
 
 /** Star breakdown and the latest reviews of this car's host. */
 export function ReviewsBlock({ vehicle }: { vehicle: Vehicle }) {

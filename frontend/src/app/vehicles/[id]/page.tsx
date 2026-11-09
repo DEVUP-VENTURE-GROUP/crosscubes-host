@@ -1091,7 +1091,7 @@ export default function VehicleDetailPage() {
                     className="mt-0.5 accent-[hsl(var(--primary))]"
                   />
                   <span className="flex-1">
-                    <span className="font-medium">Pay with CatoDrive Wallet</span>
+                    <span className="font-medium">Pay with CrossCubes Wallet</span>
                     <span className="ms-1 text-muted-foreground">
                       ({formatMoney({ amount: bal, currency: quote.data.total.currency })} available)
                     </span>
@@ -1156,7 +1156,7 @@ export default function VehicleDetailPage() {
                   <a href={platformCfg.data?.legal?.privacyUrl || '/privacy'} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground underline underline-offset-2">privacy policy</a>{' '}
                   and all other{' '}
                   <a href={platformCfg.data?.legal?.termsUrl || '/terms'} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground underline underline-offset-2">terms and conditions</a>{' '}
-                  of CatoDrive Inc. I also agree to receive communication via email, phone, etc. as and when required during the rental period or till any billing/incident issues are resolved.
+                  of CrossCubes Inc. I also agree to receive communication via email, phone, etc. as and when required during the rental period or till any billing/incident issues are resolved.
                 </span>
               </label>
             )}

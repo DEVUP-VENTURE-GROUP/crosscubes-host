@@ -169,7 +169,7 @@ describe('undo window', () => {
   });
 });
 
-describe('keep as CatoDrive credit', () => {
+describe('keep as CrossCubes credit', () => {
   it('puts the refund plus the bonus in the wallet without touching the card, and the books balance', async () => {
     await seed({ start: inHours(10), end: inHours(58) });
     const refund = jest.spyOn(paymentGateway, 'refund');

@@ -3,12 +3,12 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { Gift } from 'lucide-react-native';
-import { LegalConsent, safeReturn } from '@catodrive/core';
-import { authApi } from '@catodrive/core/web/features/auth/api';
-import { useOnAuthSuccess } from '@catodrive/core/web/features/auth/session';
-import { usePrograms } from '@catodrive/core/web/features/platform/config';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
-import { Button, Card, Input, Screen, ScreenHeader, Text, useTheme, space } from '@catodrive/ui';
+import { LegalConsent, safeReturn } from '@crosscubes/core';
+import { authApi } from '@crosscubes/core/web/features/auth/api';
+import { useOnAuthSuccess } from '@crosscubes/core/web/features/auth/session';
+import { usePrograms } from '@crosscubes/core/web/features/platform/config';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
+import { Button, Card, Input, Screen, ScreenHeader, Text, useTheme, space } from '@crosscubes/ui';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

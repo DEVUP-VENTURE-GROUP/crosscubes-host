@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, BadgeCheck, CheckCircle2, Clock, ScanFace } from 'lucide-react-native';
-import { Badge, BottomSheet, Button, Card, Input, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { TimedViewer } from '@catodrive/core';
-import { guestPhotoApi, type TimedView } from '@catodrive/core/web/features/trips/guest-photo-api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Badge, BottomSheet, Button, Card, Input, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { TimedViewer } from '@crosscubes/core';
+import { guestPhotoApi, type TimedView } from '@crosscubes/core/web/features/trips/guest-photo-api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 const errorText = (e: unknown) => (e instanceof ApiError ? e.message : 'Something went wrong. Please try again.');
 

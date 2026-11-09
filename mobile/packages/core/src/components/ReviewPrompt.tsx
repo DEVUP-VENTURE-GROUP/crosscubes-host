@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Star } from 'lucide-react-native';
-import { Button, Card, Input, Text, useTheme, space } from '@catodrive/ui';
+import { Button, Card, Input, Text, useTheme, space } from '@crosscubes/ui';
 import { useAuthStore } from '../web/features/auth/store';
 import { reviewsApi } from '../web/features/reviews/api';
 

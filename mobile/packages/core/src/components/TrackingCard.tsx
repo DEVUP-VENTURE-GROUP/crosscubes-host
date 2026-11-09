@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { MapPinOff, Navigation, ShieldAlert } from 'lucide-react-native';
-import { Badge, Card, Text, useTheme, space } from '@catodrive/ui';
+import { Badge, Card, Text, useTheme, space } from '@crosscubes/ui';
 import { useTrackingState } from '../web/features/trips/hooks';
 import { useLocationStreaming } from '../location-streaming';
 import { ApproachStrip } from './ApproachStrip';

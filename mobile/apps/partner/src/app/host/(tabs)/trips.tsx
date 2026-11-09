@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, Car } from 'lucide-react-native';
-import { Chip, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, Text, space, useTheme } from '@catodrive/ui';
-import { hostTripsApi } from '@catodrive/core/web/features/host/trips.api';
-import { groupByDay } from '@catodrive/core/web/features/host/trip-timing';
+import { Chip, EmptyState, ErrorState, Screen, ScreenHeader, SkeletonList, Text, space, useTheme } from '@crosscubes/ui';
+import { hostTripsApi } from '@crosscubes/core/web/features/host/trips.api';
+import { groupByDay } from '@crosscubes/core/web/features/host/trip-timing';
 import { HostCalendar } from '@/features/host/HostCalendar';
 import { TripCard } from '@/features/host/TripCard';
 

@@ -240,7 +240,7 @@ export const COUNTRIES: Country[] = [
   { code: 'ZW', name: 'Zimbabwe', dial: '263' },
 ];
 
-/** The markets CatoDrive operates in today, floated to the top of the picker. */
+/** The markets CrossCubes operates in today, floated to the top of the picker. */
 export const PRIORITY_CODES = ['US', 'IN', 'CA', 'GB'] as const;
 
 const BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c]));

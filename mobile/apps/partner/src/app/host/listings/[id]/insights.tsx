@@ -2,10 +2,10 @@ import { Pressable, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, CalendarCheck, ChevronRight, FileWarning, ShieldAlert, Star, TrendingUp } from 'lucide-react-native';
-import { Badge, BarChart, Card, Divider, ErrorState, Screen, ScreenHeader, Section, Skeleton, StatTile, Text, space, useTheme } from '@catodrive/ui';
-import { RequireAuth } from '@catodrive/core';
-import { vehicleApi } from '@catodrive/core/web/features/vehicles/api';
-import { formatDate, formatDay } from '@catodrive/core/web/lib/utils/format';
+import { Badge, BarChart, Card, Divider, ErrorState, Screen, ScreenHeader, Section, Skeleton, StatTile, Text, space, useTheme } from '@crosscubes/ui';
+import { RequireAuth } from '@crosscubes/core';
+import { vehicleApi } from '@crosscubes/core/web/features/vehicles/api';
+import { formatDate, formatDay } from '@crosscubes/core/web/lib/utils/format';
 
 const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 const monthLabel = (m: string) => new Date(`${m}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });

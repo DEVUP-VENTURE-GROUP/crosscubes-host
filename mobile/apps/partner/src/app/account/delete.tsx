@@ -1,4 +1,4 @@
-import { DeleteAccountScreen, RequireAuth } from '@catodrive/core';
+import { DeleteAccountScreen, RequireAuth } from '@crosscubes/core';
 
 export default function DeleteAccount() {
   return (

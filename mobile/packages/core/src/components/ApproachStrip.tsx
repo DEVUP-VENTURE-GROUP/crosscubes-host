@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Car, CheckCircle2, Clock, KeyRound, MapPin, Send } from 'lucide-react-native';
-import { Button, Skeleton, Text, radius, space, useTheme, useToast } from '@catodrive/ui';
+import { Button, Skeleton, Text, radius, space, useTheme, useToast } from '@crosscubes/ui';
 import { tripApi, type ApproachLeg } from '../web/features/trips/api';
 import { SecureImage } from './SecureImage';
 

@@ -23,7 +23,7 @@ export async function platformDailyKm(): Promise<number> {
   return Math.round((await platformConfigService.get()).booking.dailyMileageMiles * KM_PER_MILE);
 }
 
-/** Extras CatoDrive does not provide; never saved on a car, and removed from any that has them. */
+/** Extras CrossCubes does not provide; never saved on a car, and removed from any that has them. */
 export const UNOFFERED_ADDONS = new Set(['additional_driver']);
 /** The toll pass is set by the platform on every car; hosts never add, remove or price it. */
 export const TOLL_PASS = 'toll_pass';
@@ -58,7 +58,7 @@ export async function syncDailyMileage(): Promise<number> {
   const [a, b, c] = await Promise.all([
     VehicleModel.updateMany({ deletedAt: null, 'mileageLimit.perDayKm': { $ne: km } }, { $set: { 'mileageLimit.perDayKm': km } }),
     VehicleModel.updateMany({ deletedAt: null, 'listing.cancellationPolicy': { $ne: policy } }, { $set: { 'listing.cancellationPolicy': policy } }),
-    // CatoDrive does not offer additional drivers, so the extra is taken off any car still carrying it.
+    // CrossCubes does not offer additional drivers, so the extra is taken off any car still carrying it.
     VehicleModel.updateMany({ 'addOns.code': { $in: [...UNOFFERED_ADDONS] } }, { $pull: { addOns: { code: { $in: [...UNOFFERED_ADDONS] } } } }),
   ]);
   return a.modifiedCount + b.modifiedCount + c.modifiedCount + stale.modifiedCount + added.modifiedCount;
@@ -587,7 +587,7 @@ export class VehicleService implements IVehicleContract {
     return this.getById(vehicleId);
   }
 
-  /** Record (or clear, with null) the rating a car earned elsewhere; shown with its source, never mixed into CatoDrive's own rating. */
+  /** Record (or clear, with null) the rating a car earned elsewhere; shown with its source, never mixed into CrossCubes's own rating. */
   async adminSetExternalRating(vehicleId: string, value: { source: string; rating: number; trips: number } | null): Promise<VehicleDoc> {
     await this.getById(vehicleId);
     await VehicleModel.updateOne({ _id: vehicleId }, value ? { $set: { externalRating: value } } : { $unset: { externalRating: 1 } });

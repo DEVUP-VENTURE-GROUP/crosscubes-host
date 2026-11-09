@@ -41,12 +41,11 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       ...(config.assetPartnersOnly || !config.corporate
         ? []
         : [
-            { label: 'CatoDrive for Business', href: '/corporate' },
+            { label: 'CrossCubes for Business', href: '/corporate' },
             { label: 'Corporate login', href: '/corporate/login' },
             { label: 'Cost centers', href: '/corporate/cost-centers' },
             { label: 'Invoices', href: '/corporate/invoices' },
           ]),
-      { label: 'Investor Relations', href: '/investors' },
     ],
   },
   {
@@ -104,7 +103,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border pt-8 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} CatoDrive Inc. All rights reserved.
+            © {new Date().getFullYear()} CrossCubes Inc. All rights reserved.
           </p>
           {/* Terms and privacy stay one click from every page. */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">

@@ -55,7 +55,7 @@ function RequestForm({ earliest, noticeDays, busyCars, onSent }: { earliest: str
   if (cars.isLoading) return <Skeleton className="h-64 w-full rounded-lg" />;
   if (cars.isError) return <ErrorState message="We couldn’t load your cars." retry={() => void cars.refetch()} />;
   if (available.length === 0) {
-    return <EmptyState icon={<CarFront className="h-6 w-6" />} title="No cars to return" description="Every car you have with us already has a return in progress, or none are with CatoDrive right now." />;
+    return <EmptyState icon={<CarFront className="h-6 w-6" />} title="No cars to return" description="Every car you have with us already has a return in progress, or none are with CrossCubes right now." />;
   }
 
   return (
@@ -159,7 +159,7 @@ function ReturnCard({ r, onChange }: { r: PartnerReturn; onChange: () => void })
           size="sm"
           loading={cancel.isPending}
           onClick={async () => {
-            if ((await confirm({ title: 'Withdraw this request?', description: 'Your car stays with CatoDrive and keeps earning.', confirmLabel: 'Withdraw' })).ok) cancel.mutate();
+            if ((await confirm({ title: 'Withdraw this request?', description: 'Your car stays with CrossCubes and keeps earning.', confirmLabel: 'Withdraw' })).ok) cancel.mutate();
           }}
         >
           <Undo2 className="h-4 w-4" /> Withdraw request

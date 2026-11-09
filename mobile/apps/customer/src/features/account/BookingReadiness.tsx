@@ -3,9 +3,9 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Circle, IdCard, Mail, Phone } from 'lucide-react-native';
-import { Button, Card, Input, Text, useTheme, useToast, space } from '@catodrive/ui';
-import { eligibilityApi } from '@catodrive/core/web/features/account/eligibility-api';
-import { ApiError } from '@catodrive/core/web/lib/api/types';
+import { Button, Card, Input, Text, useTheme, useToast, space } from '@crosscubes/ui';
+import { eligibilityApi } from '@crosscubes/core/web/features/account/eligibility-api';
+import { ApiError } from '@crosscubes/core/web/lib/api/types';
 
 function ContactStep({ channel, onDone }: { channel: 'email' | 'phone'; onDone: () => void }) {
   const { c } = useTheme();

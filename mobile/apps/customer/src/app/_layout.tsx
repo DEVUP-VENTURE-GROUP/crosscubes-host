@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { AppShell, RouteErrorBoundary } from '@catodrive/core';
+import { AppShell, RouteErrorBoundary } from '@crosscubes/core';
 import { resolveLink } from '@/routes';
 import { StripeGate } from '@/features/payments/StripeGate';
 

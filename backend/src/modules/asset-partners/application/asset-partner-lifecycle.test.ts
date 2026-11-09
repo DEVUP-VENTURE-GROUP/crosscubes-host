@@ -54,8 +54,8 @@ async function account(): Promise<string> {
 }
 
 async function publishDocs() {
-  await assetPartnerAgreementService.publish(OPS, { title: 'Asset Partner Agreement', body: 'CatoDrive manages the {{vehicle}} owned by {{partner_name}} for a fee of {{management_fee}} of gross revenue, as agreed.' });
-  await assetPartnerAgreementService.publish(OPS, { kind: 'nda', title: 'Non-Disclosure Agreement', body: 'The recipient keeps CatoDrive’s confidential information private for three years. Signed by {{signed_name}}.' });
+  await assetPartnerAgreementService.publish(OPS, { title: 'Asset Partner Agreement', body: 'CrossCubes manages the {{vehicle}} owned by {{partner_name}} for a fee of {{management_fee}} of gross revenue, as agreed.' });
+  await assetPartnerAgreementService.publish(OPS, { kind: 'nda', title: 'Non-Disclosure Agreement', body: 'The recipient keeps CrossCubes’s confidential information private for three years. Signed by {{signed_name}}.' });
 }
 
 async function approved(): Promise<{ userId: string; partner: AssetPartnerDoc }> {
@@ -228,7 +228,7 @@ describe('returning a car the partner asked for', () => {
     const r = await runner();
 
     await expect(assetPartnerExitService.requestByPartner(userId, { vehicleIds: [String(v._id)], preferredDate: new Date(Date.now() + 5 * DAY), handoverPreference: 'pickup' })).rejects.toThrow('30 days’ notice');
-    await expect(assetPartnerExitService.requestByPartner(userId, { vehicleIds: ['not-mine'], preferredDate: new Date(Date.now() + 31 * DAY), handoverPreference: 'pickup' })).rejects.toThrow('still with CatoDrive');
+    await expect(assetPartnerExitService.requestByPartner(userId, { vehicleIds: ['not-mine'], preferredDate: new Date(Date.now() + 31 * DAY), handoverPreference: 'pickup' })).rejects.toThrow('still with CrossCubes');
     const exit = await assetPartnerExitService.requestByPartner(userId, { vehicleIds: [String(v._id)], preferredDate: new Date(Date.now() + 31 * DAY), handoverPreference: 'deliver', deliveryAddress: '1 Main St, Dallas TX' });
     expect(exit).toMatchObject({ status: 'requested', reason: 'partner_request', reference: expect.stringMatching(/^CD-RT-\d{6}$/) });
     await expect(assetPartnerExitService.requestByPartner(userId, { vehicleIds: [String(v._id)], preferredDate: new Date(Date.now() + 40 * DAY), handoverPreference: 'pickup' })).rejects.toThrow('already open');

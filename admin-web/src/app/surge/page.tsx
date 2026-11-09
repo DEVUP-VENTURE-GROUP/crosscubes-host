@@ -80,7 +80,7 @@ export default function AdminSurgePage() {
   const doCreate = async () => {
     const { ok } = await confirm({
       title: `Surge ${x(mult)} on ${form.scope === 'global' ? 'every booking' : form.scope === 'category' ? form.category : form.city}?`,
-      description: 'Guests will pay this multiplier on the daily rate immediately. CatoDrive Plus members are exempt.',
+      description: 'Guests will pay this multiplier on the daily rate immediately. CrossCubes Plus members are exempt.',
       confirmLabel: 'Create surge rule',
       tone: 'destructive',
     });
@@ -135,7 +135,7 @@ export default function AdminSurgePage() {
       <PageHeader
         eyebrow="Money in"
         title="Surge pricing"
-        description="Raises prices when most cars are booked. Add rules for known busy dates; auto-surge follows how full the fleet is. CatoDrive Plus members never pay surge."
+        description="Raises prices when most cars are booked. Add rules for known busy dates; auto-surge follows how full the fleet is. CrossCubes Plus members never pay surge."
         actions={
           <Button onClick={() => setCreating((c) => !c)} variant={creating ? 'outline' : 'primary'}>
             <Plus className="h-4 w-4" /> {creating ? 'Cancel' : 'New surge rule'}

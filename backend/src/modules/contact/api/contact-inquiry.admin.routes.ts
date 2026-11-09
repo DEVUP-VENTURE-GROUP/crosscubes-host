@@ -44,7 +44,7 @@ router.get(
   authorize('admin:read'),
   asyncHandler(async (req, res) => {
     const inquiry = await contactInquiryService.adminOne(req.params.id);
-    // The sender's CatoDrive account, if they have one: who signed in to send it, else the same email.
+    // The sender's CrossCubes account, if they have one: who signed in to send it, else the same email.
     const userId = inquiry.submittedByUserId ?? (await UserModel.findOne({ email: inquiry.email.toLowerCase(), deletedAt: null }).select('_id').lean<{ _id: string }>())?._id;
     res.set('Cache-Control', 'private, no-store');
     sendSuccess(res, { ...inquiry, account: userId ? await personSummary(userId, { visibility: 'staff' }) : null });

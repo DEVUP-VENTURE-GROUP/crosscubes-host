@@ -2,9 +2,9 @@ import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { User } from 'lucide-react-native';
-import { Card, Text, space, useTheme } from '@catodrive/ui';
-import type { HostTrip } from '@catodrive/core/web/features/host/trips.api';
-import { TRIP_ACTIVE, flightLine, nextHandoverLine, tripTiming } from '@catodrive/core/web/features/host/trip-timing';
+import { Card, Text, space, useTheme } from '@crosscubes/ui';
+import type { HostTrip } from '@crosscubes/core/web/features/host/trips.api';
+import { TRIP_ACTIVE, flightLine, nextHandoverLine, tripTiming } from '@crosscubes/core/web/features/host/trip-timing';
 import { TimingPill } from './TimingPill';
 
 /** One trip in the host's list: what happens next with this car, the guest, and the car. */

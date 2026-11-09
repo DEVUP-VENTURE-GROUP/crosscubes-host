@@ -60,10 +60,10 @@ export const assetPartnerContactConfirmService = {
     const base = config.notifications.partnerWebUrl || config.notifications.webUrl;
     const link = `${base}/contact-confirm?t=${token}`;
     const role = slot.kind === 'representative' ? 'the person who can decide about their car' : 'their emergency contact';
-    const body = `${shortName(partner.displayName)} named you as ${role} with CatoDrive. We’d only call you if we can’t reach them. Confirm or decline: ${link}`;
+    const body = `${shortName(partner.displayName)} named you as ${role} with CrossCubes. We’d only call you if we can’t reach them. Confirm or decline: ${link}`;
 
     const sms = await channelProviders.sms
-      .send({ target: { userId: `contact:${partner._id}`, phone: toE164(contact.phone) }, templateKey: 'partner.contact_confirm', title: 'CatoDrive', body })
+      .send({ target: { userId: `contact:${partner._id}`, phone: toE164(contact.phone) }, templateKey: 'partner.contact_confirm', title: 'CrossCubes', body })
       .catch((err: Error) => ({ ok: false as const, error: err.message, retryable: false }));
     let emailed = false;
     if (contact.email) {

@@ -1,6 +1,6 @@
 import { View } from 'react-native';
-import { Text, useTheme } from '@catodrive/ui';
-import type { TripTimingTone } from '@catodrive/core/web/features/host/trip-timing';
+import { Text, useTheme } from '@crosscubes/ui';
+import type { TripTimingTone } from '@crosscubes/core/web/features/host/trip-timing';
 
 /** Trip timing pill: green = starting, red = ending, muted = ended. */
 export function TimingPill({ tone, label }: { tone: TripTimingTone; label: string }) {

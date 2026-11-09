@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'expo-router';
-import { Screen, SkeletonList } from '@catodrive/ui';
+import { Screen, SkeletonList } from '@crosscubes/ui';
 import { useAuthStore } from './web/features/auth/store';
 
 /** Signed-in screens: while the session resolves show a skeleton; signed out, go to sign-in and come back after. */

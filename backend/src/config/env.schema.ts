@@ -39,7 +39,7 @@ export const envSchema = z.object({
    * when no CDN is configured. Defaults to localhost for development.
    */
   PUBLIC_API_URL: optional(z.string().url()),
-  APP_NAME: z.string().default('CatoDrive'),
+  APP_NAME: z.string().default('CrossCubes'),
   // Tags every Stripe payment, so a webhook shared with another system on the same Stripe account acts only on its own.
   APP_KEY: z.string().regex(/^[a-z0-9-]+$/).default('crosscubes'),
 
@@ -154,7 +154,7 @@ export const envSchema = z.object({
   VINAUDIT_API_KEY: optional(z.string()),
   // ── Branding, used in email footers ───────────────────────────────
   /** Shown in email headers and footers. */
-  BRAND_NAME: z.string().default('CatoDrive'),
+  BRAND_NAME: z.string().default('CrossCubes'),
   /** The web app, for links in emails. Falls back to the first CORS origin. */
   WEB_URL: optional(z.string()),
   /** The host website (self-serve hosts and their captains), for links to those pages. Falls back to WEB_URL. */
@@ -164,7 +164,7 @@ export const envSchema = z.object({
   /** The insurance partner portal, including its secret path; kept out of the repo. Falls back to WEB_URL. */
   INSURANCE_WEB_URL: optional(z.string()),
   /** The operations panel, including its secret path; House Fleet Captain invites open here. Falls back to HOST_WEB_URL. */
-  ASSET_IOC_WEB_URL: optional(z.string()),
+  HUB_WEB_URL: optional(z.string()),
   /**
    * Postal address in the email footer.
    *
@@ -193,7 +193,7 @@ export const envSchema = z.object({
   SMTP_SECURE: optional(boolString()),
   EMAIL_API_URL: optional(z.string().url()),
   EMAIL_API_KEY: optional(z.string()),
-  /** Envelope sender, e.g. "CatoDrive <no-reply@cato.com>". Required either way. */
+  /** Envelope sender, e.g. "CrossCubes <no-reply@cato.com>". Required either way. */
   EMAIL_FROM: optional(z.string()),
   /** Sentry DSN. Absent = errors are logged locally only. */
   SENTRY_DSN: optional(z.string()),
@@ -218,7 +218,7 @@ export const envSchema = z.object({
   ADMIN_PASSWORD: z.string().min(8).optional(),
   ADMIN_NAME: z.string().optional(),
 
-  // House Fleet: the single seeded Host account for CatoDrive's own vehicles.
+  // House Fleet: the single seeded Host account for CrossCubes's own vehicles.
 });
 
 /**

@@ -203,7 +203,7 @@ export interface BookingDoc {
     refund: MoneyField;
     charged?: MoneyField;
     reasonCode?: CancelReasonCode;
-    /** Where the refund went: the card, or CatoDrive credit (with its bonus). */
+    /** Where the refund went: the card, or CrossCubes credit (with its bonus). */
     choice?: 'refund' | 'credit';
     creditBonus?: MoneyField;
     /** Cancelled inside the free undo window after booking. */

@@ -1,7 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { GitCompare, X } from 'lucide-react-native';
-import { Button, Text, radius, space, useTheme } from '@catodrive/ui';
+import { Button, Text, radius, space, useTheme } from '@crosscubes/ui';
 import { useCompareStore } from './compare-store';
 
 /** The floating tray shown while one or more cars are queued for comparison. */

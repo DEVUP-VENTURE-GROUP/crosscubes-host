@@ -14,9 +14,9 @@ const fontSans = Instrument_Sans({ subsets: ['latin', 'latin-ext'], variable: '-
 const fontMono = IBM_Plex_Mono({ subsets: ['latin', 'latin-ext'], weight: ['400', '500', '600'], variable: '--font-mono', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: { default: 'CatoDrive Partners', template: '%s · CatoDrive Partners' },
-  description: 'Run your cars, trips, earnings and team on CatoDrive.',
-  applicationName: 'CatoDrive Partners',
+  title: { default: 'CrossCubes Partners', template: '%s · CrossCubes Partners' },
+  description: 'Run your cars, trips, earnings and team on CrossCubes.',
+  applicationName: 'CrossCubes Partners',
   robots: { index: false, follow: false },
   icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/icons/apple-touch-icon.png' },
 };

@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
   BadgeCheck, Bell, BookOpen, CreditCard, FileText, FileWarning, Gift, Heart, HelpCircle, KeyRound, LifeBuoy, LogOut, Mail, MapPin, Phone, Receipt, Search, ShieldCheck, Sparkles, Trash2, User, Users, Wallet,
 } from 'lucide-react-native';
-import { Avatar, Badge, Button, Card, MenuRow, MenuSection, Screen, ScreenHeader, Skeleton, Text, useTheme, space, type BadgeTone } from '@catodrive/ui';
-import { appInfo, openInAppBrowser, useSignOut, webUrl } from '@catodrive/core';
-import { accountApi } from '@catodrive/core/web/features/account/api';
-import { usePlatformConfig, usePrograms } from '@catodrive/core/web/features/platform/config';
-import { useAuthStore } from '@catodrive/core/web/features/auth/store';
+import { Avatar, Badge, Button, Card, MenuRow, MenuSection, Screen, ScreenHeader, Skeleton, Text, useTheme, space, type BadgeTone } from '@crosscubes/ui';
+import { appInfo, openInAppBrowser, useSignOut, webUrl } from '@crosscubes/core';
+import { accountApi } from '@crosscubes/core/web/features/account/api';
+import { usePlatformConfig, usePrograms } from '@crosscubes/core/web/features/platform/config';
+import { useAuthStore } from '@crosscubes/core/web/features/auth/store';
 import { ExploreLinks } from '@/features/account/ExploreLinks';
 
 function Legal() {
@@ -29,7 +29,7 @@ function SignedOut() {
   return (
     <Screen header={<ScreenHeader title="Account" large />}>
       <Card>
-        <Text variant="title">Welcome to CatoDrive</Text>
+        <Text variant="title">Welcome to CrossCubes</Text>
         <Text tone="muted">Sign in to book cars, see your trips and message hosts.</Text>
         <View style={{ gap: space.sm, marginTop: space.lg }}>
           <Button title="Sign in" onPress={() => router.push('/login')} />
@@ -42,7 +42,7 @@ function SignedOut() {
       </MenuSection>
       <ExploreLinks />
       <Legal />
-      <Text variant="caption" tone="muted" center>CatoDrive {appInfo.version}</Text>
+      <Text variant="caption" tone="muted" center>CrossCubes {appInfo.version}</Text>
     </Screen>
   );
 }
@@ -128,7 +128,7 @@ function SignedIn() {
         <MenuRow icon={<LogOut size={20} color={c.foreground} />} label={pending ? 'Signing out…' : 'Sign out'} onPress={() => void signOut()} />
         <MenuRow icon={<Trash2 size={20} color={c.destructive} />} label="Delete account" destructive onPress={() => router.push('/account/delete')} />
       </MenuSection>
-      <Text variant="caption" tone="muted" center>CatoDrive {appInfo.version}</Text>
+      <Text variant="caption" tone="muted" center>CrossCubes {appInfo.version}</Text>
     </Screen>
   );
 }

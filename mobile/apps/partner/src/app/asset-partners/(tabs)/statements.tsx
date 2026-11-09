@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Card, Chip, EmptyState, ErrorState, Screen, ScreenHeader, Section, SkeletonList, StatTile, space } from '@catodrive/ui';
-import { assetPartnerApi, type PartnerStatement } from '@catodrive/core/web/features/asset-partners/api';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { BarChart, Card, Chip, EmptyState, ErrorState, Screen, ScreenHeader, Section, SkeletonList, StatTile, space } from '@crosscubes/ui';
+import { assetPartnerApi, type PartnerStatement } from '@crosscubes/core/web/features/asset-partners/api';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { NotAPartner } from '@/features/asset-partners/NotAPartner';
 import { StatementCard } from '@/features/asset-partners/StatementCard';
 import { isNotEnrolled } from '@/features/asset-partners/notEnrolled';

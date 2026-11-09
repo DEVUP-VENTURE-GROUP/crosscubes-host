@@ -1,4 +1,4 @@
-import { RequireAuth, TicketScreen } from '@catodrive/core';
+import { RequireAuth, TicketScreen } from '@crosscubes/core';
 
 export default function Ticket() {
   return (

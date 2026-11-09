@@ -221,7 +221,7 @@ export class AssetPartnerService {
           deepLink: '/asset-partners/dashboard',
           actionLabel: 'Open your partner portal',
           templateKey: 'account.partner_added',
-          title: `You're set up on ${'CatoDrive'}`,
+          title: `You're set up on ${'CrossCubes'}`,
           body:
             'Your Asset Partner account is ready. Sign in with this email address — ' +
             'choose "email me a code", no password needed — to add your payout details ' +

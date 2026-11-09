@@ -21,7 +21,7 @@ export function InstallAppCard() {
             <Smartphone className="h-6 w-6" />
           </span>
           <div className="min-w-0">
-            <h2 className="text-xl font-bold">Get the CatoDrive app</h2>
+            <h2 className="text-xl font-bold">Get the CrossCubes app</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Book faster, get trip alerts and keep everything one tap away on your home screen. No app store needed.
             </p>

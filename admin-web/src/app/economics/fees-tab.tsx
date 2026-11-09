@@ -93,7 +93,7 @@ export function FeesTab({ draft, set }: TabProps) {
             <CardTitle className="flex items-center gap-2"><RotateCcw className="h-5 w-5 text-primary" /> Cancellations &amp; no-shows</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
               Each car uses one of three policies, chosen by its host. A guest who cancels early enough gets everything back;
-              later, they get the partial refund. The host earns their share of whatever is kept. A host or CatoDrive
+              later, they get the partial refund. The host earns their share of whatever is kept. A host or CrossCubes
               cancelling always refunds the guest in full.
             </p>
           </CardHeader>

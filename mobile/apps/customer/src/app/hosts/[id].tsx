@@ -2,10 +2,10 @@ import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Car, Star } from 'lucide-react-native';
-import { Avatar, Badge, Card, EmptyState, ErrorState, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, space } from '@catodrive/ui';
-import { useHostPublicProfile, joinedLabel, responseTimeLabel } from '@catodrive/core/web/features/host/public-profile';
-import { hostApi } from '@catodrive/core/web/features/hosts/api';
-import { reviewsApi } from '@catodrive/core/web/features/reviews/api';
+import { Avatar, Badge, Card, EmptyState, ErrorState, Screen, ScreenHeader, Section, Skeleton, Text, useTheme, space } from '@crosscubes/ui';
+import { useHostPublicProfile, joinedLabel, responseTimeLabel } from '@crosscubes/core/web/features/host/public-profile';
+import { hostApi } from '@crosscubes/core/web/features/hosts/api';
+import { reviewsApi } from '@crosscubes/core/web/features/reviews/api';
 import { VehicleCard } from '@/features/vehicles/VehicleCard';
 
 function Stat({ value, label }: { value: string; label: string }) {

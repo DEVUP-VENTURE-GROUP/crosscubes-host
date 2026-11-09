@@ -8,7 +8,7 @@ const TTL_SECONDS = 60;
 const keyOf = (code: string) => `auth:handoff:${createHash('sha256').update(code).digest('hex')}`;
 
 /**
- * Moving a signed-in person between CatoDrive's own websites (catodrive.com and
+ * Moving a signed-in person between CrossCubes's own websites (crosscubes.com and
  * the partner site), which keep separate sessions because they are separate
  * origins.
  *

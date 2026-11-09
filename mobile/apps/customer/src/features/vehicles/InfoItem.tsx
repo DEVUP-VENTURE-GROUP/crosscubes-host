@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Text, useTheme, space } from '@catodrive/ui';
+import { Text, useTheme, space } from '@crosscubes/ui';
 
 /** An icon, a heading and a line of detail: the website's "Peace of mind" rows and policy blocks. */
 export function InfoItem({ icon: Icon, title, detail, children }: { icon: React.ComponentType<{ size?: number; color?: string }>; title: string; detail?: string; children?: React.ReactNode }) {

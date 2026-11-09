@@ -66,7 +66,7 @@ export const assetPartnerOfferService = {
     }
   },
 
-  /** The partner missed the window and asks CatoDrive to send it again. */
+  /** The partner missed the window and asks CrossCubes to send it again. */
   async requestReissue(partner: AssetPartnerDoc): Promise<OfferState | null> {
     if (!partner.agreementRequired) throw new ForbiddenError('There is no agreement waiting for your signature.');
     const s = this.state(partner);

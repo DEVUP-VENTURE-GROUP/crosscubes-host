@@ -4,10 +4,10 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
 import { Check, Copy, Gift, Share2, Users } from 'lucide-react-native';
-import { Button, Card, Screen, ScreenHeader, Skeleton, Text, useTheme, space } from '@catodrive/ui';
-import { RequireAuth, webUrl } from '@catodrive/core';
-import { referralApi } from '@catodrive/core/web/features/rewards/api';
-import { formatMoney } from '@catodrive/core/web/lib/utils/format';
+import { Button, Card, Screen, ScreenHeader, Skeleton, Text, useTheme, space } from '@crosscubes/ui';
+import { RequireAuth, webUrl } from '@crosscubes/core';
+import { referralApi } from '@crosscubes/core/web/features/rewards/api';
+import { formatMoney } from '@crosscubes/core/web/lib/utils/format';
 import { ProgramGate } from '@/features/account/ProgramGate';
 
 /** The website's /referral: your code and link, and how many friends joined. */
@@ -43,7 +43,7 @@ function Referral() {
               setTimeout(() => setCopied(false), 1500);
             }}
           />
-          <Button title="Share" variant="outline" icon={<Share2 size={18} color={c.foreground} />} onPress={() => void Share.share({ message: `Get ${give} off your first CatoDrive trip: ${link}` })} />
+          <Button title="Share" variant="outline" icon={<Share2 size={18} color={c.foreground} />} onPress={() => void Share.share({ message: `Get ${give} off your first CrossCubes trip: ${link}` })} />
         </View>
       </Card>
       <View style={{ flexDirection: 'row', gap: space.sm }}>

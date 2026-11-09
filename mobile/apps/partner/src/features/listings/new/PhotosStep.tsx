@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Camera, ImageIcon, X } from 'lucide-react-native';
-import { Button, Text, space, useTheme, useToast } from '@catodrive/ui';
-import { pickPhotos, uploadPhotos, type PickSource } from '@catodrive/core';
-import { withCover } from '@catodrive/core/web/features/vehicles/new-listing';
+import { Button, Text, space, useTheme, useToast } from '@crosscubes/ui';
+import { pickPhotos, uploadPhotos, type PickSource } from '@crosscubes/core';
+import { withCover } from '@crosscubes/core/web/features/vehicles/new-listing';
 import { useListingDraft } from './draft-store';
-import { safeMessage } from '@catodrive/core/web/lib/utils/safe-message';
+import { safeMessage } from '@crosscubes/core/web/lib/utils/safe-message';
 
 /** Add photos (duplicates skipped by content), pick the cover, remove; the cover moves on when it is removed. */
 export function PhotosStep({ minPhotos, errors }: { minPhotos: number; errors: Record<string, string> }) {
