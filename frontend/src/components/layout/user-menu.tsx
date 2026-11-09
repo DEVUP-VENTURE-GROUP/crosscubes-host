@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { config } from '@/lib/config';
 import {
-  Car, LogOut, Wallet, Gift, User, LifeBuoy, Building2, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Sparkles } from 'lucide-react';
+  Car, LogOut, Wallet, Gift, User, LifeBuoy, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store';
 import { useUnreadMessages } from '@/features/messaging/hooks';
 import { useLogout } from '@/features/auth/hooks';
@@ -138,11 +138,6 @@ export function UserMenu() {
                 <SiteLink path="/host" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                   <Car className="h-4 w-4 text-primary" /> Host dashboard
                 </SiteLink>
-                {config.corporate && (
-                  <Link href="/corporate" onClick={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm transition-colors hover:bg-accent">
-                    <Building2 className="h-4 w-4 text-muted-foreground" /> Corporate
-                  </Link>
-                )}
               </>
             )}
             {/* No admin link here. The console is a separate application on

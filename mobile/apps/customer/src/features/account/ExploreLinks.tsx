@@ -33,9 +33,6 @@ export function ExploreLinks() {
         {showHost ? (
           <MenuRow icon={icon(Car)} label={isHost ? 'Host dashboard' : 'Become a host'} onPress={() => void openPartner('/host')} />
         ) : null}
-        {!config.assetPartnersOnly && config.corporate ? (
-          <MenuRow icon={icon(Building2)} label={`${config.appName} for Business`} onPress={() => void openInAppBrowser(webUrl('/corporate'))} />
-        ) : null}
       </MenuSection>
     </>
   );

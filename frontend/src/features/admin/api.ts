@@ -358,15 +358,6 @@ export interface VehicleReview {
 }
 
 // ── Cross-tenant management ──────────────────────────────────────────
-export interface AdminFleet {
-  _id: string; name: string; region: string | null;
-  hostId: string; hostName: string; vehicles: number; createdAt: string;
-}
-export interface AdminOrg {
-  _id: string; name: string; billingEmail: string; domain: string | null;
-  status: 'active' | 'suspended'; members: number; trips: number;
-  totalSpend: number; createdAt: string;
-}
 export interface AdminReview {
   _id: string; direction: string; rating: number; comment: string;
   status: 'published' | 'hidden'; authorId: string; subjectId: string; createdAt: string;
@@ -583,14 +574,6 @@ export const adminApi = {
   finance: (months = 6) => api.get<FinanceReport>('/admin/finance', { months }),
   revenueBySource: () => api.get<RevenueBySource>('/admin/finance/by-source'),
 
-
-  // Fleets
-  fleets: (search?: string) => api.get<AdminFleet[]>('/admin/fleets', search ? { search } : undefined),
-
-  // Corporate accounts
-  orgs: (status?: string) => api.get<AdminOrg[]>('/admin/corporate/orgs', status ? { status } : undefined),
-  setOrgStatus: (id: string, status: 'active' | 'suspended') =>
-    api.post(`/admin/corporate/orgs/${id}/status`, { status }),
 
   // Reviews moderation
   reviews: (q: { status?: string; minRating?: number } = {}) => api.get<AdminReview[]>('/admin/reviews', q),

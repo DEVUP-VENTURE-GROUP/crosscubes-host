@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, TrendingUp, Briefcase, Building2, Users } from 'lucide-react';
+import { ArrowRight, TrendingUp, Briefcase, Users } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
 import { config } from '@/lib/config';
 import { useFacets } from '@/features/vehicles/hooks';
@@ -108,12 +108,10 @@ const AUDIENCES = [
   // clicking "Become a partner" landed on the wrong pitch entirely.
   { icon: TrendingUp, image: '/newsections/asset_partners.webp', title: 'Asset Partners', body: 'List a vehicle you already own. Net $1,066–$1,878/month - we run everything, you get paid.', href: '/asset-partners', cta: 'Become a partner' },
   { icon: Briefcase, image: '/newsections/business_travels.webp', title: 'Business Travelers', body: 'Car delivered to your terminal at DFW or Love Field, 5–15% below market rate. Paperless end-to-end. Zero friction.', href: '/search', cta: 'Book a car' },
-  { icon: Building2, image: '/newsections/corporate_accounts.webp', title: 'Corporate Accounts', body: 'B2B fleet accounts for enterprises and staffing agencies, auto-repair loaner programs, and white-glove SUV delivery to private terminals.', href: '/corporate', cta: 'Talk to us' },
-  { icon: Users, image: '/newsections/enterprise_volume.webp', title: 'Enterprise & Volume', body: 'Volume pricing, dedicated account management, consolidated billing, and priority terminal delivery for regular DFW travel.', href: '/corporate', cta: 'Corporate portal' },
 ] as const;
 
 export function AudienceSection({ heading = 'Two sides of one platform.' }: { heading?: string }) {
-  const audiences = (config.assetPartnersOnly ? AUDIENCES.slice(0, 2) : AUDIENCES).filter((a) => config.corporate || a.href !== '/corporate');
+  const audiences = (config.assetPartnersOnly ? AUDIENCES.slice(0, 2) : AUDIENCES);
   return (
     <section>
       <Reveal className="max-w-3xl">

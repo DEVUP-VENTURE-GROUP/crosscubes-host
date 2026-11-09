@@ -4,7 +4,7 @@ import { type ComponentType } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, Users, BadgeCheck, Car, CalendarCheck, ShieldAlert, LifeBuoy,
-  ScanFace, Flag, ScrollText, LayoutGrid, Shield, Percent, SlidersHorizontal, TrendingUp, Star, Layers, Building2, Banknote, Route,
+  ScanFace, Flag, ScrollText, LayoutGrid, Shield, SlidersHorizontal, TrendingUp, Star, Route,
   Handshake, Receipt, PieChart, Radio, Gift, Umbrella,
   Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles, Network, FileSignature,
 } from 'lucide-react';
@@ -25,7 +25,6 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   bookings: CalendarCheck,
   claims: ShieldAlert,
   support: LifeBuoy,
-  commission: Percent,
   visitors: Radio,
   reports: PieChart,
   referrals: Gift,
@@ -33,9 +32,6 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   surge: TrendingUp,
   memberships: Star,
   'feature-flags': Flag,
-  fleets: Layers,
-  corporate: Building2,
-  payouts: Banknote,
   reviews: Star,
   trips: Route,
   audit: ScrollText,
