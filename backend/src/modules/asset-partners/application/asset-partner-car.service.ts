@@ -129,7 +129,7 @@ export const assetPartnerCarService = {
     for (const vin of vins) {
       const car = found.find((v) => v.vin === vin);
       if (!car) toImport.push(rows.get(vin)!);
-      else if (car.hostId !== host._id) results.set(vin, { vin, status: 'failed', reason: 'Listed by another host on CatoDrive' });
+      else if (car.hostId !== host._id) results.set(vin, { vin, status: 'failed', reason: 'Listed by another host on CrossCubes' });
       else if (car.assetPartnerId && car.assetPartnerId !== partnerId && !car.assetPartnerEndedAt) results.set(vin, { vin, status: 'failed', reason: 'Belongs to another partner' });
       else if (car.assetPartnerId === partnerId && !car.assetPartnerEndedAt) results.set(vin, { vin, status: 'already', vehicleId: car._id });
       else {

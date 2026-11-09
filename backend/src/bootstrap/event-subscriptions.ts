@@ -237,7 +237,7 @@ export function registerEventSubscribers(): void {
 
   eventBus.subscribe(EVENTS.USER_REGISTERED, async (e) => {
     const p = e.payload as { userId: string; email?: string; firstName?: string; audience?: 'guest' | 'asset_partner' | 'host' };
-    const hi = `Welcome to CatoDrive${p.firstName ? `, ${p.firstName}` : ''}`;
+    const hi = `Welcome to CrossCubes${p.firstName ? `, ${p.firstName}` : ''}`;
     // Someone who came to put their car with us is told how to do that, not how to book one.
     if (p.audience === 'asset_partner') {
       await notificationService.send({
@@ -247,7 +247,7 @@ export function registerEventSubscribers(): void {
         actionLabel: 'Add your car',
         templateKey: 'account.asset_partner_welcome',
         title: hi,
-        body: 'Thanks for joining as a CatoDrive Asset Partner. Next, tell us about your car. It takes about ten minutes, and you can save and finish later. We review it and get back to you by email.',
+        body: 'Thanks for joining as a CrossCubes Asset Partner. Next, tell us about your car. It takes about ten minutes, and you can save and finish later. We review it and get back to you by email.',
         data: { userId: p.userId },
       });
       return;

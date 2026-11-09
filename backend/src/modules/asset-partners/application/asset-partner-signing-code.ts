@@ -26,7 +26,7 @@ export const assetPartnerSigningCode = {
     const res = await channelProviders.email.send({
       target: { userId: partner.userId, email },
       templateKey: 'account.asset_partner_signing_code',
-      title: `Your CatoDrive signing code: ${code}`,
+      title: `Your CrossCubes signing code: ${code}`,
       body: `Enter ${code} to sign your documents. It expires in 5 minutes. If you didn’t ask for it, ignore this email and nothing is signed.`,
     });
     if (!res.ok) logger.error({ partnerId: partner._id, error: res.error }, 'signing code email failed');

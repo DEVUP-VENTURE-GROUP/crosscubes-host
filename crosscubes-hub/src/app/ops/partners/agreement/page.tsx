@@ -76,7 +76,7 @@ export default function PartnerAgreementPage() {
 
   const changed = !!body.trim() && (body.trim() !== (current?.body ?? '') || title.trim() !== (current?.title ?? ''));
   const send = async () => {
-    if (/\[BEFORE PUBLISHING|\[CatoDrive legal notice address\]/.test(body)) {
+    if (/\[BEFORE PUBLISHING|\[CrossCubes legal notice address\]/.test(body)) {
       toast({ tone: 'error', title: 'Finish the text first', description: 'Remove the “BEFORE PUBLISHING” line and fill in the legal notice address.' });
       return;
     }
@@ -129,7 +129,7 @@ export default function PartnerAgreementPage() {
               <CardContent className="space-y-4">
                 {kind === 'agreement' && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-subtle p-3 text-sm">
-                    <span>Start from CatoDrive’s standard agreement, with every exhibit and the live terms as placeholders. Change anything, then publish.</span>
+                    <span>Start from CrossCubes’s standard agreement, with every exhibit and the live terms as placeholders. Change anything, then publish.</span>
                     <Button
                       size="sm"
                       variant="outline"

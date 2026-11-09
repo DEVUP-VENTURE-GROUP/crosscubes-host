@@ -64,7 +64,7 @@ describe('asset partner application', () => {
     await expect(assetPartnerApplicationService.create(baseDto({ hubId: 'nowhere' }), {})).rejects.toThrow('Pick a city');
     const app = await assetPartnerApplicationService.create(baseDto(), {});
     expect(app.hubId).toBe(TEST_HUB_ID);
-    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
     const partner = await AssetPartnerModel.findOne({ email: 'jordan@example.com' }).lean();
     expect(partner?.hubId).toBe(TEST_HUB_ID);
     expect((await HostModel.findById(partner!.hostId).lean())?.hubId).toBe(TEST_HUB_ID);

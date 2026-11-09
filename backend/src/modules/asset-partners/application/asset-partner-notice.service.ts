@@ -84,6 +84,7 @@ export class AssetPartnerNoticeService {
           ...input,
           noticeRef: input.noticeRef.trim().toUpperCase(),
           partnerId: partner._id,
+          hubId: partner.hubId,
           uploadedBy: userId,
           status: 'needs_review',
           reviewReason: trips.length === 0 ? 'no_trip' : trips.length > 1 ? 'several_trips' : undefined,
@@ -183,11 +184,11 @@ export class AssetPartnerNoticeService {
     return done;
   }
 
-  /** CatoDrive pays it: the car was with our team, or the guest can no longer be charged. */
+  /** CrossCubes pays it: the car was with our team, or the guest can no longer be charged. */
   async absorb(id: string, by: string, note: string): Promise<AssetPartnerNoticeDoc> {
     const notice = await this.reviewable(id);
     const updated = await this.decide(notice, by, 'absorbed', note, notice.paidByPartner ? { reimburseInPeriod: periodOf(new Date()) } : {});
-    await this.tellPartner(updated, notice.paidByPartner ? 'CatoDrive is paying this. You’ll get your money back on your next statement.' : 'CatoDrive is paying this notice. You don’t need to do anything.');
+    await this.tellPartner(updated, notice.paidByPartner ? 'CrossCubes is paying this. You’ll get your money back on your next statement.' : 'CrossCubes is paying this notice. You don’t need to do anything.');
     return updated;
   }
 
@@ -199,19 +200,19 @@ export class AssetPartnerNoticeService {
     return updated;
   }
 
-  /** CatoDrive paid the agency itself, so the partner's registration is never held over it. */
+  /** CrossCubes paid the agency itself, so the partner's registration is never held over it. */
   async markAgencyPaid(id: string, by: string, reference?: string): Promise<AssetPartnerNoticeDoc> {
     const updated = await AssetPartnerNoticeModel.findOneAndUpdate(
       { _id: id, paidByPartner: false, agencyPaid: { $exists: false }, status: { $in: ['matched', 'absorbed'] } },
       { $set: { agencyPaid: { at: new Date(), by, reference: reference?.trim() || undefined } }, $push: { timeline: { at: new Date(), by, event: 'agency_paid', note: reference } } },
       { new: true },
     ).lean<AssetPartnerNoticeDoc>();
-    if (!updated) throw new ConflictError('This notice isn’t waiting for CatoDrive to pay the agency.', 'NOTICE_STATE');
-    await this.tellPartner(updated, 'CatoDrive has paid this notice. You don’t need to do anything.');
+    if (!updated) throw new ConflictError('This notice isn’t waiting for CrossCubes to pay the agency.', 'NOTICE_STATE');
+    await this.tellPartner(updated, 'CrossCubes has paid this notice. You don’t need to do anything.');
     return updated;
   }
 
-  /** What the partner is paid back on a statement month: notices they paid that CatoDrive accepted. */
+  /** What the partner is paid back on a statement month: notices they paid that CrossCubes accepted. */
   async reimbursementsFor(partnerId: string, period: string): Promise<{ count: number; amount: number }> {
     const rows = await AssetPartnerNoticeModel.find({ partnerId, reimburseInPeriod: period, paidByPartner: true, status: { $in: ['matched', 'absorbed'] } }).select('amountCents').lean<{ amountCents: number }[]>();
     return { count: rows.length, amount: rows.reduce((s, r) => s + r.amountCents, 0) };

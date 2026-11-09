@@ -56,7 +56,7 @@ export interface PartnerStatement {
     insurance: number;
     detailing: number;
     repairs: number;
-    /** Tolls and tickets the partner paid that CatoDrive accepted, paid back here. */
+    /** Tolls and tickets the partner paid that CrossCubes accepted, paid back here. */
     noticeRefunds: number;
     net: number;
   };

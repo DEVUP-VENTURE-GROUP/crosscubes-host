@@ -6,12 +6,14 @@ import { UserModel } from '../../users/infrastructure/user.model';
 import { DocumentModel } from '../../documents/infrastructure/document.model';
 import { notificationService } from '../../notifications/application/notification.service';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { PortalApplicationDto } from '../dto/asset-partner-application.schemas';
 
 beforeAll(connectTestDb);
 afterAll(disconnectTestDb);
 beforeEach(async () => {
   await clearTestDb();
+  await seedTestHub();
   (notificationService.send as jest.Mock).mockClear();
 });
 
@@ -21,7 +23,7 @@ const photo = (label: string, n: string) => ({ url: `https://files.example/${lab
 
 function dto(over: Partial<PortalApplicationDto> = {}): PortalApplicationDto {
   return {
-    fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+    fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin: '1HGCM82633A004352', plate: 'ABC-1234' },
     ownership: 'owned', titleStatus: 'clean', photos: [photo('Front', 'a'), photo('Rear', 'b'), photo('Odometer', 'c')],
     accident: 'no', availability: 'fulltime', acknowledgedAccurate: true, acknowledgedInspection: true, acknowledgedTerms: true,

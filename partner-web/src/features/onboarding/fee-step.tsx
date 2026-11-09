@@ -50,7 +50,7 @@ export function FeeStep({ fee, onPaid }: { fee: { amountCents: number; platformF
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><CreditCard className="h-5 w-5" /></span>
           <div className="min-w-0">
             <h2 className="text-xl font-bold">Registration fee</h2>
-            <p className="text-sm text-muted-foreground">A one-time payment to join. It covers every car you place with CatoDrive, now and later.</p>
+            <p className="text-sm text-muted-foreground">A one-time payment to join. It covers every car you place with CrossCubes, now and later.</p>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export function FeeStep({ fee, onPaid }: { fee: { amountCents: number; platformF
         )}
 
         {problem && <p role="alert" className="text-sm text-destructive">{problem}</p>}
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Lock className="h-3.5 w-3.5" /> Card details go to Stripe only; CatoDrive never sees them.</p>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Lock className="h-3.5 w-3.5" /> Card details go to Stripe only; CrossCubes never sees them.</p>
       </CardContent>
     </Card>
   );

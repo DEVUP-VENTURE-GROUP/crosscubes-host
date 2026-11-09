@@ -118,7 +118,7 @@ export class AssetPartnerAgreementService {
 
   async publish(userId: string, input: { kind?: AgreementKind; title: string; body: string }): Promise<AssetPartnerAgreementDoc> {
     // The standard draft carries review markers; partners must never be asked to sign one.
-    if (input.body.includes('[BEFORE PUBLISHING') || input.body.includes('[CatoDrive legal notice address]')) throw new ValidationError('Remove the BEFORE PUBLISHING line and fill in the legal notice address first.');
+    if (input.body.includes('[BEFORE PUBLISHING') || input.body.includes('[CrossCubes legal notice address]')) throw new ValidationError('Remove the BEFORE PUBLISHING line and fill in the legal notice address first.');
     const kind = input.kind ?? 'agreement';
     const latest = await this.current(kind);
     const bodyHash = hashOf(input.body);

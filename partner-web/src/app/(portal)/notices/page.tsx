@@ -23,7 +23,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 /** Where a notice stands, in the partner's words. */
 function standing(n: PartnerNotice): { tone: 'success' | 'warning' | 'muted' | 'destructive' | 'default'; label: string; detail: string } {
   if (n.status === 'rejected') return { tone: 'destructive', label: 'Not taken on', detail: n.resolution?.note ?? 'We couldn’t take this one on.' };
-  if (n.status === 'absorbed') return { tone: 'success', label: 'CatoDrive is paying', detail: n.paidByPartner ? `You’ll get ${usd(n.amountCents)} back on your statement.` : 'You don’t need to do anything.' };
+  if (n.status === 'absorbed') return { tone: 'success', label: 'CrossCubes is paying', detail: n.paidByPartner ? `You’ll get ${usd(n.amountCents)} back on your statement.` : 'You don’t need to do anything.' };
   if (n.status === 'needs_review')
     return {
       tone: 'warning',
@@ -115,7 +115,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           </Field>
           <label className="flex items-start gap-3 rounded-sm border border-border p-3 text-sm sm:col-span-2">
             <input type="checkbox" className="mt-0.5 h-4 w-4 accent-primary" checked={f.paid} onChange={(e) => set('paid', e.target.checked)} />
-            <span><span className="font-medium">I already paid this</span><span className="block text-xs text-muted-foreground">We pay you back on your next statement once it’s checked. If you haven’t paid, don’t: CatoDrive pays the agency.</span></span>
+            <span><span className="font-medium">I already paid this</span><span className="block text-xs text-muted-foreground">We pay you back on your next statement once it’s checked. If you haven’t paid, don’t: CrossCubes pays the agency.</span></span>
           </label>
           <div className="flex justify-end sm:col-span-2"><Button type="submit" size="lg" loading={send.isPending}>Send notice</Button></div>
         </form>

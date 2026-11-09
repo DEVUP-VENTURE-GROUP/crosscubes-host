@@ -25,7 +25,7 @@ beforeEach(async () => {
 const DAY = 86_400_000;
 
 async function world() {
-  await UserModel.create({ _id: 'ops-1', email: 'fleet@catodrive.test', roles: ['host', 'house_fleet'], status: 'active' });
+  await UserModel.create({ _id: 'ops-1', email: 'fleet@crosscubes.test', roles: ['host', 'house_fleet'], status: 'active' });
   const partner = await assetPartnerService.enrol({ userId: 'partner-user', hostId: 'fleet-host', partnerType: 'individual', displayName: 'Syed K.' });
   await VehicleModel.create({
     _id: 'car-1',
@@ -117,7 +117,7 @@ describe('tolls and tickets a partner receives by post', () => {
     expect(await ViolationModel.countDocuments()).toBe(0);
   });
 
-  it('pays the partner back for a notice they paid that CatoDrive takes on, and not for one it rejects', async () => {
+  it('pays the partner back for a notice they paid that CrossCubes takes on, and not for one it rejects', async () => {
     const partner = await world();
     const period = new Date().toISOString().slice(0, 7);
     const paid = await assetPartnerNoticeService.upload('partner-user', notice({ noticeRef: 'R-1', paidByPartner: true, amountCents: 10_000 }));

@@ -5,6 +5,7 @@ import { notificationService } from '../../notifications/application/notificatio
 import { UserModel } from '../../users/infrastructure/user.model';
 import { DocumentModel } from '../../documents/infrastructure/document.model';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import { createApplicationSchema, signAgreementSchema, type CreateApplicationDto } from '../dto/asset-partner-application.schemas';
 import { OWNERSHIP_PAPERS, seasonMonthsAllowed } from '../domain/application-rules';
 import { renderEmail } from '../../notifications/infrastructure/email-template';
@@ -15,6 +16,7 @@ beforeAll(connectTestDb);
 afterAll(disconnectTestDb);
 beforeEach(async () => {
   await clearTestDb();
+  await seedTestHub();
   (notificationService.send as jest.Mock).mockClear();
 });
 
@@ -27,7 +29,7 @@ const PHOTOS = [
 function dto(overrides: Partial<CreateApplicationDto> = {}): CreateApplicationDto {
   return {
     fullName: 'Jordan Ramirez', partnerType: 'individual', email: 'jordan@example.com', phone: '2145550142',
-    address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+    address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin: '1HGCM82633A004352', plate: 'ABC-1234' },
     ownership: 'owned', titleStatus: 'clean', photos: PHOTOS, accident: 'no', availability: 'fulltime',
     acknowledgedAccurate: true, acknowledgedInspection: true, acknowledgedTerms: true,

@@ -38,7 +38,7 @@ function YearSummary() {
     setBusy(true);
     try {
       const { blob, filename } = await assetPartnerApi.downloadYearSummary(year);
-      saveFile(blob, filename ?? `catodrive-earnings-${year}.pdf`);
+      saveFile(blob, filename ?? `crosscubes-earnings-${year}.pdf`);
     } catch {
       toast({ tone: 'error', title: 'That download didn’t work. Try again.' });
     } finally {

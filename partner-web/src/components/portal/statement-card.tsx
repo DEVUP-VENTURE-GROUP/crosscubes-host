@@ -100,7 +100,7 @@ function DownloadStatement({ period }: { period: string }) {
     setBusy(true);
     try {
       const { blob, filename } = await assetPartnerApi.downloadStatement(period);
-      saveFile(blob, filename ?? `catodrive-statement-${period}.pdf`);
+      saveFile(blob, filename ?? `crosscubes-statement-${period}.pdf`);
     } catch {
       toast({ tone: 'error', title: 'That download didn’t work. Try again.' });
     } finally {

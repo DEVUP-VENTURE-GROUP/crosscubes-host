@@ -48,9 +48,9 @@ export async function buildStatementPdf(input: { partnerName: string; statement:
   const { statement: s, vehicles } = input;
   const now = input.generatedAt ?? new Date();
   const doc = await PDFDocument.create();
-  doc.setProducer('CatoDrive');
-  doc.setCreator('CatoDrive');
-  doc.setTitle(`CatoDrive statement ${s.period}`);
+  doc.setProducer('CrossCubes');
+  doc.setCreator('CrossCubes');
+  doc.setTitle(`CrossCubes statement ${s.period}`);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
 
@@ -59,7 +59,7 @@ export async function buildStatementPdf(input: { partnerName: string; statement:
   const text = (t: string, x: number, yy: number, size: number, f = font, color = INK) => page.drawText(safe(t), { x, y: yy, size, font: f, color });
   const right = (t: string, xr: number, yy: number, size: number, f = font, color = INK) => text(t, xr - f.widthOfTextAtSize(safe(t), size), yy, size, f, color);
   const footer = () => {
-    const f = 'CatoDrive  •  Confidential partner report';
+    const f = 'CrossCubes  •  Confidential partner report';
     text(f, (W - font.widthOfTextAtSize(f, 8)) / 2, 24, 8, font, MUTED);
   };
   const ensure = (needed: number) => {
@@ -87,7 +87,7 @@ export async function buildStatementPdf(input: { partnerName: string; statement:
 
   // Summary tiles.
   const feeBps = s.managementFeeBpsUsed.length === 1 ? s.managementFeeBpsUsed[0] : s.terms.managementFeeBps;
-  const feeLabel = s.managementFeeBpsUsed.length > 1 ? `CatoDrive fee (${s.managementFeeBpsUsed.map(pct).join(' / ')})` : `CatoDrive fee (${pct(feeBps)})`;
+  const feeLabel = s.managementFeeBpsUsed.length > 1 ? `CrossCubes fee (${s.managementFeeBpsUsed.map(pct).join(' / ')})` : `CrossCubes fee (${pct(feeBps)})`;
   const net = s.totals.gross - s.totals.managementFee;
   const tiles: [string, string, string, typeof INK][] = [
     [usd(s.totals.gross), 'Gross revenue', 'Completed trips this month', NAVY],

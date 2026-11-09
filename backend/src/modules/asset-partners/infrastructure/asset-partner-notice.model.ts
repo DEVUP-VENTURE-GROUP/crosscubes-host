@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { uuid } from '../../../shared/utils/uuid';
+import { hubScoped } from '../../../shared/tenancy/hub-scoped.plugin';
 
 export const NOTICE_TYPES = ['toll', 'parking', 'traffic', 'impound', 'other'] as const;
 export type NoticeType = (typeof NOTICE_TYPES)[number];
@@ -7,7 +8,7 @@ export type NoticeType = (typeof NOTICE_TYPES)[number];
 /**
  * matched: filed against the trip that had the car, so the guest can be charged.
  * needs_review: no trip, several trips, or arrived too late to charge; ops decides.
- * absorbed: CatoDrive pays it (the car was with our team, or the guest can't be charged).
+ * absorbed: CrossCubes pays it (the car was with our team, or the guest can't be charged).
  * rejected: not ours to pay (another car, a duplicate, before the car joined).
  */
 export type NoticeStatus = 'matched' | 'needs_review' | 'absorbed' | 'rejected';
@@ -17,6 +18,7 @@ export type NoticeReviewReason = 'no_trip' | 'several_trips' | 'too_late';
 export interface AssetPartnerNoticeDoc {
   _id: string;
   partnerId: string;
+  hubId?: string;
   uploadedBy: string;
   vehicleId: string;
   type: NoticeType;
@@ -28,7 +30,7 @@ export interface AssetPartnerNoticeDoc {
   occurredAt?: Date;
   amountCents: number;
   dueDate?: string;
-  /** The partner already paid the agency; CatoDrive pays them back on their statement. */
+  /** The partner already paid the agency; CrossCubes pays them back on their statement. */
   paidByPartner: boolean;
   evidence: { url: string; key?: string; kind: 'image' | 'file' }[];
   status: NoticeStatus;
@@ -36,9 +38,9 @@ export interface AssetPartnerNoticeDoc {
   bookingId?: string;
   candidateBookingIds: string[];
   violationId?: string;
-  /** Statement month the partner is paid back in, once CatoDrive accepts the notice. */
+  /** Statement month the partner is paid back in, once CrossCubes accepts the notice. */
   reimburseInPeriod?: string;
-  /** CatoDrive paid the agency itself, when the partner hadn't. */
+  /** CrossCubes paid the agency itself, when the partner hadn't. */
   agencyPaid?: { at: Date; by: string; reference?: string };
   resolution?: { by: string; at: Date; note?: string };
   timeline: { at: Date; by: string; event: string; note?: string }[];
@@ -75,6 +77,7 @@ const schema = new Schema<AssetPartnerNoticeDoc>(
 );
 
 // One upload per notice per car; a second photo of the same letter is a duplicate, not a second charge.
+schema.plugin(hubScoped);
 schema.index({ vehicleId: 1, noticeRef: 1 }, { unique: true });
 schema.index({ partnerId: 1, createdAt: -1 });
 schema.index({ status: 1, createdAt: -1 });

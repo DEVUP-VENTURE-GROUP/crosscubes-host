@@ -17,18 +17,22 @@ import { LedgerModel } from '../../payments/infrastructure/ledger.model';
 import { paymentGateway } from '../../payments/infrastructure/gateway.provider';
 import { runStripeEvent } from '../../payments/application/stripe-event.handler';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { MockGateway } from '../../payments/infrastructure/mock.gateway';
 import type { PortalApplicationDto } from '../dto/asset-partner-application.schemas';
 
 beforeAll(connectTestDb);
 afterAll(disconnectTestDb);
-beforeEach(clearTestDb);
+beforeEach(async () => {
+  await clearTestDb();
+  await seedTestHub();
+});
 
 const OPS = 'ops-1';
 const gateway = paymentGateway as unknown as MockGateway;
 
 const dto = {
-  fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+  fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
   vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin: '1HGCM82633A004352', plate: 'ABC-1234' },
   ownership: 'owned', titleStatus: 'clean',
   photos: [{ url: 'https://files.example/f.jpg', label: 'Front' }, { url: 'https://files.example/r.jpg', label: 'Rear' }, { url: 'https://files.example/o.jpg', label: 'Odometer' }],
@@ -90,7 +94,7 @@ describe('Asset Partner fee', () => {
     // The partner comes back before the webhook: the portal checks Stripe itself.
     expect((await assetPartnerApplicationService.onboarding(userId)).stage).toBe('agreement');
     // The webhook arrives afterwards and changes nothing.
-    await runStripeEvent({ id: 'evt_1', type: 'checkout.session.completed', data: { object: { id: sessionId, metadata: { kind: 'asset_partner_fee', partnerId: partner._id } } } });
+    await runStripeEvent({ id: 'evt_1', type: 'checkout.session.completed', data: { object: { id: sessionId, metadata: { app: 'crosscubes', kind: 'asset_partner_fee', partnerId: partner._id } } } });
 
     const after = (await AssetPartnerModel.findById(partner._id).lean<AssetPartnerDoc>())!;
     expect(feeView(after.joiningFee)).toMatchObject({ status: 'paid', paidCents: 35_499 });

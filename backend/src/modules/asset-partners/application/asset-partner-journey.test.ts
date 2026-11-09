@@ -43,12 +43,16 @@ import { paymentGateway } from '../../payments/infrastructure/gateway.provider';
 import { runStripeEvent } from '../../payments/application/stripe-event.handler';
 import { notificationService } from '../../notifications/application/notification.service';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
+import { seedTestHub, TEST_HUB_ID } from '../../../testing/hub';
 import type { MockGateway } from '../../payments/infrastructure/mock.gateway';
 import type { PortalApplicationDto } from '../dto/asset-partner-application.schemas';
 
 beforeAll(connectTestDb);
 afterAll(disconnectTestDb);
-beforeEach(clearTestDb);
+beforeEach(async () => {
+  await clearTestDb();
+  await seedTestHub();
+});
 
 const OPS = 'ops-user';
 const gateway = paymentGateway as unknown as MockGateway;
@@ -56,7 +60,7 @@ const DAY = 86_400_000;
 const photo = (label: string, n = 1) => ({ url: `https://files.example/${label}-${n}.jpg`, key: `vehicle_photo/${label}-${n}.jpg`, label, sha256: `${label}-${n}`.padEnd(64, '0') });
 
 const application = {
-  fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201',
+  fullName: 'Jordan Ramirez', partnerType: 'individual', phone: '2145550142', address: '1 Main St', city: 'Dallas', state: 'TX', zip: '75201', hubId: TEST_HUB_ID,
   vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin: '1HGCM82633A004352', plate: 'ABC-1234' },
   ownership: 'owned', titleStatus: 'clean', photos: [photo('Front'), photo('Rear'), photo('Odometer')],
   accident: 'no', availability: 'fulltime', acknowledgedAccurate: true, acknowledgedInspection: true, acknowledgedTerms: true,
@@ -116,7 +120,7 @@ describe('one Asset Partner, from sign-up to returning their car', () => {
     const c = gateway.checkouts.get(sessionId)!;
     gateway.checkouts.set(sessionId, { ...c, status: 'complete', paid: true, intentId: 'pi_journey' });
     expect(await stage(userId)).toBe('agreement');
-    await runStripeEvent({ id: 'evt_journey', type: 'checkout.session.completed', data: { object: { id: sessionId, metadata: { kind: 'asset_partner_fee', partnerId: before._id } } } });
+    await runStripeEvent({ id: 'evt_journey', type: 'checkout.session.completed', data: { object: { id: sessionId, metadata: { app: 'crosscubes', kind: 'asset_partner_fee', partnerId: before._id } } } });
     expect(feeView((await AssetPartnerModel.findById(before._id).lean<AssetPartnerDoc>())!.joiningFee)).toMatchObject({ status: 'paid', paidCents: 35_499 });
     expect(await LedgerModel.countDocuments({ refType: 'asset_partner_fee' })).toBe(2);
 

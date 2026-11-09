@@ -115,11 +115,11 @@ export const assetPartnerFeeService = {
     // The same attempt always maps to the same Stripe page, so a double click cannot open two.
     const session = await paymentGateway.createCheckout({
       lines: [
-        { name: 'CatoDrive Asset Partner registration fee (one-time)', amountCents: fee.amountCents },
+        { name: 'CrossCubes Asset Partner registration fee (one-time)', amountCents: fee.amountCents },
         ...((fee.platformFeeCents ?? 0) > 0 ? [{ name: 'Platform fee', amountCents: fee.platformFeeCents! }] : []),
       ],
       currency: fee.currency,
-      description: 'CatoDrive Asset Partner registration',
+      description: 'CrossCubes Asset Partner registration',
       customerEmail: user?.email ?? p.email,
       successUrl: `${base}/onboarding?fee=paid`,
       cancelUrl: `${base}/onboarding?fee=cancelled`,
@@ -194,7 +194,7 @@ export const assetPartnerFeeService = {
         userId: updated.userId,
         templateKey: 'asset_partner.joining_fee_paid',
         title: 'Payment received',
-        body: `We’ve received your ${dollars(state.amountTotal)} registration payment on ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago' })}. It’s one-time and covers every car you place with CatoDrive. Next, sign your agreement.`,
+        body: `We’ve received your ${dollars(state.amountTotal)} registration payment on ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago' })}. It’s one-time and covers every car you place with CrossCubes. Next, sign your agreement.`,
         deepLink: '/onboarding',
         actionLabel: 'Continue',
         data: { partnerId },

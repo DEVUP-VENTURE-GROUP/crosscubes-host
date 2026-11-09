@@ -183,8 +183,8 @@ export class StripeGateway implements PaymentGateway {
         customer_email: input.customerEmail,
         success_url: input.successUrl,
         cancel_url: input.cancelUrl,
-        metadata: input.metadata,
-        payment_intent_data: { metadata: input.metadata, description: input.description },
+        metadata: { ...input.metadata, app: config.app.key },
+        payment_intent_data: { metadata: { ...input.metadata, app: config.app.key }, description: input.description },
       },
       { idempotencyKey: input.idempotencyKey },
     );

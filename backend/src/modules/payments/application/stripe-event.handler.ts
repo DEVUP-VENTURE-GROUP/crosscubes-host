@@ -35,7 +35,8 @@ export async function runStripeEvent(event: {
       last_payment_error?: { message?: string };
     };
     // The Stripe account is shared with another system: skip anything tagged for it, and untagged payments, which are its own.
-    const untaggedIsForeign = event.type.startsWith('payment_intent.') || (event.type.startsWith('charge.') && !event.type.startsWith('charge.dispute.'));
+    const untaggedIsForeign =
+      event.type.startsWith('payment_intent.') || event.type.startsWith('checkout.session.') || (event.type.startsWith('charge.') && !event.type.startsWith('charge.dispute.'));
     const foreign = obj.metadata?.app ? obj.metadata.app !== config.app.key : untaggedIsForeign;
     if (foreign) {
       await WebhookEventModel.updateOne({ _id: event.id }, { status: 'processed', processedAt: new Date(), $unset: { payload: 1 } });

@@ -100,7 +100,7 @@ export interface AssetPartnerApplicationDoc {
   // Step 4 — Condition
   hadAccident: boolean;
   accidentDetail?: string;
-  /** No longer asked: CatoDrive cars are always no-smoking and no-pets. Older applications have them. */
+  /** No longer asked: CrossCubes cars are always no-smoking and no-pets. Older applications have them. */
   smokeFree?: boolean;
   petFree?: boolean;
   hasMaintenanceRecords?: boolean;

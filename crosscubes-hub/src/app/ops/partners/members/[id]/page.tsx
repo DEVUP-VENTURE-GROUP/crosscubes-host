@@ -43,7 +43,7 @@ function StatementDownload({ partnerId }: { partnerId: string }) {
     setBusy(true);
     try {
       const { blob, filename } = await api.download(`/ioc/asset-partners/${partnerId}/statements/${period}/pdf`);
-      saveFile(blob, filename ?? `catodrive-statement-${period}.pdf`);
+      saveFile(blob, filename ?? `crosscubes-statement-${period}.pdf`);
     } catch {
       toast({ tone: 'error', title: 'That download didn’t work. Try again.' });
     } finally {

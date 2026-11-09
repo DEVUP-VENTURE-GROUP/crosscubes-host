@@ -251,7 +251,7 @@ export interface PartnerApplication {
   createdAt: string;
   reviewedAt?: string;
   reviewNotes?: string;
-  /** What CatoDrive asked to be redone; only these items are open when it is sent again. */
+  /** What CrossCubes asked to be redone; only these items are open when it is sent again. */
   changeRequest?: { items: { key: string; label: string; note?: string }[]; note?: string; requestedAt: string };
   hostVerified?: boolean;
   kind?: 'partner' | 'vehicle';
@@ -340,7 +340,7 @@ export interface PartnerStatement {
     insurance: number;
     detailing: number;
     repairs: number;
-    /** Tolls and tickets the partner paid that CatoDrive accepted, paid back here. */
+    /** Tolls and tickets the partner paid that CrossCubes accepted, paid back here. */
     noticeRefunds: number;
     net: number;
   };

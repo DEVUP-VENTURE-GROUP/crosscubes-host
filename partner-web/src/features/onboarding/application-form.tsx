@@ -220,7 +220,7 @@ export interface ApplicationFormProps {
   initial?: PartnerApplicationDetail;
   /** CrossCubes's note when it sent the application back. */
   reviewNote?: string;
-  /** The exact items CatoDrive asked to redo; everything else stays locked. */
+  /** The exact items CrossCubes asked to redo; everything else stays locked. */
   changeRequest?: PartnerApplicationDetail['changeRequest'];
   draftKey: string;
   submitLabel?: string;
@@ -392,7 +392,7 @@ export function ApplicationForm({ mode, initial, reviewNote, changeRequest, draf
     <div ref={top} className="scroll-mt-24 space-y-5">
       {only && (
         <div className="space-y-3 rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
-          <p className="font-semibold">CatoDrive asked you to change {requested.length === 1 ? 'one thing' : `${requested.length} things`}</p>
+          <p className="font-semibold">CrossCubes asked you to change {requested.length === 1 ? 'one thing' : `${requested.length} things`}</p>
           {changeRequest?.note && <p className="text-muted-foreground">{changeRequest.note}</p>}
           <ul className="space-y-1.5">
             {requested.map((i) => {
@@ -460,7 +460,7 @@ export function ApplicationForm({ mode, initial, reviewNote, changeRequest, draf
 
           {step === 'car' && (
             <>
-              <Section title="Your car" hint={only ? 'Only the items CatoDrive asked about are open.' : 'Type the VIN and we fill in the rest. It’s on the driver-side dashboard and your registration.'} />
+              <Section title="Your car" hint={only ? 'Only the items CrossCubes asked about are open.' : 'Type the VIN and we fill in the rest. It’s on the driver-side dashboard and your registration.'} />
               {show('details') && (<>
               <Field label="VIN" htmlFor="vin" error={errors.vin}>
                 <div className="flex gap-2">
@@ -543,7 +543,7 @@ export function ApplicationForm({ mode, initial, reviewNote, changeRequest, draf
               {!only && (
               <p className="flex items-start gap-2 rounded-lg bg-subtle p-3 text-sm">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Every CatoDrive car is smoke-free and pet-free. Guests agree to this in our rental terms, and we handle it if they break it.</span>
+                <span>Every CrossCubes car is smoke-free and pet-free. Guests agree to this in our rental terms, and we handle it if they break it.</span>
               </p>
               )}
               {(show('insurance') || show('paper:insurance')) && (

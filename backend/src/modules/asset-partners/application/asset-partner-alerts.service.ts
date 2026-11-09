@@ -15,7 +15,7 @@ async function partnerUserFor(vehicleId: string): Promise<{ userId: string; car:
   return p ? { userId: p.userId, car: `${v.year} ${v.make} ${v.model}` } : null;
 }
 
-/** Messages an Asset Partner needs because the car is theirs, even though CatoDrive's team runs it. */
+/** Messages an Asset Partner needs because the car is theirs, even though CrossCubes's team runs it. */
 export const assetPartnerAlertsService = {
   /** The first time a partner's car is listed, its owner hears it is earning; later relists stay quiet. */
   async carLive(vehicleId: string): Promise<void> {

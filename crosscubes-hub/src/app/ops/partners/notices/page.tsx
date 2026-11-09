@@ -25,7 +25,7 @@ const usd = (cents: number) => formatMoney({ amount: cents, currency: 'USD' });
 const FILTERS: { value: NoticeStatus | ''; label: string }[] = [
   { value: 'needs_review', label: 'Needs a decision' },
   { value: 'matched', label: 'Matched to a trip' },
-  { value: 'absorbed', label: 'CatoDrive pays' },
+  { value: 'absorbed', label: 'CrossCubes pays' },
   { value: 'rejected', label: 'Not taken on' },
   { value: '', label: 'All' },
 ];
@@ -61,7 +61,7 @@ function NoticeRow({ n }: { n: PartnerNotice }) {
               {n.partnerName} · {n.vehicle?.name}{n.vehicle?.plate ? ` (${n.vehicle.plate})` : ''} · {n.occurredAt ? formatDateTime(n.occurredAt) : formatDate(n.occurredDate)} · ref <span className="font-mono">{n.noticeRef}</span>
             </p>
             <p className="text-sm">
-              {n.paidByPartner ? 'Partner already paid the agency; refund on their statement.' : n.agencyPaid ? `CatoDrive paid the agency ${formatDate(n.agencyPaid.at)}.` : 'Agency not paid yet.'}
+              {n.paidByPartner ? 'Partner already paid the agency; refund on their statement.' : n.agencyPaid ? `CrossCubes paid the agency ${formatDate(n.agencyPaid.at)}.` : 'Agency not paid yet.'}
               {due && !n.paidByPartner && !n.agencyPaid && <span className={overdueSoon ? ' font-semibold text-destructive' : ' text-muted-foreground'}> Due {formatDate(due)}.</span>}
               {n.trip && <span className="text-muted-foreground"> Trip {n.trip.code}.</span>}
             </p>
@@ -84,7 +84,7 @@ function NoticeRow({ n }: { n: PartnerNotice }) {
             ) : (
               <span className="text-sm text-muted-foreground">Check the trip log: was the car with a captain, in the shop, or with a guest outside the app?</span>
             )}
-            <Button size="sm" variant="outline" loading={absorb.isPending} onClick={async () => { const r = await confirm({ title: 'CatoDrive pays this one?', confirmLabel: 'CatoDrive pays', reason: { label: 'Why? The partner sees this.', required: true } }); if (r.ok) absorb.mutate(r.reason); }}>CatoDrive pays</Button>
+            <Button size="sm" variant="outline" loading={absorb.isPending} onClick={async () => { const r = await confirm({ title: 'CrossCubes pays this one?', confirmLabel: 'CrossCubes pays', reason: { label: 'Why? The partner sees this.', required: true } }); if (r.ok) absorb.mutate(r.reason); }}>CrossCubes pays</Button>
             <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" loading={reject.isPending} onClick={async () => { const r = await confirm({ title: 'Not take this one on?', tone: 'destructive', confirmLabel: 'Not ours', reason: { label: 'Why? The partner sees this.', required: true } }); if (r.ok) reject.mutate(r.reason); }}>Not ours</Button>
           </div>
         )}

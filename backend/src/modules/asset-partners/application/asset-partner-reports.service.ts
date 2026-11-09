@@ -24,7 +24,7 @@ export const assetPartnerReportsService = {
     if (!/^\d{4}-\d{2}$/.test(period) || period > currentPeriod()) throw new ValidationError('Pick a month that has started.');
     const s = await assetPartnerStatementService.statement(partner, period);
     const pdf = await buildStatementPdf({ partnerName: partner.displayName, statement: s, vehicles: await this.ledger(s) });
-    return { pdf, filename: `catodrive-statement-${period}.pdf` };
+    return { pdf, filename: `crosscubes-statement-${period}.pdf` };
   },
 
   /** Each car on the statement with the completed trips that earned its gross, in the order they happened. */
@@ -45,7 +45,7 @@ export const assetPartnerReportsService = {
       plate: plate.get(l.vehicleId),
       trips: trips
         .filter((t) => t.vehicleId === l.vehicleId)
-        .map((t) => ({ start: t.period.start, end: t.period.end, where: t.delivery?.locationName || t.delivery?.address || 'Picked up at the CatoDrive base', gross: t.priceBreakdown?.subtotal?.amount ?? 0 })),
+        .map((t) => ({ start: t.period.start, end: t.period.end, where: t.delivery?.locationName || t.delivery?.address || 'Picked up at the CrossCubes base', gross: t.priceBreakdown?.subtotal?.amount ?? 0 })),
     }));
   },
 
@@ -94,6 +94,6 @@ export const assetPartnerReportsService = {
       'Your 1099 reports what was paid to you in the calendar year. A month earned in December is usually paid in January of the next year.',
     ].join('\n');
     const pdf = await buildTextPdf(`Earnings summary, ${year}`, body, [partner.displayName, 'For your records and your tax preparer']);
-    return { pdf, filename: `catodrive-earnings-${year}.pdf` };
+    return { pdf, filename: `crosscubes-earnings-${year}.pdf` };
   },
 };
