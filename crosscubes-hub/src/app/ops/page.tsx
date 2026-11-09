@@ -13,7 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils/cn';
 import { formatMoney } from '@/lib/utils/format';
 import { hostApi } from '~/features/host/api';
-import { useHostMe, useEarnings } from '~/features/host/hooks';
+import { useHostMe } from '~/features/host/hooks';
+import { useMyHub, useMyHubPayouts, holderTotals } from '~/features/hub/api';
+import { bpsToPercent } from '@/features/hubs/types';
 import { useMyVehicles } from '@/features/vehicles/hooks';
 import { PushPrompt } from '@/features/push/push-prompt';
 import type { Vehicle } from '@/features/vehicles/types';
@@ -42,19 +44,20 @@ import type { Vehicle } from '@/features/vehicles/types';
  */
 export default function HostDashboardPage() {
   const host = useHostMe();
-  const earnings = useEarnings();
+  const myHub = useMyHub();
+  const statements = useMyHubPayouts();
   const vehicles = useMyVehicles(true);
 
   const inbox = useQuery({ queryKey: ['host-inbox'], queryFn: () => hostApi.inboxActions(), retry: false });
   const payout = useQuery({ queryKey: ['payout-readiness'], queryFn: () => hostApi.payoutReadiness(), retry: false });
 
-  const cur = earnings.data?.currency ?? 'USD';
-  const money = (v: number) => formatMoney({ amount: v, currency: cur });
+  const money = (v: number) => formatMoney({ amount: v, currency: 'USD' });
 
   const cars = vehicles.data ?? [];
   const actions = inbox.data?.items ?? [];
   const blockers = (payout.data?.blockers ?? []).filter((b) => b.severity === 'blocking');
-  const hasHistory = (earnings.data?.lifetimeEarnings ?? 0) > 0 || (earnings.data?.completedTrips ?? 0) > 0;
+  const holder = holderTotals(statements.data);
+  const hasHistory = (statements.data?.length ?? 0) > 0;
 
   return (
     <div className="space-y-8 pb-8">
@@ -136,39 +139,39 @@ export default function HostDashboardPage() {
       )}
 
       {/* 2 - Money. One headline figure, the rest supporting it. */}
-      {earnings.isError && !earnings.data ? (
-          <ErrorState message="We couldn’t load earnings." retry={() => void earnings.refetch()} />
-        ) : earnings.isLoading ? (
+      {statements.isError && !statements.data ? (
+          <ErrorState message="We couldn’t load your statements." retry={() => void statements.refetch()} />
+        ) : statements.isLoading ? (
         <Skeleton className="h-40 w-full rounded-lg" />
       ) : hasHistory ? (
         <section className="rounded-lg bg-muted/20 border border-border/30 overflow-hidden">
           <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <div className="p-8 sm:border-r border-border/40 flex flex-col justify-center">
               <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                <TrendingUp className="h-4 w-4 text-primary" /> Lifetime earnings
+                <TrendingUp className="h-4 w-4 text-primary" /> Paid to you so far
               </p>
               <p className="numeric tracking-tighter mt-4 text-5xl lg:text-6xl font-black text-foreground">
-                {money(earnings.data!.lifetimeEarnings)}
+                {money(holder.paid)}
               </p>
               <p className="mt-3 text-sm font-medium text-muted-foreground">
-                Across {earnings.data!.completedTrips ?? 0} completed trip
-                {earnings.data!.completedTrips === 1 ? '' : 's'}
+                Your share of {holder.trips} completed trip
+                {holder.trips === 1 ? '' : 's'}
               </p>
               <Link
-                href="/ops/earnings"
+                href="/ops/hub"
                 className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition-transform hover:scale-105"
               >
-                View breakdown <ArrowRight className="h-4 w-4" />
+                View statements <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             <dl className="flex flex-col justify-center p-6 sm:p-8 space-y-6">
-              <Figure label="Available now" value={money(earnings.data!.currentBalance)} />
               <Figure
-                label="Pending payout"
-                value={money(earnings.data!.pendingPayout)}
-                tone={earnings.data!.pendingPayout > 0 ? 'warning' : undefined}
+                label="Waiting to be paid"
+                value={money(holder.owed)}
+                tone={holder.owed > 0 ? 'warning' : undefined}
               />
-              <Figure label="Paid out" value={money(earnings.data!.paidOut)} />
+              <Figure label="Your share of each trip" value={myHub.data ? bpsToPercent(myHub.data.holderShareBps) : '—'} />
+              <Figure label="Monthly statements" value={String(statements.data?.length ?? 0)} />
             </dl>
           </div>
         </section>
@@ -181,11 +184,11 @@ export default function HostDashboardPage() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-xl font-bold text-foreground">No earnings yet</p>
+                <p className="text-xl font-bold text-foreground">No statements yet</p>
                 <p className="mt-1 max-w-prose text-base font-medium text-muted-foreground">
                   {cars.length === 0
-                    ? 'List your first car and your earnings will appear here after your first completed trip.'
-                    : 'Your cars are live. Earnings appear here once your first trip completes.'}
+                    ? 'List your first car. Your share appears here after the first month with completed trips.'
+                    : 'Your cars are live. Your share appears here after the first month with completed trips.'}
                 </p>
               </div>
             </div>

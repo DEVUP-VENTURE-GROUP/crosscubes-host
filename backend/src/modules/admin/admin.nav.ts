@@ -41,6 +41,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
 
   { slug: 'asset-partners', path: A('asset-partners'), apiPath: '/admin/asset-partners/summary', label: 'Asset Partners', group: 'Money out', permission: 'admin:read' },
   { slug: 'asset-partner-terms', path: A('asset-partner-terms'), apiPath: '/admin/config', label: 'Partner Terms', group: 'Money out', permission: 'platform:manage' },
+  { slug: 'partner-agreement', path: A('partner-agreement'), apiPath: '/admin/asset-partner-agreements', label: 'Partner Agreement', group: 'Money out', permission: 'host:manage' },
 
   { slug: 'users', path: A('users'), apiPath: '/admin/users', label: 'Users', group: 'People & cars', permission: 'admin:read' },
   { slug: 'kyc', path: A('kyc'), apiPath: '/admin/kyc', label: 'ID Checks', group: 'People & cars', permission: 'kyc:review' },

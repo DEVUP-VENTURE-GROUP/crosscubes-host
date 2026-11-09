@@ -15,7 +15,7 @@ export function iocNotificationLink(n: Notification): string | null {
   if (link?.startsWith('/ops/') || link === '/ops' || link?.startsWith('/captain')) return link;
   const host = link?.match(/^\/host\/(trips|listings)\/([^/?#]+)(.*)$/);
   if (host) return `/ops/${host[1]}/${host[2]}${host[3]}`;
-  if (link?.startsWith('/host/earnings') || n.templateKey.includes('payout')) return '/ops/earnings';
+  if (link?.startsWith('/host/earnings') || n.templateKey.includes('payout')) return '/ops/hub';
   if (link?.startsWith('/asset-partners')) return '/ops/partners';
 
   if (bookingId) return `/ops/trips/${bookingId}`;

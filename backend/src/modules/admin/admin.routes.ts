@@ -24,6 +24,7 @@ import { platformConfigAdminRoutes } from '../platform-config/api/platform-confi
 import { growthAdminRoutes } from '../platform-config/api/growth.admin.routes';
 import { assetPartnerApplicationAdminRoutes } from '../asset-partners/api/asset-partner-application.admin.routes';
 import { assetPartnerAdminRoutes } from '../asset-partners/api/asset-partner.admin.routes';
+import { assetPartnerAgreementAdminRoutes } from '../asset-partners/api/asset-partner-agreement.admin.routes';
 import { contactInquiryAdminRoutes } from '../contact/api/contact-inquiry.admin.routes';
 import { insuranceAdminRoutes } from '../insurance/api/insurance.admin.routes';
 import { insurancePartnerAdminRoutes } from '../insurance-partners/api/insurance-partner.admin.routes';
@@ -60,6 +61,7 @@ export function buildAdminRouter(): Router {
   admin.use(hostsAdminRoutes);
   admin.use(assetPartnerApplicationAdminRoutes);
   admin.use(assetPartnerAdminRoutes);
+  admin.use(assetPartnerAgreementAdminRoutes);
   admin.use(contactInquiryAdminRoutes);
   admin.use(vehiclesAdminRoutes);
   admin.use(insuranceAdminRoutes);

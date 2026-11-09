@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, Car, Info, HelpCircle, FileText, ShieldCheck, Calculator, Sparkles } from 'lucide-react';
+import { Search, Menu, X, Info, HelpCircle, FileText, ShieldCheck, Calculator, Sparkles } from 'lucide-react';
 import { config } from '@/lib/config';
 import { Logo } from '@/components/layout/logo';
 import { useAuthStore } from '@/features/auth/store';
-import { useIsHost } from '@/features/host/hooks';
 import { useIsAssetPartner } from '@/features/asset-partners/hooks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
@@ -21,12 +20,9 @@ import { SearchBarFields } from '@/features/search/search-bar-fields';
 
 export function Navbar() {
   const { status } = useAuthStore();
-  // CrossCubes's own fleet is run from the operations panel, never the host site.
-  const isHouseFleet = useAuthStore((s) => s.user?.roles?.includes('house_fleet') ?? false);
   const pathname = usePathname();
   const authed = status === 'authenticated';
   const { isMember } = useMembership();
-  const isHost = useIsHost();
   const isAssetPartner = useIsAssetPartner();
   const isSearch = pathname === '/search';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -147,25 +143,6 @@ export function Navbar() {
                   Asset Partners
                 </Link>
               )}
-              {/*
-                Asset-Partners-only launch: don't invite a NEW self-serve
-                host. An EXISTING host still reaches their own dashboard -
-                that isn't an invitation, it's their own listing.
-
-                `!isAssetPartner` is load-bearing, not decoration: every Asset
-                Partner also carries a verified Host record underneath (it's
-                the marketplace-seller plumbing a Vehicle hangs off), so
-                isHost reads true for partners too. Without this, every
-                partner saw "Host dashboard" here and could reach the
-                self-serve tools - including Add a car, which lists a vehicle
-                with no assetPartnerId and bills it as an ordinary host
-                booking instead of running it through their actual terms.
-              */}
-              {(isHost || !config.assetPartnersOnly) && !isAssetPartner && !isHouseFleet ? (
-                <SiteLink path="/host" className="hidden rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:bg-primary/10 hover:text-primary xl:block">
-                  {isHost ? 'Host dashboard' : 'Become a host'}
-                </SiteLink>
-              ) : null}
             </>
           )}
 
@@ -237,13 +214,6 @@ export function Navbar() {
                     <Sparkles className="h-5 w-5" />
                     Asset Partners
                   </Link>
-                )}
-                {/* See the desktop link above for why !isAssetPartner matters here. */}
-                {(isHost || !config.assetPartnersOnly) && !isAssetPartner && !isHouseFleet && (
-                  <SiteLink path="/host" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onNavigate={() => setMobileMenuOpen(false)}>
-                    <Car className="h-5 w-5 text-muted-foreground" />
-                    {isHost ? 'Host dashboard' : 'Become a host'}
-                  </SiteLink>
                 )}
                 <Link href="/about" className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-accent" onClick={() => setMobileMenuOpen(false)}>
                   <Info className="h-5 w-5 text-muted-foreground" />

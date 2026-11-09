@@ -21,18 +21,10 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
   {
-    title: 'Hosting',
+    title: 'Asset Partners',
     links: [
       { label: 'Asset Partners', href: '/asset-partners' },
       { label: 'Partner dashboard', href: '/asset-partners/dashboard' },
-      ...(config.assetPartnersOnly
-        ? []
-        : [
-            { label: 'Become a host', href: '/host' },
-            { label: 'List your car', href: '/host/listings/new' },
-            { label: 'Host earnings', href: '/host/earnings' },
-            { label: 'Fleet management', href: '/host/fleet' },
-          ]),
     ],
   },
   {

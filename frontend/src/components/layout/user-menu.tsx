@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { config } from '@/lib/config';
 import {
   Car, LogOut, Wallet, Gift, User, LifeBuoy, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store';
@@ -132,13 +131,6 @@ export function UserMenu() {
               <SiteLink path="/asset-partners/dashboard" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                 <Car className="h-4 w-4 text-primary" /> Partner dashboard
               </SiteLink>
-            )}
-            {!config.assetPartnersOnly && !isAssetPartner && !user?.roles?.includes('house_fleet') && (
-              <>
-                <SiteLink path="/host" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
-                  <Car className="h-4 w-4 text-primary" /> Host dashboard
-                </SiteLink>
-              </>
             )}
             {/* No admin link here. The console is a separate application on
                 its own hostname behind Cloudflare Access; the public app neither

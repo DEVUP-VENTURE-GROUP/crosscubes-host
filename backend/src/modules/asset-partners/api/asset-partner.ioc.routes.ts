@@ -2,7 +2,7 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { assetPartnerApplicationAdminRoutes } from './asset-partner-application.admin.routes';
 import { assetPartnerAdminRoutes } from './asset-partner.admin.routes';
-import { assetPartnerAgreementService, AGREEMENT_PLACEHOLDERS } from '../application/asset-partner-agreement.service';
+import { assetPartnerAgreementService } from '../application/asset-partner-agreement.service';
 import { assetPartnerService, PARTNER_DOCS } from '../application/asset-partner.service';
 import { assetPartnerCarService, MAX_CARS_PER_BATCH } from '../application/asset-partner-car.service';
 import { assetPartnerPayoutService } from '../application/asset-partner-payout.service';
@@ -54,6 +54,7 @@ router.get(
       documents: (hub.documents ?? []).map((d) => ({ id: d._id, kind: d.kind, label: d.label, expiresAt: d.expiresAt })),
       launchBlockers: hub.status === 'setup' ? hubService.launchBlockers(hub) : [],
       pauseReason: hub.status === 'paused' ? hubService.lastPauseNote(hub) : undefined,
+      deliverySpots: hub.deliverySpots ?? [],
     });
   }),
 );
@@ -69,32 +70,6 @@ router.get(
 // The operations panel manages Asset Partners with the same endpoints the admin console has always used.
 router.use(assetPartnerApplicationAdminRoutes);
 router.use(assetPartnerAdminRoutes);
-
-router.get(
-  '/asset-partner-agreements',
-  authorize('admin:read'),
-  asyncHandler(async (_req, res) => {
-    sendSuccess(res, await assetPartnerAgreementService.versions());
-  }),
-);
-
-router.get(
-  '/asset-partner-agreements/placeholders',
-  authorize('admin:read'),
-  asyncHandler(async (_req, res) => {
-    sendSuccess(res, AGREEMENT_PLACEHOLDERS);
-  }),
-);
-
-/** Publishes a new version; partners who already signed keep the version they signed. */
-router.post(
-  '/asset-partner-agreements',
-  authorize('host:manage'),
-  validate({ body: z.object({ kind: z.enum(['agreement', 'nda', 'amendment']).default('agreement'), title: z.string().trim().min(3).max(160), body: z.string().trim().min(50).max(100_000) }) }),
-  asyncHandler(async (req, res) => {
-    sendCreated(res, await assetPartnerAgreementService.publish(req.principal!.userId, req.body));
-  }),
-);
 
 /** A partner's signed copy, for CrossCubes's records. */
 router.get(

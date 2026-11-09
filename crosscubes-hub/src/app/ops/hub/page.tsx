@@ -1,28 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatTile } from '@/components/ui/stat-tile';
 import { ErrorState } from '@/components/ui/states';
-import { api } from '@/lib/api/client';
+import { useMyHub, useMyHubPayouts, holderTotals } from '~/features/hub/api';
 import { formatDate, formatMoney } from '@/lib/utils/format';
-import { bpsToPercent, DOCUMENT_LABEL, HUB_STATUS_LABEL, HUB_STATUS_TONE, PAYOUT_METHOD_LABEL, type DocumentKind, type HubPayout, type HubStatus } from '@/features/hubs/types';
+import { bpsToPercent, DOCUMENT_LABEL, HUB_STATUS_LABEL, HUB_STATUS_TONE, PAYOUT_METHOD_LABEL, type DocumentKind, type HubStatus } from '@/features/hubs/types';
 
-interface MyHub {
-  code: string;
-  name: string;
-  city: string;
-  state: string;
-  status: HubStatus;
-  launchedAt?: string;
-  holderShareBps: number;
-  licenceExpiresAt?: string;
-  documents: { id: string; kind: DocumentKind; label: string; expiresAt?: string }[];
-  launchBlockers: string[];
-}
 
 const usd = (amount: number) => formatMoney({ amount, currency: 'USD' });
 const MONTH = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -35,15 +23,14 @@ function dateTone(iso?: string): 'success' | 'warning' | 'destructive' | 'muted'
 }
 
 export default function MyHubPage() {
-  const hub = useQuery({ queryKey: ['my-hub'], queryFn: () => api.get<MyHub>('/ioc/hub') });
-  const payouts = useQuery({ queryKey: ['my-hub-payouts'], queryFn: () => api.get<HubPayout[]>('/ioc/hub/payouts') });
+  const hub = useMyHub();
+  const payouts = useMyHubPayouts();
 
   if (hub.isError) return <ErrorState message="We couldn’t load your hub." retry={() => void hub.refetch()} />;
   if (!hub.data) return <div className="space-y-4" aria-busy="true"><Skeleton className="h-12 w-64" /><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-lg" />)}</div></div>;
 
   const h = hub.data;
-  const paidTotal = (payouts.data ?? []).filter((p) => p.status === 'paid').reduce((s, p) => s + p.amountCents, 0);
-  const owed = (payouts.data ?? []).filter((p) => p.status === 'pending').reduce((s, p) => s + p.amountCents, 0);
+  const { paid: paidTotal, owed } = holderTotals(payouts.data);
 
   return (
     <div className="space-y-6">
@@ -96,6 +83,31 @@ export default function MyHubPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader><CardTitle>Delivery spots</CardTitle></CardHeader>
+        <CardContent>
+          {h.deliverySpots.length === 0 ? (
+            <p className="text-sm text-muted-foreground">HQ hasn’t set standard delivery spots for your city yet. New cars start with no delivery places until it does.</p>
+          ) : (
+            <>
+              <p className="pb-3 text-sm text-muted-foreground">Set by HQ. Every new car listed in your city starts with these places and fees; you can change them per car.</p>
+              <ul className="divide-y divide-border rounded-lg border border-border">
+                {h.deliverySpots.map((d, i) => (
+                  <li key={`${d.name}-${i}`} className="flex items-center gap-3 p-3 text-sm">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{d.name}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{d.address}{d.minTripDays ? ` · ${d.minTripDays}+ day trips` : ''}</span>
+                    </span>
+                    <span className="font-medium tabular-nums">{usd(d.fee)}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Your monthly statements</CardTitle></CardHeader>

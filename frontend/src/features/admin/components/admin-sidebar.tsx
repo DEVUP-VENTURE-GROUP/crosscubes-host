@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, BadgeCheck, Car, CalendarCheck, ShieldAlert, LifeBuoy,
   ScanFace, Flag, ScrollText, LayoutGrid, Shield, SlidersHorizontal, TrendingUp, Star, Route,
   Handshake, Receipt, PieChart, Radio, Gift, Umbrella,
-  Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles, Network, FileSignature,
+  Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles, Network, FileSignature, FileText,
 } from 'lucide-react';
 import { PanelSidebar, type PanelNavItem } from '@/components/layout/panel-sidebar';
 import { adminApi, type AdminNavItem } from '@/features/admin/api';
@@ -40,6 +40,7 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   'asset-partners': Handshake,
   // The programme's own economics - a fee, not a commission rule.
   'asset-partner-terms': Receipt,
+  'partner-agreement': FileText,
   tax: Landmark,
   coupons: Ticket,
   kb: BookOpen,

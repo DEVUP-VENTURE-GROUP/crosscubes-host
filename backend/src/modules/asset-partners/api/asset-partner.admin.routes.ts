@@ -1,3 +1,4 @@
+import { assetPartnerAgreementService, AGREEMENT_PLACEHOLDERS } from '../application/asset-partner-agreement.service';
 import { Router } from 'express';
 import { z } from 'zod';
 import { assetPartnerService } from '../application/asset-partner.service';
@@ -225,6 +226,23 @@ router.get(
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Cache-Control', 'private, no-store');
     res.send(pdf);
+  }),
+);
+
+/** One agreement and NDA for every city, written by HQ; both consoles can read it. */
+router.get(
+  '/asset-partner-agreements',
+  authorize('admin:read'),
+  asyncHandler(async (_req, res) => {
+    sendSuccess(res, await assetPartnerAgreementService.versions());
+  }),
+);
+
+router.get(
+  '/asset-partner-agreements/placeholders',
+  authorize('admin:read'),
+  asyncHandler(async (_req, res) => {
+    sendSuccess(res, AGREEMENT_PLACEHOLDERS);
   }),
 );
 
