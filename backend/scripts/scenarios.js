@@ -7,7 +7,7 @@
  *
  * Usage: node scripts/scenarios.js
  */
-const API = 'http://localhost:8080/api/v1';
+const API = 'http://localhost:4400/api/v1';
 
 let pass = 0;
 let fail = 0;

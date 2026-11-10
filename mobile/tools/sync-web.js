@@ -99,7 +99,6 @@ const ENTRIES = [
   'features/asset-partners/api.ts',
   'features/asset-partners/hooks.ts',
   'features/asset-partners/status.ts',
-  'features/corporate/api.ts',
   'features/partner/workspaces.ts',
   'features/maps/api.ts',
 ];

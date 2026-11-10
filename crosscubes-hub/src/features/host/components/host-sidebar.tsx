@@ -11,7 +11,6 @@ export const ICONS = {
   inbox: Inbox,
   listings: Car,
   performance: BarChart3,
-  earnings: TrendingUp,
   operations: Wrench,
   team: Users,
   partners: Handshake,
@@ -27,7 +26,6 @@ export const NAV = [
   { slug: 'operations', label: 'Operations', path: '/ops/operations', group: 'Manage', mobile: false },
   { slug: 'partners', label: 'Asset management', path: '/ops/partners', group: 'Manage', mobile: false },
   { slug: 'team', label: 'Captains', path: '/ops/team', group: 'Manage', mobile: false },
-  { slug: 'earnings', label: 'Earnings', path: '/ops/earnings', group: 'Money' },
   { slug: 'performance', label: 'Performance', path: '/ops/performance', group: 'Money', mobile: false },
   { slug: 'hub', label: 'My hub', path: '/ops/hub', group: 'Money' },
   { slug: 'profile', label: 'Profile', path: '/ops/profile', group: 'Account' },
@@ -42,7 +40,7 @@ export function HostSidebar() {
   return (
     <PanelSidebar
       title={host.data?.displayName ?? 'CrossCubes'}
-      subtitle="Operations panel"
+      subtitle="City panel"
       icon={Store}
       items={items}
       icons={ICONS}

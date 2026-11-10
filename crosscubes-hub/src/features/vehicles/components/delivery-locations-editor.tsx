@@ -194,7 +194,7 @@ function LocationEditRow({
         <M className="h-4 w-4" /> {KIND_META[value.kind].label}
       </div>
 
-      <Field label="Name" hint="Shown to guests, e.g. &ldquo;Dallas Love Field Airport&rdquo;">
+      <Field label="Name" hint="Shown to guests, e.g. &ldquo;George Bush Intercontinental Airport&rdquo;">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={KIND_META[value.kind].label} />
       </Field>
 

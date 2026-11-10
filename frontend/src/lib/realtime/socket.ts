@@ -15,7 +15,7 @@ function socketBase(): string {
     const u = new URL(config.apiUrl);
     return `${u.protocol}//${u.host}`;
   } catch {
-    return 'http://localhost:8080';
+    return 'http://localhost:4400';
   }
 }
 

@@ -32,7 +32,6 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { slug: 'reports', path: A('reports'), apiPath: '/admin/finance', label: 'Reports', group: 'Overview', permission: 'analytics:read' },
   { slug: 'visitors', path: A('visitors'), apiPath: '/admin/analytics/live-traffic', label: 'Visitors', group: 'Overview', permission: 'analytics:read' },
 
-  { slug: 'commission', path: A('commission'), apiPath: '/admin/commission-rules', label: 'Commission', group: 'Money in', permission: 'admin:read' },
   { slug: 'economics', path: A('economics'), apiPath: '/admin/config', label: 'Platform Economics', group: 'Money in', permission: 'admin:read' },
   { slug: 'tax', path: A('tax'), apiPath: '/admin/tax-rules', label: 'Rental Tax', group: 'Money in', permission: 'platform:manage' },
   { slug: 'coupons', path: A('coupons'), apiPath: '/admin/coupons', label: 'Promo Codes', group: 'Money in', permission: 'platform:manage' },
@@ -40,17 +39,15 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { slug: 'memberships', path: A('memberships'), apiPath: '/admin/subscription-plans', label: 'Memberships', group: 'Money in', permission: 'admin:read' },
   { slug: 'referrals', path: A('referrals'), apiPath: '/admin/referrals/stats', label: 'Referrals', group: 'Money in', permission: 'admin:read' },
 
-  { slug: 'payouts', path: A('payouts'), apiPath: '/admin/payouts', label: 'Host Payouts', group: 'Money out', permission: 'payout:manage' },
   { slug: 'asset-partners', path: A('asset-partners'), apiPath: '/admin/asset-partners/summary', label: 'Asset Partners', group: 'Money out', permission: 'admin:read' },
   { slug: 'asset-partner-terms', path: A('asset-partner-terms'), apiPath: '/admin/config', label: 'Partner Terms', group: 'Money out', permission: 'platform:manage' },
-  { slug: 'corporate', path: A('corporate'), apiPath: '/admin/corporate/orgs', label: 'Corporate Accounts', group: 'Money out', permission: 'corporate:manage' },
+  { slug: 'partner-agreement', path: A('partner-agreement'), apiPath: '/admin/asset-partner-agreements', label: 'Partner Agreement', group: 'Money out', permission: 'host:manage' },
 
   { slug: 'users', path: A('users'), apiPath: '/admin/users', label: 'Users', group: 'People & cars', permission: 'admin:read' },
   { slug: 'kyc', path: A('kyc'), apiPath: '/admin/kyc', label: 'ID Checks', group: 'People & cars', permission: 'kyc:review' },
-  { slug: 'hosts', path: A('hosts'), apiPath: '/admin/hosts', label: 'Hosts', group: 'People & cars', permission: 'admin:read' },
+  { slug: 'hosts', path: A('hosts'), apiPath: '/admin/hosts', label: 'City operators', group: 'People & cars', permission: 'admin:read' },
   { slug: 'vehicles', path: A('vehicles'), apiPath: '/admin/vehicles', label: 'Vehicles', group: 'People & cars', permission: 'admin:read' },
   { slug: 'bookings', path: A('bookings'), apiPath: '/admin/bookings', label: 'Bookings', group: 'People & cars', permission: 'admin:read' },
-  { slug: 'fleets', path: A('fleets'), apiPath: '/admin/fleets', label: 'Fleets', group: 'People & cars', permission: 'fleet:manage' },
 
   { slug: 'support', path: A('support'), apiPath: '/admin/tickets', label: 'Support Tickets', group: 'Help & safety', permission: 'ticket:manage' },
   { slug: 'kb', path: A('kb'), apiPath: '/admin/kb/articles', label: 'Help Articles', group: 'Help & safety', permission: 'ticket:manage' },

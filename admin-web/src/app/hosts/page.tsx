@@ -69,7 +69,7 @@ export default function AdminHostsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="People & cars" title="Hosts" description="People and businesses who list cars. A host must be verified before their cars can be booked." />
+      <PageHeader eyebrow="People & cars" title="City operators" description="The accounts that run each city's cars. An operator must be verified before their cars can be booked." />
       <div className="flex flex-wrap gap-2">
         {['', 'pending', 'verified', 'rejected'].map((s) => (
           <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)} className="capitalize">{s || 'All'}</Chip>

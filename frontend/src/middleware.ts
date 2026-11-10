@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { config as appConfig } from '@/lib/config';
 
 /**
  * The public app serves no admin console.
@@ -21,10 +20,6 @@ export function middleware(req: NextRequest) {
     pathname.startsWith('/admin/') ||
     (SLUG !== 'admin' && (pathname === `/${SLUG}` || pathname.startsWith(`/${SLUG}/`)))
   ) {
-    return new NextResponse(null, { status: 404 });
-  }
-  // Corporate accounts ship in version 3; answered here because the page itself streams a 200 before its layout can refuse.
-  if (!appConfig.corporate && (pathname === '/corporate' || pathname.startsWith('/corporate/'))) {
     return new NextResponse(null, { status: 404 });
   }
   return NextResponse.next();

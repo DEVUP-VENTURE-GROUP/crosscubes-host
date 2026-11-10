@@ -18,11 +18,11 @@ import { config } from '../../../config';
  *    without one is more likely to be filtered as spam even when transactional.
  */
 
-const BRAND = '#0e918c'; // Meridian teal — matches the app, not the old emerald
-const INK = '#141210';
-const MUTED = '#6b6560';
-const PAPER = '#f8f6f2';
-const BORDER = '#e6e1d9';
+const BRAND = '#0f3cf0'; // CrossCubes cobalt, same as frontend/src/styles/brand.css
+const INK = '#0c0e1d';
+const MUTED = '#5c627a';
+const PAPER = '#f8f9fc';
+const BORDER = '#dfe3ee';
 
 function esc(v: string): string {
   return v
@@ -47,6 +47,8 @@ export interface EmailContent {
   terms?: string[];
   /** Absolute links to the legal pages, shown in the footer of every email. */
   legalLinks?: { label: string; url: string }[];
+  /** Who it is for; partner emails leave out the guest travel banner. */
+  audience?: 'guest' | 'partner';
 }
 
 export function renderEmail(c: EmailContent): string {
@@ -54,8 +56,8 @@ export function renderEmail(c: EmailContent): string {
   // Emails need an ABSOLUTE url — they can't reach local files. Served from the
   // web app's /public. Falls back to text-only when no web URL is configured,
   // and the alt text covers the (common) case of a client blocking images.
-  const logoUrl = config.notifications.webUrl ? `${config.notifications.webUrl}/logos/cato-logo-256.png` : '';
-  const bannerUrl = config.notifications.webUrl ? `${config.notifications.webUrl}/email/cato-hero-banner.jpg` : '';
+  const logoUrl = config.notifications.webUrl ? `${config.notifications.webUrl}/logos/crosscubes-mark-256.png` : '';
+  const bannerUrl = config.notifications.webUrl && c.audience !== 'partner' ? `${config.notifications.webUrl}/email/crosscubes-banner.jpg` : '';
   const web = config.notifications.webUrl || '';
   const support = config.notifications.supportEmail;
   const address = config.notifications.companyAddress;
@@ -237,8 +239,8 @@ export function renderEmail(c: EmailContent): string {
               <p style="margin:0 0 6px;">
                 Questions? <a href="mailto:${esc(support)}" style="color:${BRAND};text-decoration:underline;">${esc(support)}</a>
               </p>
-              ${address ? `<p style="margin:0 0 6px;color:#9a938c;">${esc(address)}</p>` : ''}
-              <p style="margin:0;color:#9a938c;">&copy; ${new Date().getFullYear()} ${esc(brand)}. All rights reserved.</p>
+              ${address ? `<p style="margin:0 0 6px;color:#8a90a6;">${esc(address)}</p>` : ''}
+              <p style="margin:0;color:#8a90a6;">&copy; ${new Date().getFullYear()} ${esc(brand)}. All rights reserved.</p>
             </td>
           </tr>
         </table>

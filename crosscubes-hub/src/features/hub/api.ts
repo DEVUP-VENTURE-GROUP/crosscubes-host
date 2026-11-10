@@ -1,0 +1,29 @@
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api/client';
+import type { DeliverySpot, DocumentKind, HubPayout, HubStatus } from '@/features/hubs/types';
+
+export interface MyHub {
+  code: string;
+  name: string;
+  city: string;
+  state: string;
+  status: HubStatus;
+  launchedAt?: string;
+  holderShareBps: number;
+  licenceExpiresAt?: string;
+  documents: { id: string; kind: DocumentKind; label: string; expiresAt?: string }[];
+  launchBlockers: string[];
+  deliverySpots: DeliverySpot[];
+}
+
+export const useMyHub = () => useQuery({ queryKey: ['my-hub'], queryFn: () => api.get<MyHub>('/ioc/hub') });
+export const useMyHubPayouts = () => useQuery({ queryKey: ['my-hub-payouts'], queryFn: () => api.get<HubPayout[]>('/ioc/hub/payouts') });
+
+/** The licence holder's own money: their monthly statements, split into owed and paid. */
+export function holderTotals(payouts: HubPayout[] = []) {
+  return {
+    owed: payouts.filter((p) => p.status === 'pending').reduce((s, p) => s + p.amountCents, 0),
+    paid: payouts.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amountCents, 0),
+    trips: payouts.reduce((s, p) => s + p.trips, 0),
+  };
+}

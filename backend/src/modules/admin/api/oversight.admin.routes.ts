@@ -20,33 +20,6 @@ const router = Router();
  * out of step — the UI can't be the only thing protecting a route.
  */
 
-// ── Fleets (fleet:manage) ─────────────────────────────────────────────
-router.get(
-  '/fleets',
-  authorize('fleet:manage'),
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await oversightService.fleets({ search: req.query.search as string }));
-  }),
-);
-
-// ── Corporate accounts (corporate:manage) ─────────────────────────────
-router.get(
-  '/corporate/orgs',
-  authorize('corporate:manage'),
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await oversightService.orgs({ status: req.query.status as string }));
-  }),
-);
-
-router.post(
-  '/corporate/orgs/:id/status',
-  authorize('corporate:manage'),
-  validate({ body: z.object({ status: z.enum(['active', 'suspended']) }) }),
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await oversightService.setOrgStatus(req.params.id, req.body.status));
-  }),
-);
-
 // ── Reviews moderation (review:moderate) ──────────────────────────────
 router.get(
   '/reviews',

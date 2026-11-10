@@ -1,283 +1,103 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import {
-  PlaneTakeoff, Car, Banknote, Settings2, ShieldCheck, Sparkles,
-  ArrowRight, CheckCircle2, Camera, Wallet, ClipboardCheck,
-} from 'lucide-react';
+import { ArrowRight, Building2, Car, KeyRound, MapPin, ShieldCheck, Users } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
-import { SectionEyebrow, TractionStats, AudienceSection, BRAND } from '@/features/marketing/sections';
+import { CubeArt } from '@/components/brand/cube-art';
+import { SiteLink } from '@/components/layout/site-link';
+import { SectionEyebrow, BRAND } from '@/features/marketing/sections';
+import { useLiveHubs } from '@/features/hubs/api';
 
-/**
- * About CrossCubes - the brand story, the traction, and the owner economics.
- *
- * The booking experience is the homepage; this is where the pitch lives. Built
- * on the same dark hero-mesh / display-type / Reveal system as the homepage so
- * the two read as one brand. The traction and audience blocks come from the
- * shared marketing module, so they stay identical to the ones on the homepage.
- *
- * Every figure here is CrossCubes marketing copy supplied by the business.
- * Confirm current numbers before each campaign - stale claims on a rental site
- * are a trust and legal risk.
- */
-
-const PILLARS = [
-  { n: '01', icon: PlaneTakeoff, title: 'Free Terminal Valet', body: 'Car delivered straight to your terminal at DFW International and Love Field. Returned the same way. No shuttles. No satellite lots. Ever.' },
-  { n: '02', icon: Car, title: 'Exact Car, Guaranteed', body: 'Book the precise vehicle you want. Real photos, real car. No bait-and-switch. Every vehicle SOP-maintained, spotless, and road-ready.' },
-  { n: '03', icon: Banknote, title: 'Owners Net $1,066–$1,878/mo', body: 'Most of every booking goes to you. After maintenance (~$100–200/mo), the average owner nets over $1,000/month per vehicle. The car pays for itself in 36–40 months.' },
-  { n: '04', icon: Settings2, title: 'Full Fleet Management', body: 'Owners do nothing. We list, price, deliver, clean, and service - a 24/7 operations team based in DFW. Your only job is cashing the check.' },
+const SIDES = [
+  { icon: KeyRound, who: 'Guests', title: 'Book a car, not a counter.', body: 'Pick the exact car, verify your ID in the app, and have it brought to your terminal, hotel or door.', href: '/search', cta: 'Find a car' },
+  { icon: Car, who: 'Car owners', title: 'Your car, run for you.', body: 'Asset Partners hand their car to the city team, who rent it, deliver it and look after it, and pay them every month.', href: '/asset-partners', cta: 'Become an Asset Partner' },
+  { icon: Building2, who: 'City operators', title: 'Run CrossCubes in your city.', body: 'A yearly city licence gives a local operator the booking platform, payments, ID checks and HQ support, and a share of every trip.', href: '/cities', cta: 'Apply for a city' },
 ] as const;
 
-const STEPS = [
-  { n: '01', icon: Car, title: 'List the Car You Own', body: 'You already own an eligible vehicle - no purchase required. We take it from there.', tag: 'Use the car you already own' },
-  { n: '02', icon: Camera, title: `${BRAND} Lists It`, body: 'We photograph it, list it, and price it dynamically. You do nothing.', tag: '$0 additional effort from you' },
-  { n: '03', icon: ClipboardCheck, title: 'Guest Books Online', body: 'A vetted traveler books online. We screen every trip. You’re never involved.', tag: 'Full vetting on every reservation' },
-  { n: '04', icon: Settings2, title: 'We Manage Everything', body: 'Valet pickup, terminal delivery, cleaning, maintenance coordination - full white-glove service.', tag: '100% of operations handled' },
-  { n: '05', icon: Wallet, title: 'You Get Paid', body: 'Your share of every booking hits your account monthly. No invoices. No chasing.', tag: 'Net $1,066–$1,878 / month' },
-] as const;
-
-const RISKS = [
-  { scenario: 'Renter damages the vehicle', detail: '$750K liability + collision coverage per trip. The owner does not pay and never files directly.', owner: 'CrossCubes' as const },
-  { scenario: 'The car sits empty', detail: 'We manage pricing, listing optimization and the booking pipeline 24/7. Your exposure is zero.', owner: 'CrossCubes' as const },
-  { scenario: 'Routine maintenance', detail: 'The owner’s only cost: ~$100–200/month for oil, tires and washes - offset many times over by net income.', owner: 'Owner' as const },
-  { scenario: 'Guest no-show or late return', detail: 'Our operations team handles all guest issues, rescheduling and late-fee recovery.', owner: 'CrossCubes' as const },
+const PROMISES = [
+  { icon: ShieldCheck, title: 'Every guest is checked', body: 'ID and licence checks happen before a car is handed over, in every city.' },
+  { icon: MapPin, title: 'Local teams, one standard', body: 'Each city is run by its own team, with the same checklist, the same app and the same support behind it.' },
+  { icon: Users, title: 'Clear money for everyone', body: 'Partners and city operators get a monthly statement showing every trip and every deduction.' },
 ] as const;
 
 export default function AboutPage() {
+  const live = useLiveHubs();
+  const cities = (live.data ?? []).map((h) => h.city);
+
   return (
-    <div className="-mt-6">
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="full-bleed relative isolate grain overflow-hidden hero-mesh">
-        <div className="mx-auto max-w-6xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20">
-          <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
-              <PlaneTakeoff className="h-3.5 w-3.5" /> Airport mobility, reimagined
+    <div className="-mt-24 space-y-20 pb-20 sm:space-y-24">
+      <section className="full-bleed relative isolate overflow-hidden hero-mesh">
+        <div aria-hidden className="cube-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_75%)]" />
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-16 pt-32 sm:px-6 sm:pb-24 sm:pt-36 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <Reveal className="min-w-0">
+            <span className="text-sm font-semibold uppercase tracking-wider text-signal">
+              About {BRAND}
             </span>
-          </Reveal>
-          <Reveal delay={80}>
-            <h1 className="display mt-6 max-w-4xl text-[2.4rem] leading-[0.98] text-white sm:mt-7 sm:text-[4rem] lg:text-[4.9rem]">
-              Airport mobility is trapped in{' '}
-              <span className="text-white/30 line-through decoration-primary/70 decoration-4">1995</span>.
+            <h1 className="display mt-6 text-[2.6rem] leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
+              A car network,
+              <br />
+              <span className="text-signal">One city at a time.</span>
             </h1>
-          </Reveal>
-          <Reveal delay={160}>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:mt-7 sm:text-xl">
-              Every rental company makes you take a shuttle bus to a satellite lot. {BRAND} delivers your
-              car <span className="font-semibold text-white">curbside at the terminal</span> - DFW and Love Field.
-              Keys in hand.
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+              {BRAND} is the city-by-city car rental network from CatoDrive, Inc. Each city is its own cube: a local team, local cars from local owners, all on one platform.
             </p>
+            <p className="mt-4 text-sm text-white/60">{cities.length ? `Live in ${cities.join(', ')}.` : 'Opening city by city.'}</p>
           </Reveal>
-          <Reveal delay={240}>
-            <div className="mt-8 flex flex-wrap gap-4 sm:mt-10">
-              <Link href="/search" className="group inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03] active:scale-95 sm:h-14 sm:px-7 sm:text-base">
-                Book a car <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link href="/asset-partners" className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white/10 sm:h-14 sm:px-7 sm:text-base">
-                Become an Asset Partner
-              </Link>
-            </div>
-          </Reveal>
+          <div className="relative mx-auto hidden w-full max-w-sm lg:block">
+            <CubeArt className="w-full" />
+          </div>
         </div>
       </section>
 
-      {/* People shot - overlaps the seam between hero and content. Kept OUTSIDE
-          the hero section (which is overflow-hidden for the grain texture and
-          full-bleed trick) - a translated element bleeding past a clipped
-          section gets cut off, which is exactly what was chopping this photo
-          in half on mobile. A real negative margin does the overlap safely,
-          and a responsive aspect ratio keeps it a real photo at every width
-          instead of squashing into a thin strip on small screens. */}
-      <div className="relative z-10 mx-auto -mt-10 max-w-6xl px-4 sm:-mt-20 sm:px-6">
-        <Reveal delay={300}>
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border sm:aspect-[16/9] lg:aspect-[21/9]">
-            <Image
-              src="/newsections/cato-hero-people.webp"
-              alt="CrossCubes concierge delivering a car to a traveler at the terminal"
-              fill
-              priority
-              sizes="(min-width: 1152px) 1100px, 100vw"
-              className="object-cover"
-            />
-          </div>
+      <section>
+        <Reveal className="max-w-2xl">
+          <SectionEyebrow>Three sides, one network</SectionEyebrow>
+          <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Who {BRAND} is for.</h2>
         </Reveal>
-      </div>
-
-      <div className="mx-auto max-w-6xl space-y-14 px-4 pb-16 pt-8 sm:space-y-16 sm:px-6 sm:pt-12">
-        {/* Traction - shared with the homepage. */}
-        <TractionStats />
-
-        {/* ── THE SOLUTION ───────────────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>The solution</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">
-              A premium experience for travelers.{' '}
-              <span className="text-primary">Passive income for owners.</span>
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">
-              {BRAND} built what Enterprise, Hertz and Avis never would - actual terminal delivery at both DFW
-              airports - and turned it into a passive-income engine for vehicle owners.
-            </p>
-          </Reveal>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {PILLARS.map((p, i) => (
-              <Reveal key={p.n} delay={i * 80}>
-                <FrameCard {...p} />
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── HOW IT WORKS ───────────────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>How it works</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Five steps. Zero headaches. Income in 30 days.</h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">
-              From vehicle to passive income - {BRAND} handles 100% of operations, from listing to payout.
-            </p>
-          </Reveal>
-          <ol className="mt-12 space-y-3">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.n} as="li" delay={i * 70}>
-                <StepRow {...s} last={i === STEPS.length - 1} />
-              </Reveal>
-            ))}
-          </ol>
-        </section>
-
-        {/*
-          The testimonials section that sat here is gone.
-
-          It ran three quotes attributed to a "Portfolio Owner", an "Asset
-          Partner" and a "DFW Investor" - people who do not exist - under a
-          row of five hardcoded amber stars. This page already carries the real
-          evidence: live traction figures above, and the risk/responsibility
-          table below that states plainly who covers what. Invented quotes
-          weakened that rather than adding to it.
-
-          If real partner quotes are collected, with names and consent, this is
-          where they go.
-        */}
-
-        {/* Who we serve - shared with the homepage (image cards). */}
-        <AudienceSection />
-
-        {/* ── RISK & RESPONSIBILITY ──────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>Risk &amp; responsibility</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Every risk has an owner. Most of them are us.</h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">
-              Backed by a commercial policy with <span className="font-semibold text-foreground">$750K liability per trip</span>.
-              The owner never files a claim directly.
-            </p>
-          </Reveal>
-          <div className="mt-12 overflow-hidden rounded-lg border border-border">
-            {RISKS.map((r, i) => (
-              <Reveal key={r.scenario} delay={i * 60}>
-                <RiskRow {...r} first={i === 0} />
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── CLOSING CTA (image background) ─────────────────────────── */}
-        <Reveal>
-          <section className="relative isolate overflow-hidden rounded-lg px-5 py-16 text-center sm:px-12 sm:py-24">
-            <Image
-              src="/newsections/become_asset_partner.webp"
-              alt=""
-              fill
-              sizes="(min-width: 1152px) 1100px, 100vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/80 to-ink/70" />
-            <div className="relative">
-              <Sparkles className="mx-auto h-8 w-8 text-primary" />
-              <h2 className="display mx-auto mt-5 max-w-2xl text-3xl text-white sm:text-4xl lg:text-5xl">
-                Your car could be earning next month.
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-base text-white/75 sm:text-lg">
-                List the vehicle you already own, or book a car delivered to your terminal. Either way, {BRAND} does the work.
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link href="/asset-partners" className="group inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03] active:scale-95 sm:h-14 sm:px-7 sm:text-base">
-                  Become an Asset Partner <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-                <Link href="/search" className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white/20 sm:h-14 sm:px-7 sm:text-base">
-                  Book a car
-                </Link>
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          {SIDES.map((s, i) => (
+            <Reveal key={s.who} delay={i * 80}>
+              <div className="group flex h-full flex-col rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary/50 sm:p-8">
+                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-ink text-signal"><s.icon className="h-6 w-6" aria-hidden /></span>
+                <p className="mt-6 text-label font-semibold uppercase tracking-wider text-primary">{s.who}</p>
+                <h3 className="display mt-2 text-2xl text-foreground">{s.title}</h3>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                <Link href={s.href} className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">{s.cta} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </div>
-            </div>
-          </section>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      <section className="relative isolate overflow-hidden rounded-lg hero-mesh px-6 py-14 text-white sm:px-12 sm:py-20">
+        <div aria-hidden className="cube-grid absolute inset-0 -z-10" />
+        <Reveal className="max-w-2xl">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-signal">What stays the same everywhere</span>
+          <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">The same standard in every city.</h2>
         </Reveal>
-      </div>
-    </div>
-  );
-}
+        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+          {PROMISES.map((p) => (
+            <div key={p.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-6">
+              <p.icon className="h-6 w-6 text-signal" aria-hidden />
+              <h3 className="mt-4 font-semibold">{p.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/65">{p.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-/* ── Pieces ─────────────────────────────────────────────────────────── */
-
-function FrameCard({ n, icon: Icon, title, body }: { n: string; icon: typeof Car; title: string; body: string }) {
-  return (
-    <article className="group relative h-full overflow-hidden rounded-lg border border-border bg-card p-7 transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40">
-      <span className="numeric pointer-events-none absolute -right-2 -top-5 text-[7rem] font-black leading-none text-foreground/[0.04] transition-colors duration-500 group-hover:text-primary/10">
-        {n}
-      </span>
-      <span className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 transition-transform duration-500 group-hover:scale-110">
-        <Icon className="h-6 w-6" />
-      </span>
-      <h3 className="display relative mt-5 text-xl">{title}</h3>
-      <p className="relative mt-2.5 text-[15px] leading-relaxed text-muted-foreground">{body}</p>
-    </article>
-  );
-}
-
-function StepRow({ n, icon: Icon, title, body, tag, last }: {
-  n: string; icon: typeof Car; title: string; body: string; tag: string; last: boolean;
-}) {
-  return (
-    <div className="group relative flex gap-5 rounded-lg border border-border bg-card p-6 transition-all duration-500 hover:border-primary/40 sm:p-7">
-      <div className="relative flex flex-col items-center">
-        <span className="numeric flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
-          {n}
-        </span>
-        {!last && <span className="mt-2 hidden w-px flex-1 bg-gradient-to-b from-primary/40 to-transparent sm:block" />}
-      </div>
-      <div className="flex-1 pb-1">
-        <h3 className="display flex items-center gap-2 text-xl">
-          <Icon className="h-5 w-5 text-primary" /> {title}
-        </h3>
-        <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{body}</p>
-        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          <CheckCircle2 className="h-3.5 w-3.5" /> {tag}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function RiskRow({ scenario, detail, owner, first }: {
-  scenario: string; detail: string; owner: 'CrossCubes' | 'Owner'; first: boolean;
-}) {
-  const isCato = owner === 'CrossCubes';
-  return (
-    <div className={`flex flex-col gap-4 bg-card p-6 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:gap-6 sm:p-7 ${first ? '' : 'border-t border-border'}`}>
-      <div className="flex-1">
-        <p className="font-semibold text-foreground">{scenario}</p>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{detail}</p>
-      </div>
-      <span
-        className={`inline-flex shrink-0 items-center gap-1.5 self-start rounded-full px-3.5 py-1.5 text-xs font-bold sm:self-center ${
-          isCato
-            ? 'bg-success/10 text-success ring-1 ring-success/20'
-            : 'bg-warning/10 text-warning ring-1 ring-warning/20 dark:text-warning'
-        }`}
-      >
-        <ShieldCheck className="h-3.5 w-3.5" /> {isCato ? `${BRAND} covers this` : 'Owner’s cost'}
-      </span>
+      <Reveal as="section" className="grid gap-6 rounded-lg border border-border bg-card p-6 sm:p-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div>
+          <h2 className="display text-2xl text-foreground sm:text-3xl">Part of CatoDrive.</h2>
+          <p className="mt-3 max-w-2xl text-muted-foreground">{BRAND} is operated by CatoDrive, Inc., headquartered in Dallas–Fort Worth, Texas. Partner agreements, payments and guest support all run through CatoDrive, Inc.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/contact" className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm font-semibold hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Contact us</Link>
+          <SiteLink site="partner" path="/sign-up" className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            List your car <ArrowRight className="h-4 w-4" aria-hidden />
+          </SiteLink>
+        </div>
+      </Reveal>
     </div>
   );
 }

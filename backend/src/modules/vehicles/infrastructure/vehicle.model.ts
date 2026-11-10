@@ -88,6 +88,8 @@ export interface VehicleDoc {
    * vehicle, so the link has to live on the vehicle.
    */
   assetPartnerId?: string;
+  /** When the partner was told the car went live; set once. */
+  partnerLiveNotifiedAt?: Date;
   // Statements charge a partner car only for the months between these two dates.
   assetPartnerSince?: Date;
   assetPartnerEndedAt?: Date;
@@ -240,6 +242,7 @@ const schema = new Schema<VehicleDoc>(
     _id: { type: String, default: () => uuid() },
     hostId: { type: String, required: true },
     assetPartnerId: String,
+    partnerLiveNotifiedAt: Date,
     assetPartnerSince: Date,
     assetPartnerEndedAt: Date,
     hostIsSuperhost: { type: Boolean, default: false },

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { assetPartnerSigningCode } from './asset-partner-signing-code';
 import { AssetPartnerAgreementModel, type AgreementKind, type AssetPartnerAgreementDoc } from '../infrastructure/asset-partner-agreement.model';
 import { AssetPartnerModel, type AssetPartnerDoc, type PartnerAgreementSignature } from '../infrastructure/asset-partner.model';
 import { AssetPartnerApplicationModel, type AssetPartnerApplicationDoc } from '../infrastructure/asset-partner-application.model';
@@ -13,7 +14,9 @@ import { assetPartnerEnvelopeService } from './asset-partner-envelope.service';
 import { assetPartnerOfferService } from './asset-partner-offer.service';
 import { assetPartnerProfileService } from './asset-partner-profile.service';
 import { SignatureEnvelopeModel } from '../infrastructure/signature-envelope.model';
+import { KycModel } from '../../kyc/infrastructure/kyc.model';
 import type { ResolvedTermsSnapshot } from '../infrastructure/asset-partner-terms.model';
+import { feeDue } from './asset-partner-fee.service';
 
 const hashOf = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
 
@@ -92,9 +95,12 @@ export interface SignInput {
   agreementVersion: number;
   ndaVersion: number;
   signedName: string;
-  licenceNumber: string;
-  licenceState: string;
+  /** Left out when the ID check already read the licence. */
+  licenceNumber?: string;
+  licenceState?: string;
   payout: PayoutElection;
+  /** The one-time code emailed to the partner for this signing. */
+  emailCode: string;
 }
 
 const tidy = (s: string) => s.trim().replace(/\s+/g, ' ');
@@ -111,6 +117,8 @@ export class AssetPartnerAgreementService {
   }
 
   async publish(userId: string, input: { kind?: AgreementKind; title: string; body: string }): Promise<AssetPartnerAgreementDoc> {
+    // The standard draft carries review markers; partners must never be asked to sign one.
+    if (input.body.includes('[BEFORE PUBLISHING') || input.body.includes('[CrossCubes legal notice address]')) throw new ValidationError('Remove the BEFORE PUBLISHING line and fill in the legal notice address first.');
     const kind = input.kind ?? 'agreement';
     const latest = await this.current(kind);
     const bodyHash = hashOf(input.body);
@@ -167,9 +175,17 @@ export class AssetPartnerAgreementService {
 
   /** Everything known before signing, filled into both texts; what the partner types at signing stays blank until then. */
   async prefill(partner: AssetPartnerDoc): Promise<Record<string, string>> {
-    const app = await this.applicationOf(partner);
+    const [app, kyc] = await Promise.all([
+      this.applicationOf(partner),
+      KycModel.findOne({ userId: partner.userId, status: 'approved' }).select('licenceLast4 verifiedFirstName verifiedLastName').lean<{ licenceLast4?: string; verifiedFirstName?: string; verifiedLastName?: string }>(),
+    ]);
     const v = app?.vehicle;
+    const idName = [kyc?.verifiedFirstName, kyc?.verifiedLastName].filter(Boolean).join(' ');
     return {
+      // What the ID check and the application already know, so the signing page doesn't ask again.
+      signer_name: idName || app?.fullName || partner.displayName,
+      licence_last4: kyc?.licenceLast4 ?? '',
+      licence_state: app?.state ?? '',
       effective_date: signedDate(new Date()),
       partner_name: app?.fullName ?? partner.displayName,
       partner_email: partner.email ?? app?.email ?? '',
@@ -197,6 +213,7 @@ export class AssetPartnerAgreementService {
     if (!assetPartnerProfileService.isComplete(partner)) throw new ConflictError('Add your emergency contact before signing.', 'PROFILE_REQUIRED');
     const identity = await assetPartnerProfileService.identity(partner);
     if (identity.required && !assetPartnerProfileService.isIdentityDone(identity)) throw new ConflictError('Verify your ID before signing.', 'IDENTITY_REQUIRED');
+    if (feeDue(partner)) throw new ConflictError('Pay the Asset Partner fee before signing.', 'FEE_REQUIRED');
 
     const [agreement, nda] = await Promise.all([this.current('agreement'), this.current('nda')]);
     if (!agreement || !nda) throw new ConflictError('Your agreement is still being prepared. We’ll email you when it’s ready.', 'AGREEMENT_NOT_READY');
@@ -206,14 +223,18 @@ export class AssetPartnerAgreementService {
 
     const signedName = tidy(input.signedName);
     if (signedName.length < 2) throw new ValidationError('Type your full legal name to sign');
-    const licence = input.licenceNumber.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-    const state = input.licenceState.trim().toUpperCase();
+    const known = await this.prefill(partner);
+    const typed = (input.licenceNumber ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const licence = typed || known.licence_last4;
+    const state = (input.licenceState?.trim() || known.licence_state).toUpperCase();
     if (licence.length < 4 || licence.length > 20 || !/^[A-Z]{2}$/.test(state)) throw new ValidationError('Enter your driver’s licence number and state');
 
     const p = input.payout;
     if (p.method === 'zelle' && (tidy(p.zelleHandle).length < 5 || tidy(p.zelleName).length < 2)) throw new ValidationError('Enter the Zelle phone or email and the name on the account');
     if (p.method === 'check' && (tidy(p.payableTo).length < 2 || tidy(p.mailingAddress).length < 8)) throw new ValidationError('Enter who the check is payable to and the mailing address');
 
+    // Checked last, so a mistake elsewhere on the form doesn't burn the code.
+    const provedEmail = await assetPartnerSigningCode.verify(partner, input.emailCode);
     const now = new Date();
     const fields: Record<string, string> = {
       ...(await this.prefill(partner)),
@@ -241,6 +262,7 @@ export class AssetPartnerAgreementService {
       terms,
       ctx,
       at: now,
+      authenticated: { at: now, email: provedEmail },
     });
     const signature = (doc: AssetPartnerAgreementDoc): PartnerAgreementSignature => ({
       version: doc.version, bodyHash: doc.bodyHash, signedName, signedAt: now, ip: ctx.ip, userAgent: ctx.userAgent, fields, envelopeId: envelope.envelopeId,

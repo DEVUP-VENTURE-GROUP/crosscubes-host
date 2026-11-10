@@ -106,6 +106,11 @@ describe('a Stripe account shared with CrossCubes', () => {
     await WebhookEventModel.create({ _id: 'evt_untagged_refund', type: 'charge.refunded' });
     await runStripeEvent({ id: 'evt_untagged_refund', type: 'charge.refunded', data: { object: { id: 'ch_2', payment_intent: 'pi_untagged', amount_refunded: 500 } } });
     expect(reconcile).not.toHaveBeenCalled();
+
+    // The other system's registration-fee payment pages carry no tag and are skipped.
+    await WebhookEventModel.create({ _id: 'evt_untagged_fee', type: 'checkout.session.completed' });
+    await runStripeEvent({ id: 'evt_untagged_fee', type: 'checkout.session.completed', data: { object: { id: 'cs_other', metadata: { kind: 'asset_partner_fee', partnerId: 'someone-elses' } } } });
+    expect((await WebhookEventModel.findById('evt_untagged_fee').lean())!.status).toBe('processed');
     expect((await WebhookEventModel.findById('evt_other_refund').lean())!.status).toBe('processed');
     reconcile.mockRestore();
 

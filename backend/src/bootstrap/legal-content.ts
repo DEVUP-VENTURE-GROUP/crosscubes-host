@@ -6,7 +6,7 @@ export const LEGAL_ARTICLES = [
     summary: 'What CrossCubes collects, why, who receives it, and the choices you have.',
     body: `_Last updated: [DATE]_
 
-This policy explains how **[LEGAL ENTITY NAME]** ("CrossCubes", "we", "us") handles personal information when you use our website, web app and related services in the United States. CrossCubes is a marketplace: hosts list vehicles and guests book them.
+This policy explains how **CatoDrive, Inc.** (doing business as CrossCubes) ("CrossCubes", "we", "us") handles personal information when you use our website, web app and related services in the United States. CrossCubes is a marketplace: hosts list vehicles and guests book them.
 
 ## Information we collect
 
@@ -65,7 +65,7 @@ CrossCubes is for adults aged 21 or older [CONFIRM MINIMUM AGE]. We do not knowi
 We will post updates on this page and change the date above; for material changes we will notify you.
 
 ## Contact
-**[LEGAL ENTITY NAME]**, [POSTAL ADDRESS] · **[PRIVACY EMAIL]**
+**CatoDrive, Inc.** (doing business as CrossCubes), [POSTAL ADDRESS] · **[PRIVACY EMAIL]**
 `,
   },
   {
@@ -74,7 +74,7 @@ We will post updates on this page and change the date above; for material change
     summary: 'The rules that apply when you book or host on CrossCubes.',
     body: `_Last updated: [DATE]_
 
-These terms are an agreement between you and **[LEGAL ENTITY NAME]** ("CrossCubes"). By creating an account or using CrossCubes you agree to them and to our Privacy Policy.
+These terms are an agreement between you and **CatoDrive, Inc.** (doing business as CrossCubes) ("CrossCubes"). By creating an account or using CrossCubes you agree to them and to our Privacy Policy.
 
 ## Our role
 CrossCubes is a marketplace platform. Hosts (owners of vehicles, including fleets and partners) offer vehicles; guests rent them. Unless a listing says the vehicle is operated by CrossCubes, the rental is between the host and the guest, and CrossCubes is not the owner, lessor or insurer of the vehicle.
@@ -102,6 +102,9 @@ A guest may ask to extend a trip; it depends on host approval and availability. 
 
 ## Damage, accidents, claims and disputes
 Report any accident, damage, theft or emergency immediately in the app and, where appropriate, to police. Either party may open a claim with evidence. We review claims and may decide them based on the evidence, including photos and logs; decisions may result in charges to the responsible party or payouts to the affected party. Fines, tolls, towing, impound and tickets during a trip are the guest's responsibility. Chargebacks filed without first raising the issue with us may result in account suspension.
+
+## Tolls, tickets and notices after your trip
+You are responsible for every toll, parking ticket, traffic or camera citation, towing and impound charge, and any late fee or collection charge on them, incurred while the vehicle is booked to you. This includes toll roads used without a toll pass and areas the vehicle is not allowed to enter. These notices are usually posted to the vehicle's registered owner weeks after a trip; when one reaches us or the owner, we match it to your trip by date and time, tell you with the notice reference, and you may dispute it within the period shown. If it stands, we charge the amount on the notice plus a processing fee to the card on file. This continues to apply after your trip ends.
 
 ## Insurance
 Coverage depends on the protection plan and the host's and guest's own insurance. [INSURANCE ARRANGEMENTS AND DISCLAIMERS TO BE COMPLETED WITH YOUR INSURER AND COUNSEL]. Nothing here creates insurance where none exists.
@@ -134,7 +137,7 @@ You agree to receive notices and agreements electronically, including by email, 
 We may update these terms; the date above shows the latest version, and continued use means you accept them. We will notify you of material changes.
 
 ## Contact
-**[LEGAL ENTITY NAME]**, [POSTAL ADDRESS] · **[SUPPORT EMAIL]**
+**CatoDrive, Inc.** (doing business as CrossCubes), [POSTAL ADDRESS] · **[SUPPORT EMAIL]**
 `,
   },
 ] as const;

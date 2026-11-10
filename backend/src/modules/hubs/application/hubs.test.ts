@@ -134,6 +134,13 @@ describe('city hubs', () => {
     expect(back.status).toBe('live');
   });
 
+  it('names the city operator CrossCubes plus the city, which is what guests see on its cars', async () => {
+    const hub = await hubService.create(input(), 'hq');
+    await hubService.assignOperator(hub._id, { name: 'Ana Ruiz', email: 'ana.op@bayou.example' }, 'hq');
+    const user = await UserModel.findOne({ email: 'ana.op@bayou.example' }).lean<{ _id: string }>();
+    expect((await HostModel.findOne({ userId: user!._id }).lean<{ displayName: string }>())?.displayName).toBe('CrossCubes Houston');
+  });
+
   it('never makes an HQ staff account a licence holder', async () => {
     const hub = await hubService.create(input(), 'hq');
     await UserModel.create({ email: 'ops@hq.example', roles: ['ops'], status: 'active' });

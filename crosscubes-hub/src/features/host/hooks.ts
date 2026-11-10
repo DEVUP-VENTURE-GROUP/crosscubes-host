@@ -67,22 +67,3 @@ export function useUpdateHostProfile() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['host-me'] }),
   });
 }
-
-export function useEarnings() {
-  return useQuery({ queryKey: ['earnings'], queryFn: () => hostApi.earnings() });
-}
-
-export function usePayouts() {
-  return useQuery({ queryKey: ['payouts'], queryFn: () => hostApi.payouts() });
-}
-
-export function useInstantPayout() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => hostApi.instantPayout(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['earnings'] });
-      qc.invalidateQueries({ queryKey: ['payouts'] });
-    },
-  });
-}

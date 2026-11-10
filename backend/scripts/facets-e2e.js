@@ -8,7 +8,7 @@
  *
  * Run: node scripts/facets-e2e.js
  */
-const API = process.env.API || 'http://localhost:8080/api/v1';
+const API = process.env.API || 'http://localhost:4400/api/v1';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@cato.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Cato@Admin2026';
 

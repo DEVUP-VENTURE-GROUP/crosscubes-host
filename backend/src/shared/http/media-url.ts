@@ -5,7 +5,7 @@ import { storageGateway } from '../../infrastructure/storage/storage.provider';
  * Rewriting stored media URLs to the host we are actually running on.
  *
  * Media URLs are built at UPLOAD time and stored whole, so a photo uploaded
- * while the API was on localhost:8080 keeps that address forever. Move the API
+ * while the API was on localhost:4400 keeps that address forever. Move the API
  * to a real domain, or open the app on a phone, and every one of those photos
  * 404s — the images are fine, the addresses are stale.
  *

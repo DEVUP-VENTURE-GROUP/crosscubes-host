@@ -4,9 +4,9 @@ import { type ComponentType } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, Users, BadgeCheck, Car, CalendarCheck, ShieldAlert, LifeBuoy,
-  ScanFace, Flag, ScrollText, LayoutGrid, Shield, Percent, SlidersHorizontal, TrendingUp, Star, Layers, Building2, Banknote, Route,
+  ScanFace, Flag, ScrollText, LayoutGrid, Shield, SlidersHorizontal, TrendingUp, Star, Route,
   Handshake, Receipt, PieChart, Radio, Gift, Umbrella,
-  Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Sparkles, Network, FileSignature,
+  Landmark, Ticket, BookOpen, Mail, FileWarning, AlertTriangle, UserCog, Activity, Network, FileSignature, FileText,
 } from 'lucide-react';
 import { PanelSidebar, type PanelNavItem } from '@/components/layout/panel-sidebar';
 import { adminApi, type AdminNavItem } from '@/features/admin/api';
@@ -25,7 +25,6 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   bookings: CalendarCheck,
   claims: ShieldAlert,
   support: LifeBuoy,
-  commission: Percent,
   visitors: Radio,
   reports: PieChart,
   referrals: Gift,
@@ -33,9 +32,6 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   surge: TrendingUp,
   memberships: Star,
   'feature-flags': Flag,
-  fleets: Layers,
-  corporate: Building2,
-  payouts: Banknote,
   reviews: Star,
   trips: Route,
   audit: ScrollText,
@@ -44,6 +40,7 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   'asset-partners': Handshake,
   // The programme's own economics - a fee, not a commission rule.
   'asset-partner-terms': Receipt,
+  'partner-agreement': FileText,
   tax: Landmark,
   coupons: Ticket,
   kb: BookOpen,
@@ -51,7 +48,7 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   violations: FileWarning,
   failures: AlertTriangle,
   staff: UserCog,
-  ai: Sparkles,
+  ai: Activity,
 };
 
 export function AdminSidebar() {

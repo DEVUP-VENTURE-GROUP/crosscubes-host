@@ -85,7 +85,7 @@ jobs:
           fi
           exit "$code"
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+          NEXT_PUBLIC_API_URL: http://localhost:4400/api/v1
           NEXT_PUBLIC_APP_NAME: CATO
 
   admin-web:
@@ -140,7 +140,7 @@ jobs:
       - run: npm run build
         working-directory: ${{ matrix.app }}
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+          NEXT_PUBLIC_API_URL: http://localhost:4400/api/v1
           CROSSCUBES_HUB_SLUG: ci-build-slug
 
 

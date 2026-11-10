@@ -1,5 +1,6 @@
 import { REJECTION_REASONS } from '../infrastructure/asset-partner-application.model';
 import { z } from 'zod';
+import { CHANGE_KEYS, REQUIRED_PHOTOS, TITLE_STATUSES, type ChangeKey } from '../domain/application-rules';
 
 const yn = z.enum(['yes', 'no']);
 
@@ -33,6 +34,8 @@ export const createApplicationSchema = z.object({
 
   // Step 3
   ownership: z.enum(['owned', 'financed', 'leased']),
+  // Only a clean title is accepted; a branded one is refused with its reason, not silently.
+  titleStatus: z.enum(TITLE_STATUSES),
   lienholder: z.string().trim().max(120).optional(),
   lienAccountLast4: z.string().trim().max(4).optional(),
   estimatedMarketValue: z.string().trim().max(40).optional(),
@@ -40,24 +43,26 @@ export const createApplicationSchema = z.object({
   // Step 4
   accident: yn,
   accidentDetail: z.string().trim().max(600).optional(),
-  smokeFree: yn,
-  petFree: yn,
   hasMaintenanceRecords: yn.optional(),
   photos: z
-    .array(z.object({ url: z.string().url(), key: z.string().optional(), label: z.string().max(30).optional() }))
+    .array(z.object({ url: z.string().url(), key: z.string().optional(), label: z.string().max(30).optional(), sha256: z.string().regex(/^[a-f0-9]{64}$/).optional() }))
     .max(12)
-    .optional(),
+    .refine((ps) => REQUIRED_PHOTOS.every((label) => ps.some((p) => p.label === label)), { message: 'Add the front, back and odometer photos' }),
 
   // Step 5
-  insurance: z.object({
-    carrier: z.string().trim().min(1).max(80),
-    policyNumber: z.string().trim().min(1).max(60),
-    coverageType: z.enum(['full', 'liability', 'unsure']),
-    policyExpiry: z.coerce.date().optional(),
-  }),
+  // May be skipped now and given later from the dashboard; the declarations page is then asked for under Documents.
+  insurance: z
+    .object({
+      carrier: z.string().trim().max(80).optional(),
+      policyNumber: z.string().trim().max(60).optional(),
+      coverageType: z.enum(['full', 'liability', 'unsure']).optional(),
+      policyExpiry: z.coerce.date().optional(),
+    })
+    .optional(),
 
   // Step 6
-  availability: z.enum(['fulltime', 'parttime', 'seasonal']),
+  availability: z.enum(['fulltime', 'seasonal']),
+  seasonMonths: z.coerce.number().int().optional(),
   preferredZone: z.string().trim().max(60).optional(),
   targetStartDate: z.coerce.date().optional(),
   notes: z.string().trim().max(1000).optional(),
@@ -80,8 +85,8 @@ export const signAgreementSchema = z.object({
   agreementVersion: z.number().int().min(1),
   ndaVersion: z.number().int().min(1),
   signedName: z.string().trim().min(2).max(120),
-  licenceNumber: z.string().trim().min(4).max(30),
-  licenceState: z.string().trim().length(2),
+  licenceNumber: z.string().trim().min(4).max(30).optional(),
+  licenceState: z.string().trim().length(2).optional(),
   payout: z.discriminatedUnion('method', [
     z.object({ method: z.literal('zelle'), zelleHandle: z.string().trim().min(5).max(120), zelleName: z.string().trim().min(2).max(120) }),
     z.object({ method: z.literal('check'), payableTo: z.string().trim().min(2).max(120), mailingAddress: z.string().trim().min(8).max(300) }),
@@ -89,11 +94,16 @@ export const signAgreementSchema = z.object({
   acceptAgreement: mustAccept,
   acceptNda: mustAccept,
   acknowledgeDeductibles: mustAccept,
+  emailCode: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code we emailed you'),
 });
 
 export const reviewApplicationSchema = z.object({
   decision: z.enum(['approved', 'changes_requested', 'rejected']),
   notes: z.string().trim().max(1000).optional(),
+  // Targeted changes: the partner redoes only these items.
+  changes: z.array(z.object({ key: z.enum(CHANGE_KEYS as [ChangeKey, ...ChangeKey[]]), note: z.string().trim().max(300).optional() })).max(CHANGE_KEYS.length).optional(),
+  // What this partner pays to join, set by ops at approval; 0 waives it, absent uses the admin default.
+  joiningFeeCents: z.number().int().min(0).max(500_000).optional(),
   rejection: z
     .object({
       reasons: z.array(z.enum(REJECTION_REASONS)).min(1).max(REJECTION_REASONS.length),

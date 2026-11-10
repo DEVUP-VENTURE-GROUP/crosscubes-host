@@ -26,6 +26,7 @@ export type ApplicationKind = 'partner' | 'vehicle';
 export type PartnerType = 'individual' | 'business' | 'fleet';
 export type OwnershipStatus = 'owned' | 'financed' | 'leased';
 export type CoverageType = 'full' | 'liability' | 'unsure';
+/** parttime is kept only so older applications still read. */
 export type Availability = 'fulltime' | 'parttime' | 'seasonal';
 export const REJECTION_REASONS = [
   'vehicle_age',
@@ -41,6 +42,14 @@ export const REJECTION_REASONS = [
   'other',
 ] as const;
 export type RejectionReason = (typeof REJECTION_REASONS)[number];
+
+export interface ChangeRequest {
+  items: { key: string; label?: string; note?: string }[];
+  note?: string;
+  requestedAt: Date;
+  requestedBy?: string;
+  before: Record<string, unknown>;
+}
 
 export interface AssetPartnerApplicationDoc {
   _id: string;
@@ -86,26 +95,30 @@ export interface AssetPartnerApplicationDoc {
   lienholder?: string;
   lienAccountLast4?: string;
   estimatedMarketValue?: string;
+  titleStatus?: 'clean' | 'salvage' | 'rebuilt' | 'flood' | 'lemon';
 
   // Step 4 — Condition
   hadAccident: boolean;
   accidentDetail?: string;
-  smokeFree: boolean;
-  petFree: boolean;
+  /** No longer asked: CrossCubes cars are always no-smoking and no-pets. Older applications have them. */
+  smokeFree?: boolean;
+  petFree?: boolean;
   hasMaintenanceRecords?: boolean;
   /** Optional — the form itself allows emailing photos later. */
-  photos: { url: string; key?: string; label?: string }[];
+  photos: { url: string; key?: string; label?: string; sha256?: string }[];
 
   // Step 5 — Insurance
-  insurance: {
-    carrier: string;
-    policyNumber: string;
-    coverageType: CoverageType;
+  insurance?: {
+    carrier?: string;
+    policyNumber?: string;
+    coverageType?: CoverageType;
     policyExpiry?: Date;
   };
 
   // Step 6 — Preferences & agreement
   availability: Availability;
+  /** Seasonal only: how many months the car is committed for. */
+  seasonMonths?: number;
   preferredZone?: string;
   targetStartDate?: Date;
   notes?: string;
@@ -126,6 +139,10 @@ export interface AssetPartnerApplicationDoc {
   reviewNotes?: string;
   /** Why it was declined, what would change the answer, and when they may apply again. */
   rejection?: { reasons: RejectionReason[]; improvements?: string; reapplyAfter?: Date };
+  /** The open request for changes: exactly what to redo, and how each item looked when it was asked. */
+  changeRequest?: ChangeRequest;
+  /** The latest resubmission, so ops sees what changed against what was there before. */
+  resubmission?: { at: Date; changed: string[]; before: Record<string, unknown> };
   /** Set on approval when a matching account existed and was auto-verified as
    *  a host. False/absent means ops still needs to follow up once the
    *  applicant creates an account. */
@@ -171,25 +188,27 @@ const schema = new Schema<AssetPartnerApplicationDoc>(
     lienholder: String,
     lienAccountLast4: String,
     estimatedMarketValue: String,
+    titleStatus: { type: String, enum: ['clean', 'salvage', 'rebuilt', 'flood', 'lemon'] },
 
     hadAccident: { type: Boolean, required: true },
     accidentDetail: String,
-    smokeFree: { type: Boolean, required: true },
-    petFree: { type: Boolean, required: true },
+    smokeFree: Boolean,
+    petFree: Boolean,
     hasMaintenanceRecords: Boolean,
     photos: {
-      type: [{ _id: false, url: String, key: String, label: String }],
+      type: [{ _id: false, url: String, key: String, label: String, sha256: String }],
       default: [],
     },
 
     insurance: {
-      carrier: { type: String, required: true },
-      policyNumber: { type: String, required: true },
-      coverageType: { type: String, required: true, enum: ['full', 'liability', 'unsure'] },
+      carrier: String,
+      policyNumber: String,
+      coverageType: { type: String, enum: ['full', 'liability', 'unsure'] },
       policyExpiry: Date,
     },
 
     availability: { type: String, required: true, enum: ['fulltime', 'parttime', 'seasonal'] },
+    seasonMonths: Number,
     preferredZone: String,
     targetStartDate: Date,
     notes: String,
@@ -211,6 +230,23 @@ const schema = new Schema<AssetPartnerApplicationDoc>(
       default: undefined,
     },
     hostVerified: Boolean,
+    changeRequest: {
+      type: new Schema(
+        {
+          items: { type: [{ _id: false, key: { type: String, required: true }, label: String, note: String }], default: [] },
+          note: String,
+          requestedAt: { type: Date, required: true },
+          requestedBy: String,
+          before: { type: Schema.Types.Mixed, default: {} },
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
+    resubmission: {
+      type: new Schema({ at: Date, changed: [String], before: { type: Schema.Types.Mixed, default: {} } }, { _id: false }),
+      default: undefined,
+    },
   },
   { timestamps: true, _id: false },
 );

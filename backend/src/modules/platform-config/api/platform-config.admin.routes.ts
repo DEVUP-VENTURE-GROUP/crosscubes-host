@@ -107,6 +107,9 @@ router.put(
       assetPartner: z
         .object({
           managementFeeBps: bps.optional(),
+          minSeasonMonths: z.number().int().min(1).max(6).optional(),
+          joiningFeeEnabled: z.boolean().optional(),
+          registrationPlatformFeeCents: z.number().int().min(0).max(50_000).optional(),
           insuranceMonthlyCents: z.number().int().min(0).optional(),
           detailingMonthlyCents: z.number().int().min(0).optional(),
           deductibleCapCents: z.number().int().min(0).optional(),
@@ -409,6 +412,7 @@ router.put(
       appRelease: z
         .object({ customer: appRelease.optional(), partner: appRelease.optional() })
         .optional(),
+      siteNotice: z.object({ enabled: z.boolean().optional() }).optional(),
       booking: z
         .object({
           hostApprovalHours: z.number().min(1).max(168).optional(),

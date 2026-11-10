@@ -1,3 +1,4 @@
+jest.mock('./asset-partner-signing-code', () => ({ assetPartnerSigningCode: { send: jest.fn(async () => ({ sentTo: 'j•••@example.com', devCode: '123456' })), verify: jest.fn(async () => 'jordan@example.com') } }));
 jest.mock('../../notifications/application/notification.service', () => ({ notificationService: { send: jest.fn(async () => undefined) } }));
 jest.mock('../../vehicles/application/vin-decode.service', () => ({
   vinDecodeService: {
@@ -28,6 +29,7 @@ const NDA = { kind: 'nda' as const, title: 'Non-Disclosure Agreement', body: 'Th
 const SIGN: SignInput = {
   agreementVersion: 1, ndaVersion: 2, signedName: 'Jordan Ramirez', licenceNumber: 'D12345678', licenceState: 'tx',
   payout: { method: 'zelle', zelleHandle: 'jordan@example.com', zelleName: 'Jordan Ramirez' },
+  emailCode: '123456',
 };
 
 function dto(vin = '1HGCM82633A004352'): PortalApplicationDto {
@@ -40,10 +42,8 @@ function dto(vin = '1HGCM82633A004352'): PortalApplicationDto {
     state: 'TX',
     zip: '75201', hubId: TEST_HUB_ID,
     vehicle: { year: '2024', make: 'BMW', model: '5 Series', mileage: 18400, vin, plate: 'ABC-1234' },
-    ownership: 'owned',
+    ownership: 'owned', titleStatus: 'clean' as const, photos: [{ url: 'https://files.example/front.jpg', label: 'Front' }, { url: 'https://files.example/rear.jpg', label: 'Rear' }, { url: 'https://files.example/odo.jpg', label: 'Odometer' }],
     accident: 'no',
-    smokeFree: 'yes',
-    petFree: 'yes',
     insurance: { carrier: 'State Farm', policyNumber: 'SF-123', coverageType: 'full' },
     availability: 'fulltime',
     acknowledgedAccurate: true,
@@ -62,7 +62,7 @@ async function account(emailVerified = true) {
 async function approvedApplicant() {
   const userId = await account();
   const app = await assetPartnerApplicationService.createForAccount(userId, dto(), {});
-  await assetPartnerApplicationService.review(app._id, OPS, 'approved');
+  await assetPartnerApplicationService.review(app._id, OPS, 'approved', undefined, undefined, 0); // fee waived: covered in asset-partner-fee.test
   return userId;
 }
 
@@ -136,20 +136,25 @@ describe('getting started on the partner portal', () => {
     expect(pdf.pdf.subarray(0, 4).toString()).toBe('%PDF');
     expect(pdf.filename).toMatch(/^CrossCubes-Asset-Partner-Agreement-Jordan-Ramirez-CD-ENV-[A-Z0-9]{4}-[A-Z0-9]{4}.pdf$/);
 
+    // Signing opens the dashboard; the papers list rides along so the portal can ask for them.
     const docsStep = await assetPartnerApplicationService.onboarding(userId);
-    expect(docsStep.stage).toBe('documents');
+    expect(docsStep.stage).toBe('ready');
     expect(docsStep.documents?.map((d) => d.category)).toEqual(['w9', 'kyc', 'title', 'insurance', 'registration']);
-    await expect(assetPartnerService.requirePortalReady(userId)).rejects.toThrow('Finish getting started');
+    await expect(assetPartnerService.requirePortalReady(userId)).resolves.toBeTruthy();
+    const partnerId = (await assetPartnerService.getByUserId(userId))!._id;
+    await expect(assetPartnerService.transition(partnerId, 'active')).rejects.toThrow('Tax form');
 
     for (const category of ['w9', 'kyc', 'title', 'insurance', 'registration']) {
       await DocumentModel.create({ ownerId: userId, category, url: `https://cdn.example.com/${category}.pdf` });
     }
-    expect((await assetPartnerApplicationService.onboarding(userId)).stage).toBe('ready');
-    await expect(assetPartnerService.requirePortalReady(userId)).resolves.toBeTruthy();
+    expect((await assetPartnerApplicationService.onboarding(userId)).documents?.every((d) => d.uploaded)).toBe(true);
 
-    // A paper CrossCubes sends back locks the dashboard again until it is replaced.
+    // A paper CrossCubes sends back keeps the car off the road until it is replaced, without locking the dashboard.
     await DocumentModel.updateOne({ ownerId: userId, category: 'w9' }, { $set: { verification: { status: 'rejected', reason: 'Unsigned' } } });
-    expect((await assetPartnerApplicationService.onboarding(userId)).stage).toBe('documents');
+    expect((await assetPartnerApplicationService.onboarding(userId)).stage).toBe('ready');
+    await expect(assetPartnerService.transition(partnerId, 'active')).rejects.toThrow('papers are in');
+    await DocumentModel.create({ ownerId: userId, category: 'w9', url: 'https://cdn.example.com/w9-signed.pdf' });
+    expect((await assetPartnerService.transition(partnerId, 'active')).status).toBe('active');
 
     // A later version never rewrites what was signed.
     await assetPartnerAgreementService.publish(OPS, { ...AGREEMENT, body: `${AGREEMENT.body} Third.` });

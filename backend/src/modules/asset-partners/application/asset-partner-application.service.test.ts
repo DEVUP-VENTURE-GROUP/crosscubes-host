@@ -39,10 +39,8 @@ function baseDto(overrides: Partial<CreateApplicationDto> = {}): CreateApplicati
       vin: '1HGCM82633A004352',
       plate: 'ABC-1234',
     },
-    ownership: 'owned',
+    ownership: 'owned', titleStatus: 'clean' as const, photos: [{ url: 'https://files.example/front.jpg', label: 'Front' }, { url: 'https://files.example/rear.jpg', label: 'Rear' }, { url: 'https://files.example/odo.jpg', label: 'Odometer' }],
     accident: 'no',
-    smokeFree: 'yes',
-    petFree: 'yes',
     insurance: { carrier: 'State Farm', policyNumber: 'SF-123', coverageType: 'full' },
     availability: 'fulltime',
     acknowledgedAccurate: true,
@@ -66,7 +64,7 @@ describe('asset partner application', () => {
     await expect(assetPartnerApplicationService.create(baseDto({ hubId: 'nowhere' }), {})).rejects.toThrow('Pick a city');
     const app = await assetPartnerApplicationService.create(baseDto(), {});
     expect(app.hubId).toBe(TEST_HUB_ID);
-    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
     const partner = await AssetPartnerModel.findOne({ email: 'jordan@example.com' }).lean();
     expect(partner?.hubId).toBe(TEST_HUB_ID);
     expect((await HostModel.findById(partner!.hostId).lean())?.hubId).toBe(TEST_HUB_ID);
@@ -76,7 +74,7 @@ describe('asset partner application', () => {
     const user = await UserModel.create({ email: 'jordan@example.com', roles: ['guest'] });
     const app = await assetPartnerApplicationService.create(baseDto(), {});
 
-    const reviewed = await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+    const reviewed = await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
     expect(reviewed.status).toBe('approved');
     expect(reviewed.hostVerified).toBe(true);
 
@@ -100,7 +98,7 @@ describe('asset partner application', () => {
    */
   it('approval creates the account for an applicant who has not registered', async () => {
     const app = await assetPartnerApplicationService.create(baseDto({ email: 'nobody@example.com' }), {});
-    const reviewed = await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+    const reviewed = await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
     expect(reviewed.status).toBe('approved');
     expect(reviewed.hostVerified).toBe(true);
 
@@ -127,7 +125,7 @@ describe('asset partner application', () => {
 
   it('refuses to re-review an already-decided application', async () => {
     const app = await assetPartnerApplicationService.create(baseDto(), {});
-    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+    await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
     await expect(assetPartnerApplicationService.review(app._id, ADMIN, 'rejected')).rejects.toThrow();
   });
 
@@ -181,7 +179,7 @@ describe('asset partner application', () => {
     it('enrols a partner on approval and starts them in onboarding, not active', async () => {
       const user = await UserModel.create({ email: 'jordan@example.com', roles: ['guest'] });
       const app = await assetPartnerApplicationService.create(baseDto(), {});
-      await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+      await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
 
       const dash = await assetPartnerApplicationService.dashboardFor(user._id);
       expect(dash.partner).toBeDefined();
@@ -194,7 +192,7 @@ describe('asset partner application', () => {
     it('carries the fleet partner type through to the programme', async () => {
       const user = await UserModel.create({ email: 'jordan@example.com', roles: ['guest'] });
       const app = await assetPartnerApplicationService.create(baseDto({ partnerType: 'fleet' }), {});
-      await assetPartnerApplicationService.review(app._id, ADMIN, 'approved');
+      await assetPartnerApplicationService.review(app._id, ADMIN, 'approved', undefined, undefined, 0);
 
       const dash = await assetPartnerApplicationService.dashboardFor(user._id);
       expect(dash.partner!.partnerType).toBe('fleet');

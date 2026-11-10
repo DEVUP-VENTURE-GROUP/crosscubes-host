@@ -36,7 +36,6 @@ import { featureFlagsRoutes } from './modules/feature-flags/api/feature-flags.ro
 import { aiRoutes } from './modules/ai/api/ai.routes';
 import { kycRoutes } from './modules/kyc/api/kyc.routes';
 import { mapsRoutes } from './modules/maps/api/maps.routes';
-import { corporateRoutes } from './modules/corporate/api/corporate.routes';
 import { rewardsRoutes } from './modules/rewards/api/rewards.routes';
 import { referralRoutes } from './modules/referral/api/referral.routes';
 import { assetPartnerApplicationRoutes } from './modules/asset-partners/api/asset-partner-application.routes';
@@ -102,7 +101,6 @@ export function buildApiRouter(): Router {
   api.use('/maps', mapsRoutes);
   api.use('/feature-flags', featureFlagsRoutes);
   api.use('/ai', aiRoutes);
-  api.use('/corporate', corporateRoutes);
   api.use('/rewards', rewardsRoutes);
   api.use('/referral', referralRoutes);
   // Without a signed-in session the admin API does not exist as far as a scanner can tell: same 404 as any unknown path.

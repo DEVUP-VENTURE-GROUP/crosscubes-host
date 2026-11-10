@@ -1,6 +1,6 @@
 /** Centralized, typed runtime config. Never read process.env elsewhere. */
 export const config = {
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4400/api/v1',
   // The company name, not an environment value - hardcoded, not read from
   // NEXT_PUBLIC_APP_NAME, because a wrong env var on one deploy (it was set
   // to "CATO") was rendering as the wordmark on the navbar, footer, auth
@@ -19,5 +19,4 @@ export const config = {
    */
   assetPartnersOnly: (process.env.NEXT_PUBLIC_LAUNCH_MODE ?? 'asset_partners_only') === 'asset_partners_only',
   /** Corporate accounts ship in version 3: until this is on, their pages 404 and every link to them is hidden. */
-  corporate: process.env.NEXT_PUBLIC_CORPORATE === 'on',
 } as const;

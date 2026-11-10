@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { fontDisplay, fontMono, fontSans } from '@/styles/fonts';
 import '@/styles/globals.css';
 import { Providers } from '@/app/providers';
 import { AdminChrome } from './admin-chrome';
 
 /**
- * Root shell for the standalone admin application (port 3005).
+ * Root shell for the standalone admin application (port 4005).
  *
  * Reuses the public app's Providers, design tokens and font pairing from
  * ../frontend/src, so the console is identical without a second copy of any of
@@ -13,19 +13,6 @@ import { AdminChrome } from './admin-chrome';
  * the back-office frame (topbar, sidebar, server-verified access gate) and
  * leaves the login route bare.
  */
-const fontDisplay = Archivo({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['600', '700', '800'],
-  variable: '--font-display',
-  display: 'swap',
-});
-const fontSans = Instrument_Sans({ subsets: ['latin', 'latin-ext'], variable: '--font-sans', display: 'swap' });
-const fontMono = IBM_Plex_Mono({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600'],
-  variable: '--font-mono',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'CrossCubes Admin',
@@ -36,8 +23,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f8f6f2' },
-    { media: '(prefers-color-scheme: dark)', color: '#151210' },
+    { media: '(prefers-color-scheme: light)', color: '#f8f9fc' },
+    { media: '(prefers-color-scheme: dark)', color: '#090b16' },
   ],
 };
 

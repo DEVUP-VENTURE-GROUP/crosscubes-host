@@ -37,6 +37,7 @@ const config: Config = {
         // text-warning / bg-ink rendered as nothing at all.
         warning: { DEFAULT: 'hsl(var(--warning))', foreground: 'hsl(var(--warning-foreground))' },
         ink: { DEFAULT: 'hsl(var(--ink))', foreground: 'hsl(var(--ink-foreground))' },
+        signal: { DEFAULT: 'hsl(var(--signal))', foreground: 'hsl(var(--signal-foreground))' },
         card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
       },
       borderRadius: {

@@ -27,7 +27,7 @@ const boolString = () => z.enum(['true', 'false']).transform((v) => v === 'true'
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'staging', 'production', 'test']).default('development'),
-  PORT: z.coerce.number().int().positive().default(4000),
+  PORT: z.coerce.number().int().positive().default(4400),
   /** Interface to bind. '0.0.0.0' = all (default, portable); '127.0.0.1'
    *  = localhost only, correct behind a reverse proxy like Nginx so the Node
    *  port is never directly reachable from the internet. */
@@ -86,7 +86,7 @@ export const envSchema = z.object({
    * secrets-manager handling the way PASSWORD_PEPPER does; it just needs to
    * be stable so the same visitor hashes the same way across requests.
    */
-  VISITOR_HASH_SALT: z.string().default('cato-visitor-salt-dev-only'),
+  VISITOR_HASH_SALT: z.string().default('crosscubes-visitor-salt-dev-only'),
 
   JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900),
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(2_592_000),

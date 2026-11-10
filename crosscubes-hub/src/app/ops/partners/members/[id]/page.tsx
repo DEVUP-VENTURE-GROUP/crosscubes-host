@@ -21,8 +21,44 @@ import { IntakeReports } from '~/features/partners/intake-reports';
 import { PartnerEnvelopes } from '~/features/partners/partner-envelopes';
 import { TermsHistory } from '~/features/partners/terms-history';
 import { PartnerLifecycleCard } from '~/features/partners/partner-lifecycle-card';
+import { JoiningFeeCard } from '~/features/partners/joining-fee-card';
+import { PartnerCarsCard } from '~/features/partners/partner-cars-card';
 import { ApiError } from '@/lib/api/types';
 import { safeMessage } from '@/lib/utils/safe-message';
+import { api } from '@/lib/api/client';
+import { saveFile } from '@/lib/utils/save-file';
+
+/** The monthly partner report ops used to build by hand: pick the month, get the PDF to send. */
+function StatementDownload({ partnerId }: { partnerId: string }) {
+  const toast = useToast();
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - i);
+    return d.toISOString().slice(0, 7);
+  });
+  const [period, setPeriod] = useState(months[1]);
+  const [busy, setBusy] = useState(false);
+  const download = async () => {
+    setBusy(true);
+    try {
+      const { blob, filename } = await api.download(`/ioc/asset-partners/${partnerId}/statements/${period}/pdf`);
+      saveFile(blob, filename ?? `crosscubes-statement-${period}.pdf`);
+    } catch {
+      toast({ tone: 'error', title: 'That download didn’t work. Try again.' });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2 pt-2">
+      <Select aria-label="Month" value={period} onChange={(e) => setPeriod(e.target.value)} className="w-36">
+        {months.map((m) => <option key={m} value={m}>{m}</option>)}
+      </Select>
+      <Button size="sm" variant="outline" loading={busy} onClick={() => void download()}>Download report (PDF)</Button>
+    </div>
+  );
+}
 
 const manage = partnerManageApi('/ioc');
 
@@ -219,6 +255,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       <PartnerLifecycleCard partnerId={id} cars={(data.vehicles ?? []).map((v: { _id: string; year: number; make: string; model: string; assetPartnerEndedAt?: string }) => ({ ...v, endedAt: v.assetPartnerEndedAt }))} />
 
+      <JoiningFeeCard partnerId={id} fee={partner.joiningFee} signed={signed} />
+
       <PartnerPaperwork partnerId={id} signed={{ agreement: partner.agreement, nda: partner.nda }} />
 
       <PartnerEnvelopes partnerId={id} />
@@ -349,40 +387,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       <TermsHistory partnerId={id} />
 
-      {/* Their cars — ops had no way to see these from the partner record. */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Vehicles {data.vehicles?.length ? `· ${data.vehicles.length}` : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2.5 text-sm">
-          {data.vehicles?.length ? (
-            data.vehicles.map((v: any) => (
-              <div
-                key={v._id}
-                className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2.5 last:border-0 last:pb-0"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium">
-                    {v.year} {v.make} {v.model}
-                    {v.trim ? ` ${v.trim}` : ''}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {v.plate ? `Plate ${v.plate}` : 'No plate on file'}
-                    {v.vin ? ` · VIN ${v.vin}` : ''}
-                  </p>
-                </div>
-                <Badge tone={v.status === 'listed' ? 'success' : 'muted'}>{v.status}</Badge>
-              </div>
-            ))
-          ) : (
-            <p className="text-muted-foreground">
-              No vehicles onboarded yet — added once the car is photographed and inspected.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <PartnerCarsCard partnerId={id} cars={data.vehicles ?? []} active={['onboarding', 'active'].includes(partner.status)} />
 
       {/* What they actually submitted. Absent for a partner ops added directly. */}
       <Card>
@@ -446,6 +451,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               />
               <Row label="Fleet insurance" value={`−${money(statement.data.totals.insurance)}`} />
               <Row label="Detailing" value={`−${money(statement.data.totals.detailing)}`} />
+              {statement.data.totals.repairs > 0 && <Row label="Repairs" value={`−${money(statement.data.totals.repairs)}`} />}
+              {statement.data.totals.noticeRefunds > 0 && <Row label="Tolls and tickets refunded" value={`+${money(statement.data.totals.noticeRefunds)}`} />}
               <div className="border-t border-border pt-2.5">
                 <Row label="Partner net" value={money(statement.data.totals.net)} strong />
               </div>
@@ -455,6 +462,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 {formatDate(statement.data.payoutDate)} by {statement.data.payoutMethod} ·{' '}
                 {statement.data.final ? 'final' : 'month still running'}
               </p>
+              <StatementDownload partnerId={id} />
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No statement available.</p>

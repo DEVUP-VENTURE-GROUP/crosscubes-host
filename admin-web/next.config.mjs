@@ -17,7 +17,7 @@ const MOVED = [
 ];
 
 /**
- * The admin app is a SEPARATE Next application on its own port (3005), but it
+ * The admin app is a SEPARATE Next application on its own port (4005), but it
  * shares one component library, API client and admin feature code with the
  * public app rather than duplicating them. `@/*` therefore resolves into
  * ../frontend/src, and `externalDir` lets Next compile TS/TSX that lives

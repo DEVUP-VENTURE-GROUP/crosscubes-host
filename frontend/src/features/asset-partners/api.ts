@@ -12,6 +12,8 @@ export interface AssetPartnerVehicle {
   plate: string;
 }
 
+export type TitleStatus = 'clean' | 'salvage' | 'rebuilt' | 'flood' | 'lemon';
+
 export interface CreateAssetPartnerApplicationInput {
   fullName: string;
   businessName?: string;
@@ -27,22 +29,22 @@ export interface CreateAssetPartnerApplicationInput {
   referral?: string;
   vehicle: AssetPartnerVehicle;
   ownership: 'owned' | 'financed' | 'leased';
+  titleStatus: TitleStatus;
   lienholder?: string;
   lienAccountLast4?: string;
   estimatedMarketValue?: string;
   accident: 'yes' | 'no';
   accidentDetail?: string;
-  smokeFree: 'yes' | 'no';
-  petFree: 'yes' | 'no';
   hasMaintenanceRecords?: 'yes' | 'no';
-  photos?: { url: string; key?: string; label?: string }[];
-  insurance: {
-    carrier: string;
-    policyNumber: string;
-    coverageType: 'full' | 'liability' | 'unsure';
+  photos: { url: string; key?: string; label?: string; sha256?: string }[];
+  insurance?: {
+    carrier?: string;
+    policyNumber?: string;
+    coverageType?: 'full' | 'liability' | 'unsure';
     policyExpiry?: string;
   };
-  availability: 'fulltime' | 'parttime' | 'seasonal';
+  availability: 'fulltime' | 'seasonal';
+  seasonMonths?: number;
   preferredZone?: string;
   targetStartDate?: string;
   notes?: string;
@@ -58,7 +60,7 @@ export type ApplicationStatus = 'submitted' | 'under_review' | 'changes_requeste
 /** From the partner portal the account's own email is used. */
 export type PortalApplicationInput = Omit<CreateAssetPartnerApplicationInput, 'email'>;
 
-export type OnboardingStage = 'verify_email' | 'apply' | 'review' | 'changes' | 'rejected' | 'profile' | 'identity' | 'agreement' | 'agreement_expired' | 'documents' | 'payout' | 'ready';
+export type OnboardingStage = 'verify_email' | 'apply' | 'review' | 'changes' | 'rejected' | 'profile' | 'identity' | 'fee' | 'agreement' | 'agreement_expired' | 'documents' | 'payout' | 'ready';
 
 export interface ContactConfirmation {
   status: 'pending' | 'confirmed' | 'declined' | 'undeliverable';
@@ -197,18 +199,23 @@ export interface SignDocumentsInput {
   agreementVersion: number;
   ndaVersion: number;
   signedName: string;
-  licenceNumber: string;
-  licenceState: string;
+  /** Left out when the ID check already read the licence. */
+  licenceNumber?: string;
+  licenceState?: string;
   payout: PayoutElection;
   acceptAgreement: true;
   acceptNda: true;
   acknowledgeDeductibles: true;
+  /** The one-time code emailed for this signing. */
+  emailCode: string;
 }
 
 export interface PartnerOnboarding {
   stage: OnboardingStage;
   email?: string;
   emailVerified: boolean;
+  /** What is owed at the fee step. */
+  fee?: { amountCents: number; platformFeeCents: number; totalCents: number; currency: string };
   application?: PartnerApplicationDetail;
   partner?: { displayName: string; status: PartnerStatus };
   agreement?: SignableDocument | null;
@@ -236,12 +243,16 @@ export interface PartnerApplication {
   email: string;
   phone?: string;
   vehicle: AssetPartnerVehicle;
+  // Older applications may still say part time.
   availability: 'fulltime' | 'parttime' | 'seasonal';
+  seasonMonths?: number;
   preferredZone?: string;
   targetStartDate?: string;
   createdAt: string;
   reviewedAt?: string;
   reviewNotes?: string;
+  /** What CrossCubes asked to be redone; only these items are open when it is sent again. */
+  changeRequest?: { items: { key: string; label: string; note?: string }[]; note?: string; requestedAt: string };
   hostVerified?: boolean;
   kind?: 'partner' | 'vehicle';
 }
@@ -255,13 +266,14 @@ export interface PartnerApplicationDetail extends PartnerApplication {
   state: string;
   zip: string;
   ownership: 'owned' | 'financed' | 'leased';
+  titleStatus?: TitleStatus;
   lienholder?: string;
   hadAccident: boolean;
   accidentDetail?: string;
-  smokeFree: boolean;
-  petFree: boolean;
-  photos: { url: string; key?: string; label?: string }[];
-  insurance: { carrier: string; policyNumber: string; coverageType: 'full' | 'liability' | 'unsure'; policyExpiry?: string };
+  smokeFree?: boolean;
+  petFree?: boolean;
+  photos: { url: string; key?: string; label?: string; sha256?: string }[];
+  insurance?: { carrier?: string; policyNumber?: string; coverageType?: 'full' | 'liability' | 'unsure'; policyExpiry?: string };
   notes?: string;
   signature: string;
   signedAt: string;
@@ -305,6 +317,8 @@ export interface StatementLine {
   managementFee: number;
   insurance: number;
   detailing: number;
+  /** Approved repairs finished this month; a damage repair counts up to the deductible cap. */
+  repairs: number;
   net: number;
 }
 
@@ -325,6 +339,9 @@ export interface PartnerStatement {
     managementFee: number;
     insurance: number;
     detailing: number;
+    repairs: number;
+    /** Tolls and tickets the partner paid that CrossCubes accepted, paid back here. */
+    noticeRefunds: number;
     net: number;
   };
   payoutDate: string;
@@ -370,7 +387,73 @@ export interface PartnerVehicleDetail extends PartnerVehicleSummary {
   recentTrips: VehicleTripSummary[];
   /** This car's net across recent months, oldest first (chart order). */
   monthly: { period: string; net: number; gross: number }[];
+  /** Trips not finished yet, soonest first; `now` marks the one out with a guest. */
+  upcoming: { code: string; start: string; end: string; now: boolean }[];
+  daysBookedThisMonth: number;
+  daysInMonth: number;
+  photos: string[];
+  rating: { average: number; count: number };
+  reviews: { rating: number; comment: string; at: string }[];
+  claims: { type: string; status: string; at: string; amountClaimed?: number; amountApproved?: number }[];
 }
+
+export type NoticeType = 'toll' | 'parking' | 'traffic' | 'impound' | 'other';
+export type NoticeStatus = 'matched' | 'needs_review' | 'absorbed' | 'rejected';
+
+export interface PartnerNoticeTrip {
+  id: string;
+  code: string;
+  start: string;
+  end: string;
+}
+
+export interface PartnerNotice {
+  _id: string;
+  vehicleId: string;
+  vehicle: { name: string; plate?: string } | null;
+  partnerName?: string;
+  type: NoticeType;
+  issuedBy: string;
+  noticeRef: string;
+  occurredDate: string;
+  occurredAt?: string;
+  amountCents: number;
+  dueDate?: string;
+  paidByPartner: boolean;
+  evidence: { url: string; kind: 'image' | 'file' }[];
+  status: NoticeStatus;
+  reviewReason?: 'no_trip' | 'several_trips' | 'too_late';
+  trip: PartnerNoticeTrip | null;
+  candidates: PartnerNoticeTrip[];
+  /** How charging the guest stands: reported, charged, charge_failed, disputed, waived. */
+  guestCharge: string | null;
+  reimburseInPeriod?: string;
+  agencyPaid?: { at: string; reference?: string };
+  resolution?: { at: string; note?: string };
+  createdAt: string;
+}
+
+export interface NoticeUploadInput {
+  vehicleId: string;
+  type: NoticeType;
+  issuedBy: string;
+  noticeRef: string;
+  occurredDate: string;
+  occurredAt?: string;
+  amountCents: number;
+  dueDate?: string;
+  paidByPartner: boolean;
+  evidence: { key: string; kind: 'image' | 'file' }[];
+}
+
+export interface PartnerYearSummary {
+  year: number;
+  months: { period: string; trips: number; gross: number; net: number }[];
+  totals: { trips: number; gross: number; managementFee: number; insurance: number; detailing: number; repairs: number; noticeRefunds: number; net: number };
+  paidInYear: number;
+}
+
+export const NOTICE_TYPE_LABEL: Record<NoticeType, string> = { toll: 'Toll', parking: 'Parking ticket', traffic: 'Traffic or camera ticket', impound: 'Towing or impound', other: 'Other' };
 
 export type MaintenanceApproval = 'not_required' | 'pending' | 'approved' | 'declined';
 
@@ -426,6 +509,8 @@ export const assetPartnerApi = {
   submitApplication: (input: PortalApplicationInput) => api.post<PartnerApplicationDetail>('/asset-partners/me/applications', input),
   resubmitApplication: (id: string, input: PortalApplicationInput) => api.patch<PartnerApplicationDetail>(`/asset-partners/me/applications/${id}`, input),
   signDocuments: (input: SignDocumentsInput) => api.post('/asset-partners/me/agreement', input),
+  /** Stripe's hosted page for the one-time fee; `paid` when it has already gone through. */
+  joiningFeeCheckout: () => api.post<{ url?: string; paid: boolean }>('/asset-partners/me/joining-fee/checkout'),
   requestNewOffer: () => api.post<AgreementOfferState | null>('/asset-partners/me/agreement/reissue-request'),
   profile: () => api.get<{ profile: PartnerProfile | null; ownPhone?: string; identity: { state: IdentityState; required: boolean; reason?: string } }>('/asset-partners/me/profile'),
   saveProfile: (input: PartnerProfileInput) => api.put<PartnerProfile>('/asset-partners/me/profile', input),
@@ -447,7 +532,8 @@ export const assetPartnerApi = {
   envelopes: () => api.get<SignatureEnvelope[]>('/asset-partners/me/envelopes'),
   downloadSealed: (documentId: string) => api.download(`/asset-partners/me/signed-documents/${documentId}`),
   amendment: () => api.get<TermsAmendment | null>('/asset-partners/me/amendment'),
-  signAmendment: (input: { versionId: string; signedName: string; templateVersion: number }) =>
+  sendSigningCode: () => api.post<{ sentTo: string }>('/asset-partners/me/signing-code'),
+  signAmendment: (input: { versionId: string; signedName: string; templateVersion: number; emailCode: string }) =>
     api.post<{ envelopeId: string; effectiveFrom: string }>('/asset-partners/me/amendment/sign', input),
   declineAmendment: () => api.post<{ declined: true }>('/asset-partners/me/amendment/decline'),
   /** Public: anyone can check an envelope ID or a file's fingerprint. */
@@ -457,6 +543,11 @@ export const assetPartnerApi = {
   respondIntake: (id: string, body: { kind: 'acknowledged'; signedName: string } | { kind: 'objected'; objection: string }) =>
     api.post<IntakeReport>(`/asset-partners/me/intakes/${id}/respond`, body),
   downloadIntake: (id: string) => api.download(`/asset-partners/me/intakes/${id}/pdf`),
+  notices: () => api.get<PartnerNotice[]>('/asset-partners/notices'),
+  uploadNotice: (body: NoticeUploadInput) => api.post<PartnerNotice>('/asset-partners/notices', body),
+  downloadStatement: (period: string) => api.download(`/asset-partners/statements/${period}/pdf`),
+  yearSummary: (year: number) => api.get<PartnerYearSummary>(`/asset-partners/year-summary/${year}`),
+  downloadYearSummary: (year: number) => api.download(`/asset-partners/year-summary/${year}/pdf`),
   lookupVin: (vin: string) => api.get<VinLookup>(`/asset-partners/vin/${encodeURIComponent(vin)}`),
 
   // Self-service payout recipient details. NOT terms - see the backend route.

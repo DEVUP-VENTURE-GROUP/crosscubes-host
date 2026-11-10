@@ -7,6 +7,7 @@ import { HostModel } from '../../hosts/infrastructure/host.model';
 import { hashPassword } from '../../auth/application/password';
 import { haversineKm } from '../../risk/domain/risk-signals';
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
+import { config } from '../../../config';
 import { notificationService } from '../../notifications/application/notification.service';
 import { ConflictError, NotFoundError, ValidationError } from '../../../core/errors/app-error';
 import { HOUSE_FLEET_ROLE, ROLES, STAFF_ROLES } from '../../../shared/constants/rbac';
@@ -245,7 +246,7 @@ export class HubService {
       });
     }
     let host = await hostService.getByUserId(user._id);
-    if (!host) host = await hostService.onboard(user._id, hub.name);
+    if (!host) host = await hostService.onboard(user._id, `${config.notifications.brandName} ${hub.name}`);
     if (host.verificationStatus !== 'verified') await hostService.setVerification(host._id, 'verified');
     await HostModel.updateOne({ _id: host._id }, { $set: { hubId: hub._id } });
     const updated = await HubModel.updateOne(

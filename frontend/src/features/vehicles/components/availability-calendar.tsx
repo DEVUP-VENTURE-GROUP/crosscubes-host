@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Box, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils/cn';
 import type { Vehicle } from '@/features/vehicles/types';
@@ -288,7 +288,7 @@ export function AvailabilityCalendar({
 
           {longestRun > 0 && longestFrom && !range && (
             <p className="flex items-center gap-1.5 text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <Box className="h-3.5 w-3.5 text-primary" />
               Longest open stretch this month: {longestRun} night{longestRun === 1 ? '' : 's'} from{' '}
               {longestFrom.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </p>

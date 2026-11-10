@@ -159,6 +159,9 @@ export class PlatformConfigService {
       hubs: { holderShareBps: 1000, licenceFeeCents: 100000, licenceTermMonths: 12, licenceReminderDays: 30, payoutDayOfMonth: 5, ...(doc.hubs ?? {}) },
       assetPartner: {
         managementFeeBps: 2000,
+        minSeasonMonths: 2,
+        joiningFeeEnabled: true,
+        registrationPlatformFeeCents: 499,
         insuranceMonthlyCents: 13_700,
         detailingMonthlyCents: 5_000,
         deductibleCapCents: 100_000,
@@ -168,7 +171,7 @@ export class PlatformConfigService {
         intakeObjectionDays: 3,
         countersignerName: '',
         countersignerTitle: '',
-        countersignerOrganisation: 'CrossCubes',
+        countersignerOrganisation: 'CatoDrive, Inc. (CrossCubes)',
         agreementValidDays: 25,
         agreementReminderDays: 5,
         requireIdentity: true,
@@ -289,6 +292,7 @@ export class PlatformConfigService {
         customer: { ...DEFAULT_APP_RELEASE, ...(doc.appRelease?.customer ?? {}) },
         partner: { ...DEFAULT_APP_RELEASE, ...(doc.appRelease?.partner ?? {}) },
       },
+      siteNotice: { enabled: doc.siteNotice?.enabled ?? true },
       booking: {
         hostApprovalHours: 24,
         verificationGraceHours: 72,

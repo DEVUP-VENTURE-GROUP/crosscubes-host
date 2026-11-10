@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Sun, Heart, Route, Sparkles, Mountain, Compass, Palmtree, type LucideIcon } from 'lucide-react';
+import { Sun, Heart, Route, Box, Mountain, Compass, Palmtree, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
-const ICONS: LucideIcon[] = [Sun, Heart, Route, Sparkles, Mountain, Compass, Palmtree];
+const ICONS: LucideIcon[] = [Sun, Heart, Route, Box, Mountain, Compass, Palmtree];
 const ROTATE_MS = 4500;
 
 const QUOTES = [

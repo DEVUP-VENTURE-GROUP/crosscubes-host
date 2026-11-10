@@ -65,7 +65,7 @@ server {
   #    See Cloudflare's "Validate JWTs" — the Team domain + AUD tag.
 
   location / {
-    proxy_pass http://127.0.0.1:3005;   # admin app, bound to loopback only
+    proxy_pass http://127.0.0.1:4005;   # admin app, bound to loopback only
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
@@ -73,7 +73,7 @@ server {
 }
 ```
 
-Critically, the admin process **binds to `127.0.0.1:3005`, not `0.0.0.0`** — so
+Critically, the admin process **binds to `127.0.0.1:4005`, not `0.0.0.0`** — so
 `:3005` is not listening on any public interface and cannot be hit directly even
 from inside the datacenter. The EC2 security group should also not expose 3005.
 
@@ -103,7 +103,7 @@ npm install
 npm run build && npm run start   # listens on :3005
 ```
 
-Bind it to loopback in production (`next start -p 3005 -H 127.0.0.1`) so :3005 is
+Bind it to loopback in production (`next start -p 4005 -H 127.0.0.1`) so :3005 is
 never publicly reachable, and let NGINX + Cloudflare Access (§2–§3) be the only
 way in.
 

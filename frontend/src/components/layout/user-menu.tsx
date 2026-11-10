@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { config } from '@/lib/config';
 import {
-  Car, LogOut, Wallet, Gift, User, LifeBuoy, Building2, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Sparkles } from 'lucide-react';
+  Car, LogOut, Wallet, Gift, User, LifeBuoy, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Box } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store';
 import { useUnreadMessages } from '@/features/messaging/hooks';
 import { useLogout } from '@/features/auth/hooks';
@@ -55,7 +54,7 @@ export function UserMenu() {
     { href: '/saved-searches', label: 'Saved searches', icon: Search, inFooter: false },
     { href: '/wallet', label: 'Wallet', icon: Wallet, inFooter: false },
     { href: '/citations', label: 'Tickets & tolls', icon: FileWarning, inFooter: false },
-    ...(programs.membership ? [{ href: '/membership', label: 'Membership', icon: Sparkles, inFooter: false }] : []),
+    ...(programs.membership ? [{ href: '/membership', label: 'Membership', icon: Box, inFooter: false }] : []),
     ...(programs.rewards ? [{ href: '/rewards', label: 'Rewards', icon: Gift, inFooter: false }] : []),
     { href: '/account', label: 'Account', icon: User, inFooter: true },
     { href: '/help', label: 'Help centre', icon: BookOpen, inFooter: false },
@@ -132,18 +131,6 @@ export function UserMenu() {
               <SiteLink path="/asset-partners/dashboard" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                 <Car className="h-4 w-4 text-primary" /> Partner dashboard
               </SiteLink>
-            )}
-            {!config.assetPartnersOnly && !isAssetPartner && !user?.roles?.includes('house_fleet') && (
-              <>
-                <SiteLink path="/host" onNavigate={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
-                  <Car className="h-4 w-4 text-primary" /> Host dashboard
-                </SiteLink>
-                {config.corporate && (
-                  <Link href="/corporate" onClick={() => setOpen(false)} role="menuitem" className="flex items-center gap-3 px-4 py-2 text-sm transition-colors hover:bg-accent">
-                    <Building2 className="h-4 w-4 text-muted-foreground" /> Corporate
-                  </Link>
-                )}
-              </>
             )}
             {/* No admin link here. The console is a separate application on
                 its own hostname behind Cloudflare Access; the public app neither

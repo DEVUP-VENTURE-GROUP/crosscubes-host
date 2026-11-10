@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Gauge, Fuel, Check, DoorOpen, Truck, ShieldCheck, Gauge as MileIcon, ClipboardList, Sparkles, LifeBuoy, Headphones, CalendarCheck, Grid2x2, Umbrella, CalendarX2 } from 'lucide-react';
+import { Users, Gauge, Fuel, Check, DoorOpen, Truck, ShieldCheck, Gauge as MileIcon, ClipboardList, Box, LifeBuoy, Headphones, CalendarCheck, Grid2x2, Umbrella, CalendarX2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -601,7 +601,7 @@ export default function VehicleDetailPage() {
           <div className="pt-8">
             <h2 className="mb-4 text-2xl font-bold tracking-tight">Peace of mind</h2>
             <div className="space-y-4">
-              <PeaceItem icon={<Sparkles className="h-6 w-6 stroke-[1.5]" />} title="No car wash necessary" detail="Just keep the car tidy and return it as you found it." />
+              <PeaceItem icon={<Box className="h-6 w-6 stroke-[1.5]" />} title="No car wash necessary" detail="Just keep the car tidy and return it as you found it." />
               {v.insurance?.approved && (
                 <PeaceItem
                   icon={<Umbrella className="h-6 w-6 stroke-[1.5]" />}
@@ -1066,7 +1066,7 @@ export default function VehicleDetailPage() {
                     href="/membership"
                     className="mt-3 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm transition-colors hover:border-primary/60"
                   >
-                    <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+                    <Box className="h-4 w-4 shrink-0 text-primary" />
                     <span className="min-w-0">
                       Save <span className="font-semibold">{formatMoney(quote.data.memberOffer.savings)}</span> on
                       this trip with {quote.data.memberOffer.planName}
@@ -1156,7 +1156,7 @@ export default function VehicleDetailPage() {
                   <a href={platformCfg.data?.legal?.privacyUrl || '/privacy'} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground underline underline-offset-2">privacy policy</a>{' '}
                   and all other{' '}
                   <a href={platformCfg.data?.legal?.termsUrl || '/terms'} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground underline underline-offset-2">terms and conditions</a>{' '}
-                  of CrossCubes Inc. I also agree to receive communication via email, phone, etc. as and when required during the rental period or till any billing/incident issues are resolved.
+                  of CatoDrive, Inc. (trading as CrossCubes) I also agree to receive communication via email, phone, etc. as and when required during the rental period or till any billing/incident issues are resolved.
                 </span>
               </label>
             )}

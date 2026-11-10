@@ -11,6 +11,7 @@ import { EVENTS } from '../../../core/events/event-names';
 import { logger } from '../../../infrastructure/logging/logger';
 import { config } from '../../../config';
 import { hubApplicationService } from '../../hubs/application/hub-application.service';
+import { assetPartnerFeeService, FEE_KIND } from '../../asset-partners/application/asset-partner-fee.service';
 
 /**
  * Handle one verified Stripe event and record the outcome.
@@ -34,7 +35,8 @@ export async function runStripeEvent(event: {
       last_payment_error?: { message?: string };
     };
     // The Stripe account is shared with another system: skip anything tagged for it, and untagged payments, which are its own.
-    const untaggedIsForeign = event.type.startsWith('payment_intent.') || (event.type.startsWith('charge.') && !event.type.startsWith('charge.dispute.'));
+    const untaggedIsForeign =
+      event.type.startsWith('payment_intent.') || event.type.startsWith('checkout.session.') || (event.type.startsWith('charge.') && !event.type.startsWith('charge.dispute.'));
     const foreign = obj.metadata?.app ? obj.metadata.app !== config.app.key : untaggedIsForeign;
     if (foreign) {
       await WebhookEventModel.updateOne({ _id: event.id }, { status: 'processed', processedAt: new Date(), $unset: { payload: 1 } });
@@ -63,11 +65,19 @@ export async function runStripeEvent(event: {
         if (meta?.kind === 'security_deposit') await depositService.syncOnPage(obj.id);
         break;
       }
+      // The Asset Partner fee is paid on Stripe's hosted page, outside any booking.
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
+        const meta = (event.data.object as { metadata?: { kind?: string } }).metadata;
+        if (meta?.kind === FEE_KIND) await assetPartnerFeeService.onCheckoutCompleted(obj.id);
+        break;
+      }
       case 'charge.refunded': {
         // Book any refund we did not make ourselves (e.g. from the Stripe dashboard).
         const charge = event.data.object as { payment_intent?: string; amount_refunded?: number };
         if (charge.payment_intent && typeof charge.amount_refunded === 'number') {
           await dashboardRefundService.reconcile(charge.payment_intent, charge.amount_refunded);
+          await assetPartnerFeeService.reconcileRefund(charge.payment_intent, charge.amount_refunded);
         }
         if (bookingId) emit(EVENTS.PAYMENT_REFUNDED, bookingId, { bookingId });
         break;

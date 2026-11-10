@@ -6,7 +6,7 @@
  */
 const path = require('path');
 const fs = require('fs');
-const API = process.env.API || 'http://127.0.0.1:8080/api/v1';
+const API = process.env.API || 'http://127.0.0.1:4400/api/v1';
 
 let pass = 0, fail = 0;
 const ok = (n, c, d = '') => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fail++; console.log(`  ✗ ${n}${d ? `  -> ${d}` : ''}`); } };

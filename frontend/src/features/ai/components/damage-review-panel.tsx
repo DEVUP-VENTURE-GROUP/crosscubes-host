@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ScanSearch, ShieldCheck, AlertTriangle, Eye, Sparkles } from 'lucide-react';
+import { ScanSearch, ShieldCheck, AlertTriangle, Eye, Box } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,7 +64,7 @@ export function DamageReviewPanel({
             <p className="flex items-center gap-2 font-semibold">
               <ScanSearch className="h-5 w-5 text-primary" /> Photo comparison
               <Badge tone="muted">
-                <Sparkles className="me-1 inline h-3 w-3" />AI
+                <Box className="me-1 inline h-3 w-3" />AI
               </Badge>
             </p>
             <p className="mt-0.5 text-sm text-muted-foreground">

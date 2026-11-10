@@ -91,6 +91,12 @@ export interface PlatformConfigDoc {
   assetPartner: {
     /** Management fee on gross booking revenue. 2000 = the published 20%. */
     managementFeeBps: number;
+    /** Shortest seasonal commitment accepted, in months; seasons run up to six months or a full year. */
+    minSeasonMonths: number;
+    /** One-time registration fee, charged after the ID check; ops enters each partner's amount when approving. */
+    joiningFeeEnabled: boolean;
+    /** Added on top of every registration fee; separate from the guest booking service fee. */
+    registrationPlatformFeeCents: number;
     /** Roamly fleet insurance, per vehicle per month, in minor units. */
     insuranceMonthlyCents: number;
     /** Professional detailing, per vehicle per month, in minor units. */
@@ -577,6 +583,8 @@ export interface PlatformConfigDoc {
   };
   /** Mobile app versions: below minVersion the app blocks with "Update"; below latestVersion it shows a banner. */
   appRelease: Record<'customer' | 'partner', AppReleaseConfig>;
+  /** The testing notice across the top of every site; its wording lives in the sites. On until admin switches it off. */
+  siteNotice: { enabled: boolean };
   booking: {
     hostApprovalHours: number;
     verificationGraceHours: number;
@@ -747,6 +755,9 @@ const schema = new Schema<PlatformConfigDoc>(
     // Defaults are the terms published on /asset-partners.
     assetPartner: {
       managementFeeBps: { type: Number, default: 2000 }, // 20%
+      minSeasonMonths: { type: Number, default: 2 },
+      joiningFeeEnabled: { type: Boolean, default: true },
+      registrationPlatformFeeCents: { type: Number, default: 499 },
       insuranceMonthlyCents: { type: Number, default: 13_700 }, // $137 Roamly
       detailingMonthlyCents: { type: Number, default: 5_000 }, // $50
       deductibleCapCents: { type: Number, default: 100_000 }, // $1,000 cap
@@ -756,7 +767,7 @@ const schema = new Schema<PlatformConfigDoc>(
       intakeObjectionDays: { type: Number, default: 3 },
       countersignerName: { type: String, default: '' },
       countersignerTitle: { type: String, default: '' },
-      countersignerOrganisation: { type: String, default: 'CrossCubes' },
+      countersignerOrganisation: { type: String, default: 'CatoDrive, Inc. (CrossCubes)' },
       agreementValidDays: { type: Number, default: 25 },
       agreementReminderDays: { type: Number, default: 5 },
       requireIdentity: { type: Boolean, default: true },
@@ -988,6 +999,9 @@ const schema = new Schema<PlatformConfigDoc>(
     appRelease: {
       customer: { minVersion: String, latestVersion: String, androidUrl: String, iosUrl: String },
       partner: { minVersion: String, latestVersion: String, androidUrl: String, iosUrl: String },
+    },
+    siteNotice: {
+      enabled: { type: Boolean, default: true },
     },
     booking: {
       hostApprovalHours: { type: Number, default: 24 },

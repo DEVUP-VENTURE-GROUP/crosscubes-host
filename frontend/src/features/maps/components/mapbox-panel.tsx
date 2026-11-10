@@ -338,7 +338,7 @@ function pinEl(
   el.title = `${p.name ?? ''}${p.rating ? ` · ${p.rating}★` : ''} - $${p.price}/day`;
 
   const bolt = p.instant
-    ? '<span class="absolute -end-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-[#0c7979] text-xs text-white ring-2 ring-white">\u26A1</span>'
+    ? '<span class="absolute -end-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-xs text-white ring-2 ring-white">\u26A1</span>'
     : '';
 
   // A photo is dropped when the map is busy, and when the car has none - an
@@ -346,8 +346,8 @@ function pinEl(
   const showPhoto = !compact && !!p.photo;
 
   el.innerHTML = `
-    <span class="relative flex items-center rounded-lg bg-[#141210]
-                 ring-2 ring-white transition-colors duration-150 group-hover:ring-[#0c7979]
+    <span class="relative flex items-center rounded-lg bg-ink
+                 ring-2 ring-white transition-colors duration-150 group-hover:ring-primary
                  ${showPhoto ? 'gap-1.5 p-1 pe-2.5' : 'px-2.5 py-1'}">
       ${showPhoto ? `<img src="${p.photo}" alt="" loading="lazy" class="h-9 w-12 shrink-0 rounded-xl object-cover" />` : ''}
       <span class="text-[13px] font-bold leading-none text-white">$${p.price}</span>
@@ -372,9 +372,9 @@ function clusterEl(count: number, onClick: () => void): HTMLButtonElement {
   // A soft halo behind the bubble reads as density without needing a heat map,
   // and tells the eye which clusters are worth zooming into.
   el.innerHTML = `
-    <span class="absolute inset-0 rounded-full bg-[#0c7979] opacity-20"></span>
-    <span class="absolute inset-[15%] rounded-full bg-[#0c7979] opacity-30"></span>
-    <span class="relative grid h-[70%] w-[70%] place-items-center rounded-full bg-[#0c7979]
+    <span class="absolute inset-0 rounded-full bg-primary opacity-20"></span>
+    <span class="absolute inset-[15%] rounded-full bg-primary opacity-30"></span>
+    <span class="relative grid h-[70%] w-[70%] place-items-center rounded-full bg-primary
                  text-[13px] font-bold text-white ring-2 ring-white
                   transition-transform duration-150
                  group-hover:scale-110">${count}</span>`;

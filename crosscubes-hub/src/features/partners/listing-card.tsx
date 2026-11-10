@@ -61,7 +61,7 @@ export function ListingCard({ applicationId, vehicleId }: { applicationId: strin
           <p className="mt-1 text-sm text-muted-foreground">Creates a draft listing from the VIN with the partner’s photos, tagged to this partner so their statements and dashboard follow it. Set the price and publish it after the inspection.</p>
         </div>
         <Field label="Where the car will be based" htmlFor="base" hint="Leave empty to use the same place as the rest of the fleet.">
-          <Input id="base" value={address} maxLength={300} placeholder="e.g. DFW Airport, Terminal D" onChange={(e) => setAddress(e.target.value)} />
+          <Input id="base" value={address} maxLength={300} placeholder="e.g. the airport terminal or your lot address" onChange={(e) => setAddress(e.target.value)} />
         </Field>
         {needsDetails && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -9,16 +9,16 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'CrossCubes - Premium Car Rentals',
+    name: 'CrossCubes',
     short_name: 'CrossCubes',
     description:
-      'Book premium cars delivered to your terminal, or turn the car you own into income. Curbside at DFW and Love Field.',
+      'Book a car run by your local CrossCubes team, or put the car you own to work.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#12100e',
-    theme_color: '#12100e',
+    background_color: '#090b16',
+    theme_color: '#090b16',
     categories: ['travel', 'business', 'lifestyle'],
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

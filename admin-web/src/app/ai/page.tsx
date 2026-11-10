@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles, AlertTriangle } from 'lucide-react';
+import { Activity, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,7 +65,7 @@ export default function AiUsagePage() {
 
           {(q.data?.byFeature.length ?? 0) === 0 ? (
             <EmptyState
-              icon={<Sparkles className="h-8 w-8" />}
+              icon={<Activity className="h-8 w-8" />}
               title="No AI calls in this window"
               description="Usage appears here once a feature runs."
             />

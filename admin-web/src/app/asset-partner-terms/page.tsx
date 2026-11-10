@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Percent, ShieldCheck, Sparkles, Wrench, Banknote, CalendarDays } from 'lucide-react';
+import { Save, Percent, ShieldCheck, Box, Wrench, Banknote, CalendarDays } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,13 +32,14 @@ const money = (cents: number) =>
  * businesses with different arithmetic, and an operator editing one must never
  * be able to believe they edited the other.
  */
-type LifecycleKey = 'agreementValidDays' | 'agreementReminderDays' | 'reapplyAfterDays' | 'exitNoticeDays' | 'unresponsiveAfterDays' | 'returnPhotoMin';
+type LifecycleKey = 'agreementValidDays' | 'agreementReminderDays' | 'reapplyAfterDays' | 'exitNoticeDays' | 'unresponsiveAfterDays' | 'returnPhotoMin' | 'minSeasonMonths';
 const LIFECYCLE_NUMBERS: { key: LifecycleKey; label: string; hint: string; min: number; max: number; fallback: number }[] = [
   { key: 'agreementValidDays', label: 'Days to sign the agreement', hint: 'After approval, the offer to sign lapses after this many days and has to be sent again.', min: 1, max: 90, fallback: 25 },
   { key: 'agreementReminderDays', label: 'Reminder before the offer ends (days)', hint: '0 sends no reminder.', min: 0, max: 30, fallback: 5 },
   { key: 'reapplyAfterDays', label: 'Wait before a declined applicant reapplies (days)', hint: 'The default; staff can change it on each decision.', min: 0, max: 365, fallback: 90 },
   { key: 'exitNoticeDays', label: 'Notice to get a car back (days)', hint: 'The earliest return date a partner can ask for.', min: 0, max: 180, fallback: 30 },
   { key: 'unresponsiveAfterDays', label: 'Watch list after no visit for (days)', hint: 'Partners who haven’t opened their portal this long appear on the Returns watch list.', min: 7, max: 365, fallback: 60 },
+  { key: 'minSeasonMonths', label: 'Shortest seasonal stay (months)', hint: 'Partners can pick from this up to 6 months, or a full year.', min: 1, max: 6, fallback: 2 },
   { key: 'returnPhotoMin', label: 'Photos per car at return', hint: 'The runner can’t finish without this many.', min: 0, max: 40, fallback: 8 },
 ];
 
@@ -262,6 +263,29 @@ export default function AdminAssetPartnerTermsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Registration fee</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <label className="flex items-start gap-3 text-sm sm:col-span-2">
+              <input type="checkbox" className="mt-1 h-4 w-4 accent-primary" checked={ap.joiningFeeEnabled !== false} onChange={(e) => set((d) => { d.assetPartner.joiningFeeEnabled = e.target.checked; })} />
+              <span><span className="font-medium">Charge new partners a one-time registration fee</span><span className="block text-muted-foreground">Ops enters each partner’s amount when approving (or none). Paid on Stripe right after the ID check, before signing, and covers every car they place.</span></span>
+            </label>
+            <Field label="Partner platform fee" hint="Added on top of every registration fee. Separate from the guest booking service fee.">
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="500"
+                disabled={ap.joiningFeeEnabled === false}
+                value={toDollars(ap.registrationPlatformFeeCents ?? 499)}
+                onChange={(e) => set((d) => { d.assetPartner.registrationPlatformFeeCents = Math.min(50_000, Math.max(0, toCents(e.target.value))); })}
+              />
+            </Field>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Joining and leaving</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -312,7 +336,7 @@ export default function AdminAssetPartnerTermsPage() {
                   icon={Percent}
                 />
                 <Row label="Fleet insurance" value={`− ${money(ap.insuranceMonthlyCents)}`} muted icon={ShieldCheck} />
-                <Row label="Professional detailing" value={`− ${money(ap.detailingMonthlyCents)}`} muted icon={Sparkles} />
+                <Row label="Professional detailing" value={`− ${money(ap.detailingMonthlyCents)}`} muted icon={Box} />
                 <tr className="border-t border-border">
                   <td className="pt-3 font-semibold">Partner net</td>
                   <td className={`pt-3 text-right text-lg font-bold ${exampleNet < 0 ? 'text-destructive' : 'text-success'}`}>

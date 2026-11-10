@@ -25,7 +25,7 @@ export function FeesTab({ draft, set }: TabProps) {
           </CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Charged to the guest on top of the trip and shown as its own line at checkout. Separate
-            from commission (on the Commission page), which is taken out of host earnings. Set to 0 to charge no fee.
+            from the Asset Partner management fee. Set to 0 to charge no fee.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">

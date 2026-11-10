@@ -38,7 +38,7 @@ function Receipt() {
     // Dynamically imported and fully guarded: a QR failure must never take the
     // receipt down.
     import('qrcode')
-      .then((QR) => QR.toDataURL(url, { margin: 1, width: 240, errorCorrectionLevel: 'M', color: { dark: '#12100e', light: '#ffffff' } }))
+      .then((QR) => QR.toDataURL(url, { margin: 1, width: 240, errorCorrectionLevel: 'M', color: { dark: '#090b16', light: '#ffffff' } }))
       .then(setQr)
       .catch(() => setQr(null));
   }, [bookingId]);

@@ -21,31 +21,10 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
   {
-    title: 'Hosting',
+    title: 'Asset Partners',
     links: [
       { label: 'Asset Partners', href: '/asset-partners' },
       { label: 'Partner dashboard', href: '/asset-partners/dashboard' },
-      ...(config.assetPartnersOnly
-        ? []
-        : [
-            { label: 'Become a host', href: '/host' },
-            { label: 'List your car', href: '/host/listings/new' },
-            { label: 'Host earnings', href: '/host/earnings' },
-            { label: 'Fleet management', href: '/host/fleet' },
-          ]),
-    ],
-  },
-  {
-    title: 'Business',
-    links: [
-      ...(config.assetPartnersOnly || !config.corporate
-        ? []
-        : [
-            { label: 'CrossCubes for Business', href: '/corporate' },
-            { label: 'Corporate login', href: '/corporate/login' },
-            { label: 'Cost centers', href: '/corporate/cost-centers' },
-            { label: 'Invoices', href: '/corporate/invoices' },
-          ]),
     ],
   },
   {
@@ -74,7 +53,7 @@ export function Footer() {
               <span className="display text-xl tracking-tight">{config.appName}</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Premium managed vehicles, delivered curbside at DFW and Love Field. Book in seconds, no rental counter.
+              Cars run by a local team in every city, delivered to your terminal, hotel or door. Part of CatoDrive, Inc.
             </p>
           </div>
 
@@ -103,7 +82,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border pt-8 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} CrossCubes Inc. All rights reserved.
+            © {new Date().getFullYear()} CatoDrive, Inc. CrossCubes is a CatoDrive company.
           </p>
           {/* Terms and privacy stay one click from every page. */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
