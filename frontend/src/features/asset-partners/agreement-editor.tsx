@@ -76,8 +76,8 @@ export function AgreementEditor({ base, readOnly = false }: { base: '/admin' | '
 
   const changed = !!body.trim() && (body.trim() !== (current?.body ?? '') || title.trim() !== (current?.title ?? ''));
   const send = async () => {
-    if (/\[BEFORE PUBLISHING|\[CrossCubes legal notice address\]|\[CROSSCUBES LEGAL ENTITY NAME\]/.test(body)) {
-      toast({ tone: 'error', title: 'Finish the text first', description: 'Remove the “BEFORE PUBLISHING” line and fill in the company name and legal notice address.' });
+    if (/\[BEFORE PUBLISHING|\[CrossCubes legal notice address\]/.test(body)) {
+      toast({ tone: 'error', title: 'Finish the text first', description: 'Remove the “BEFORE PUBLISHING” line and fill in the legal notice address.' });
       return;
     }
     const { ok } = await confirm({

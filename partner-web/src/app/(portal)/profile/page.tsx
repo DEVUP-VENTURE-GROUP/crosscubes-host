@@ -260,7 +260,7 @@ function PayoutDetailsCard({
               rows={3}
               value={mailingAddress}
               onChange={(e) => setMailingAddress(e.target.value)}
-              placeholder="123 Main St, Apt 4B, Dallas, TX 75201"
+              placeholder="123 Main St, Apt 4B, City, ST 00000"
             />
           </Field>
         )}

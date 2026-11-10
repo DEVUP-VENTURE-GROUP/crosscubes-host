@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Percent, ShieldCheck, Sparkles, Wrench, Banknote, CalendarDays } from 'lucide-react';
+import { Save, Percent, ShieldCheck, Box, Wrench, Banknote, CalendarDays } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -336,7 +336,7 @@ export default function AdminAssetPartnerTermsPage() {
                   icon={Percent}
                 />
                 <Row label="Fleet insurance" value={`− ${money(ap.insuranceMonthlyCents)}`} muted icon={ShieldCheck} />
-                <Row label="Professional detailing" value={`− ${money(ap.detailingMonthlyCents)}`} muted icon={Sparkles} />
+                <Row label="Professional detailing" value={`− ${money(ap.detailingMonthlyCents)}`} muted icon={Box} />
                 <tr className="border-t border-border">
                   <td className="pt-3 font-semibold">Partner net</td>
                   <td className={`pt-3 text-right text-lg font-bold ${exampleNet < 0 ? 'text-destructive' : 'text-success'}`}>

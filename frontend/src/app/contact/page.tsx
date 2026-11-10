@@ -63,7 +63,7 @@ function ContactForm() {
   return (
     <div className="-mt-6">
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="full-bleed relative isolate grain overflow-hidden hero-mesh">
+      <section className="full-bleed relative isolate overflow-hidden hero-mesh">
         <div className="mx-auto max-w-5xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20">
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
@@ -104,7 +104,7 @@ function ContactForm() {
         <section>
           <Reveal className="max-w-2xl">
             <SectionEyebrow>Send Us a Message</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Whether it’s a car or a question.</h2>
+            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Talk to the team.</h2>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">Whether you’re interested in listing your vehicle or have questions about {BRAND}, we’ll get back to
               you within 24 hours.
             </p>
@@ -116,7 +116,7 @@ function ContactForm() {
               <div className="h-full space-y-4 rounded-lg border border-border bg-card p-7">
                 <SidebarRow icon={Mail} label="Email" value={CONTACT.email} href={`mailto:${CONTACT.email}`} />
                 <SidebarRow icon={Phone} label="Asset Partner hotline (car owners only)" value={CONTACT.assetPartnerHotlineDisplay} href={CONTACT.assetPartnerHotlineHref} />
-                <SidebarRow icon={MapPin} label="Location" value="Dallas/Fort Worth, TX" />
+                <SidebarRow icon={MapPin} label="Headquarters" value="CatoDrive, Inc. · Dallas–Fort Worth, TX" />
                 <SidebarRow icon={Clock} label="Hours" value="Mon–Sun: 8 AM – 10 PM Central" />
               </div>
             </Reveal>
@@ -186,15 +186,15 @@ function ContactForm() {
         {/* ── MAP ──────────────────────────────────────────────────────── */}
         <section>
           <Reveal className="max-w-2xl">
-            <SectionEyebrow>Find Us</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Dallas–Fort Worth.</h2>
+            <SectionEyebrow>Headquarters</SectionEyebrow>
+            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">CatoDrive, Inc., Dallas–Fort Worth.</h2>
             <p className="mt-4 text-[15px] text-muted-foreground">
-              Operations centered near DFW International Airport. Office visits by appointment only -{' '}
+              CrossCubes is run from CatoDrive’s headquarters; each city has its own local team. Office visits by appointment only:{' '}
               <Link href={`mailto:${CONTACT.email}`} className="font-semibold text-primary">email us to schedule</Link>.
             </p>
           </Reveal>
           <Reveal delay={80}>
-            <LocationMap lat={DFW_AIRPORT.lat} lng={DFW_AIRPORT.lng} label="CrossCubes - Dallas/Fort Worth" zoom={9.5} className="mt-8 h-80 w-full sm:h-96" />
+            <LocationMap lat={DFW_AIRPORT.lat} lng={DFW_AIRPORT.lng} label="CatoDrive, Inc. headquarters" zoom={9.5} className="mt-8 h-80 w-full sm:h-96" />
           </Reveal>
         </section>
       </div>

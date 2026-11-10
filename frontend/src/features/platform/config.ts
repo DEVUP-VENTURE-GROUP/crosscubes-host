@@ -22,7 +22,7 @@ export interface PlatformPublicConfig {
   programs?: { rewardsEnabled: boolean; referralEnabled: boolean; membershipEnabled?: boolean };
   checkout?: { otherMethodsEnabled: boolean };
   /** The published Asset Partner management fee; the owner keeps the rest. */
-  assetPartner?: { managementFeeBps: number; minSeasonMonths?: number };
+  assetPartner?: { managementFeeBps: number; minSeasonMonths?: number; insuranceMonthlyCents?: number; detailingMonthlyCents?: number; deductibleCapCents?: number; maintenanceApprovalCents?: number; payoutDayOfMonth?: number };
   /** Whether admin has the testing notice switched on. */
   siteNotice?: { enabled: boolean };
   auth?: { phoneSignIn: boolean };

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { MAPBOX_TOKEN } from '@/features/maps/api';
 import { loadMapbox } from '@/features/maps/mapbox-loader';
+import { BRAND_HEX } from '@/lib/brand';
 
 interface MbMap { remove: () => void }
 interface MbMarker { setLngLat: (c: [number, number]) => MbMarker; addTo: (m: MbMap) => MbMarker }
@@ -59,7 +60,7 @@ export function LocationMap({
           zoom,
           attributionControl: false,
         });
-        new mb.Marker({ color: '#0c7979' }).setLngLat([lng, lat]).addTo(map);
+        new mb.Marker({ color: BRAND_HEX.primary }).setLngLat([lng, lat]).addTo(map);
       })
       .catch((err: Error) => setError(err.message));
 

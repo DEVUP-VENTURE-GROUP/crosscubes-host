@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   Plus, Car, TrendingUp, Award, ArrowRight, AlertTriangle, ImageOff,
-  Wallet, ChevronRight, Sparkles,
+  Wallet, ChevronRight, Box,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -181,7 +181,7 @@ export default function HostDashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-start gap-4">
               <div className="h-12 w-12 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                <Sparkles className="h-6 w-6" />
+                <Box className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-xl font-bold text-foreground">No statements yet</p>

@@ -1,38 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { fontDisplay, fontMono, fontSans } from '@/styles/fonts';
 import '@/styles/globals.css';
 import { Providers } from './providers';
 import { AppChrome } from '@/components/layout/app-chrome';
 
-/*
- * Three voices, not one.
- *
- * Outfit previously did display AND body, so nothing on any screen carried
- * emphasis - everything spoke in the same tone. Archivo takes weight and
- * tightens toward signage at large sizes; Instrument Sans stays quiet
- * underneath it; and numbers move to a mono face because prices, totals,
- * plates and citation references are data and must line up in a column.
- *
- * All three carry extended Latin, Cyrillic and Greek. CJK, Arabic and
- * Devanagari fall through to the system stack until we add a companion face.
- */
-const fontDisplay = Archivo({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['600', '700', '800'],
-  variable: '--font-display',
-  display: 'swap',
-});
-const fontSans = Instrument_Sans({
-  subsets: ['latin', 'latin-ext'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-const fontMono = IBM_Plex_Mono({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600'],
-  variable: '--font-mono',
-  display: 'swap',
-});
 
 /*
  * Owned, on-brand metadata for CrossCubes.
@@ -48,10 +19,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.crosscubes.com
 // environment (this is exactly how it once rendered "CATO Drive" in
 // production: the env var was "CATO", and " Drive" got appended onto it).
 const BRAND = 'CrossCubes';
-const TAGLINE = `${BRAND} - rent the perfect car from local hosts`;
+const TAGLINE = `${BRAND} - cars, city by city`;
 const DESCRIPTION =
-  `${BRAND} is a peer-to-peer car rental marketplace: book a car from a trusted local host, ` +
-  `or earn by sharing yours. Verified hosts, protected trips, no rental counters.`;
+  `${BRAND} is a city-by-city car rental network from CatoDrive, Inc.: book a car run by your local team, ` +
+  `or put the car you own to work as an Asset Partner.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -87,13 +58,13 @@ export const metadata: Metadata = {
     title: TAGLINE,
     description: DESCRIPTION,
     url: SITE_URL,
-    images: [{ url: '/logos/cato-logo.png', width: 829, height: 937, alt: BRAND }],
+    images: [{ url: '/logos/crosscubes-og.png', width: 1200, height: 630, alt: BRAND }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: TAGLINE,
     description: DESCRIPTION,
-    images: ['/logos/cato-logo.png'],
+    images: ['/logos/crosscubes-og.png'],
   },
 };
 
@@ -110,8 +81,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f8f6f2' }, // --background paper
-    { media: '(prefers-color-scheme: dark)', color: '#151210' }, // --background asphalt
+    { media: '(prefers-color-scheme: light)', color: '#f8f9fc' }, // --background
+    { media: '(prefers-color-scheme: dark)', color: '#090b16' }, // --background (dark)
   ],
 };
 

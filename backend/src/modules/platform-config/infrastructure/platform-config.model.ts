@@ -767,7 +767,7 @@ const schema = new Schema<PlatformConfigDoc>(
       intakeObjectionDays: { type: Number, default: 3 },
       countersignerName: { type: String, default: '' },
       countersignerTitle: { type: String, default: '' },
-      countersignerOrganisation: { type: String, default: 'CrossCubes' },
+      countersignerOrganisation: { type: String, default: 'CatoDrive, Inc. (CrossCubes)' },
       agreementValidDays: { type: Number, default: 25 },
       agreementReminderDays: { type: Number, default: 5 },
       requireIdentity: { type: Boolean, default: true },

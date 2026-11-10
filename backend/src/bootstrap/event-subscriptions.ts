@@ -86,7 +86,7 @@ async function bookingTerms(bookingId: string): Promise<string[] | undefined> {
       ? `after that the service fee is non-refundable and ${Math.round(rule.partialBps / 100)}% of the rest is refunded`
       : 'it is non-refundable after that';
     const terms = [
-      'By booking you agreed to the privacy policy and all other terms and conditions of CrossCubes Inc., and to receive communication via email, phone, etc. as and when required during the rental period or until any billing/incident issues are resolved.',
+      'By booking you agreed to the privacy policy and all other terms and conditions of CatoDrive, Inc. (trading as CrossCubes), and to receive communication via email, phone, etc. as and when required during the rental period or until any billing/incident issues are resolved.',
       `Cancellation: full refund if you cancel at least ${hoursText(rule.fullBeforeHours)} before pickup; ${partial}.`,
     ];
     if (cfg.deposit.enabled) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Menu, X, Info, HelpCircle, FileText, ShieldCheck, Calculator, Sparkles } from 'lucide-react';
+import { Search, Menu, X, Info, HelpCircle, FileText, ShieldCheck, Calculator, Box } from 'lucide-react';
 import { config } from '@/lib/config';
 import { Logo } from '@/components/layout/logo';
 import { useAuthStore } from '@/features/auth/store';
@@ -206,12 +206,12 @@ export function Navbar() {
               <nav className="px-2 space-y-1">
                 {isAssetPartner ? (
                   <SiteLink path="/asset-partners/dashboard" className="flex items-center gap-3 px-4 py-3 text-base font-semibold text-primary rounded-xl hover:bg-primary/10" onNavigate={() => setMobileMenuOpen(false)}>
-                    <Sparkles className="h-5 w-5" />
+                    <Box className="h-5 w-5" />
                     Partner dashboard
                   </SiteLink>
                 ) : (
                   <Link href="/asset-partners" className="flex items-center gap-3 px-4 py-3 text-base font-semibold text-primary rounded-xl hover:bg-primary/10" onClick={() => setMobileMenuOpen(false)}>
-                    <Sparkles className="h-5 w-5" />
+                    <Box className="h-5 w-5" />
                     Asset Partners
                   </Link>
                 )}

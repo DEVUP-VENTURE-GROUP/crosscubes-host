@@ -6,7 +6,7 @@ export const LEGAL_ARTICLES = [
     summary: 'What CrossCubes collects, why, who receives it, and the choices you have.',
     body: `_Last updated: [DATE]_
 
-This policy explains how **[LEGAL ENTITY NAME]** ("CrossCubes", "we", "us") handles personal information when you use our website, web app and related services in the United States. CrossCubes is a marketplace: hosts list vehicles and guests book them.
+This policy explains how **CatoDrive, Inc.** (doing business as CrossCubes) ("CrossCubes", "we", "us") handles personal information when you use our website, web app and related services in the United States. CrossCubes is a marketplace: hosts list vehicles and guests book them.
 
 ## Information we collect
 
@@ -65,7 +65,7 @@ CrossCubes is for adults aged 21 or older [CONFIRM MINIMUM AGE]. We do not knowi
 We will post updates on this page and change the date above; for material changes we will notify you.
 
 ## Contact
-**[LEGAL ENTITY NAME]**, [POSTAL ADDRESS] · **[PRIVACY EMAIL]**
+**CatoDrive, Inc.** (doing business as CrossCubes), [POSTAL ADDRESS] · **[PRIVACY EMAIL]**
 `,
   },
   {
@@ -74,7 +74,7 @@ We will post updates on this page and change the date above; for material change
     summary: 'The rules that apply when you book or host on CrossCubes.',
     body: `_Last updated: [DATE]_
 
-These terms are an agreement between you and **[LEGAL ENTITY NAME]** ("CrossCubes"). By creating an account or using CrossCubes you agree to them and to our Privacy Policy.
+These terms are an agreement between you and **CatoDrive, Inc.** (doing business as CrossCubes) ("CrossCubes"). By creating an account or using CrossCubes you agree to them and to our Privacy Policy.
 
 ## Our role
 CrossCubes is a marketplace platform. Hosts (owners of vehicles, including fleets and partners) offer vehicles; guests rent them. Unless a listing says the vehicle is operated by CrossCubes, the rental is between the host and the guest, and CrossCubes is not the owner, lessor or insurer of the vehicle.
@@ -137,7 +137,7 @@ You agree to receive notices and agreements electronically, including by email, 
 We may update these terms; the date above shows the latest version, and continued use means you accept them. We will notify you of material changes.
 
 ## Contact
-**[LEGAL ENTITY NAME]**, [POSTAL ADDRESS] · **[SUPPORT EMAIL]**
+**CatoDrive, Inc.** (doing business as CrossCubes), [POSTAL ADDRESS] · **[SUPPORT EMAIL]**
 `,
   },
 ] as const;

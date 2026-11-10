@@ -1,13 +1,13 @@
 /** The standard Asset Partner Agreement, built from CrossCubes's consolidated draft and how the platform actually runs. Staff edit it before publishing. */
 export const STANDARD_AGREEMENT = {
   title: 'Asset Partner Agreement',
-  body: `[BEFORE PUBLISHING: have Texas counsel review this text, fill CrossCubes's legal notice address in section 19, then delete this line.]
+  body: `[BEFORE PUBLISHING: have Texas counsel review this text, fill CatoDrive, Inc.'s legal notice address in section 19, then delete this line.]
 
-[CROSSCUBES LEGAL ENTITY NAME]
+CATODRIVE, INC. (DOING BUSINESS AS CROSSCUBES)
 ASSET PARTNER AGREEMENT
 Vehicle Enrollment, Fleet Operations, Partner Earnings and Onboarding
 
-This Asset Partner Agreement (the "Agreement") is made on {{effective_date}} (the "Effective Date") between CrossCubes, Inc., a Texas corporation headquartered in Dallas, Texas ("CrossCubes"), and the vehicle owner named below (the "Partner").
+This Asset Partner Agreement (the "Agreement") is made on {{effective_date}} (the "Effective Date") between CatoDrive, Inc., a Texas corporation headquartered in Dallas, Texas, doing business as CrossCubes ("CrossCubes"), and the vehicle owner named below (the "Partner").
 
 PARTNER
 Full legal name: {{partner_name}}
@@ -116,7 +116,7 @@ PARTNER
 Signature: {{signed_name}}
 Date: {{effective_date}}
 
-[CROSSCUBES LEGAL ENTITY NAME]
+CATODRIVE, INC. (DOING BUSINESS AS CROSSCUBES)
 Authorised representative: Syed Ali Iqbal, CEO and Co-Founder
 `,
 };

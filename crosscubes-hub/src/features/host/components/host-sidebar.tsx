@@ -40,7 +40,7 @@ export function HostSidebar() {
   return (
     <PanelSidebar
       title={host.data?.displayName ?? 'CrossCubes'}
-      subtitle="Operations panel"
+      subtitle="City panel"
       icon={Store}
       items={items}
       icons={ICONS}

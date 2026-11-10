@@ -1,105 +1,8 @@
+/* Colours, radius and chart series live in brand.css. */
+@import './brand.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ── Design tokens (light) ─────────────────────────────────────────────
-   MERIDIAN. Two rules govern this palette:
-
-   1. The NEUTRALS are the brand. They are warm (a hue around 35–40°, never
-      blue) because a car handed to a stranger is a warm physical thing, and
-      because warm neutrals carry no cultural charge in any market we ship to.
-      Blue-black would make a marketplace read like a bank.
-
-   2. The ACCENT is a guest, not the host. Deep teal is the least
-      culturally-loaded hue at 50-market scale - saffron is political in India,
-      red pulls three ways, purple is mourning in Brazil and Thailand and is
-      already Turo's. Teal is also rare on car bodywork, so it never fights the
-      photography, and it leaves green free to mean exactly one thing: cleared.
-   ───────────────────────────────────────────────────────────────────── */
-:root {
-  --background: 40 30% 96%;        /* paper - warm, never grey-blue */
-  --foreground: 38 21% 7%;         /* ink */
-  --subtle: 40 24% 93%;
-  /* Cards stay PURE WHITE on purpose: a warm ground behind a silver or white
-     car reads as a yellowed photo, and silver + white are 39% of the US fleet.
-     The warmth lives in the page behind the cards, never under a photograph. */
-  --card: 0 0% 100%;
-  --card-foreground: 38 21% 7%;
-  --primary: 180 82% 26%;          /* meridian teal, dark enough for 4.5:1 text on paper */
-  --primary-foreground: 0 0% 100%;
-  --primary-soft: 180 40% 93%;
-  --secondary: 40 24% 93%;
-  --secondary-foreground: 38 21% 7%;
-  --muted: 40 20% 93%;
-  --muted-foreground: 33 9% 40%;   /* road */
-  --accent: 180 40% 93%;
-  --accent-foreground: 38 21% 7%;
-  --destructive: 4 64% 48%;
-  --destructive-foreground: 0 0% 100%;
-  --success: 159 76% 30%;          /* cleared - semantic only, never brand */
-  --success-foreground: 0 0% 100%;
-  /* Amber, kept clear of the teal brand so "needs attention" never reads as
-     "on brand". Dark enough to pass on the warm paper ground. */
-  --warning: 32 88% 34%;
-  --warning-foreground: 0 0% 100%;
-  --border: 39 20% 86%;
-  --input: 39 20% 86%;
-  --ring: 180 82% 26%;
-  --radius: 0.75rem;
-
-  /* Ink scale - high-contrast marketing surfaces (asphalt) */
-  --ink: 30 18% 7%;
-  --ink-foreground: 38 31% 93%;
-
-  /* Chart series, in this order; identity is always repeated in a label */
-  --chart-1: 158 83% 34%;
-  --chart-2: 239 84% 67%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 350 89% 60%;
-  --chart-5: 189 94% 43%;
-}
-
-/* ── Design tokens (dark) ─────────────────────────────────────────────
-   Not an inversion. The ground warms rather than cooling, and the accent
-   lightens so it clears contrast on a dark surface - a 31%-lightness teal is
-   unreadable on asphalt.
-   ───────────────────────────────────────────────────────────────────── */
-.dark {
-  --background: 30 18% 7%;         /* asphalt */
-  --foreground: 38 31% 93%;
-  --subtle: 30 15% 10%;
-  /* Photos still sit on a lifted surface rather than the page ground, so a
-     dark card never swallows the darker half of the fleet. */
-  --card: 30 15% 11%;
-  --card-foreground: 38 31% 93%;
-  --primary: 180 55% 45%;
-  --primary-foreground: 30 18% 7%;
-  --primary-soft: 183 55% 11%;
-  --secondary: 33 12% 17%;
-  --secondary-foreground: 38 31% 93%;
-  --muted: 33 12% 16%;
-  --muted-foreground: 34 11% 61%;
-  --accent: 183 55% 11%;
-  --accent-foreground: 38 31% 93%;
-  --destructive: 5 73% 63%;
-  --destructive-foreground: 30 18% 7%;
-  --success: 159 54% 46%;
-  --success-foreground: 30 18% 7%;
-  --warning: 38 92% 58%;
-  --warning-foreground: 30 18% 7%;
-  --border: 37 17% 15%;
-  --input: 37 17% 18%;
-  --ring: 180 55% 45%;
-
-  --ink: 30 15% 10%;
-  --ink-foreground: 38 31% 93%;
-
-  --chart-1: 158 60% 45%;
-  --chart-2: 239 84% 74%;
-  --chart-3: 38 92% 58%;
-  --chart-4: 350 89% 68%;
-  --chart-5: 189 80% 50%;
-}
 
 * {
   border-color: hsl(var(--border));
@@ -184,7 +87,7 @@ body {
 /* ── Reusable design utilities ───────────────────────────────────────── */
 @layer utilities {
   .brand-gradient {
-    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(196 70% 38%));
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(258 80% 55%));
   }
   .text-gradient {
     background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(198 72% 40%));
@@ -204,16 +107,22 @@ body {
     scrollbar-width: none;
   }
 
-  /* Cinematic hero backdrop: layered radial mesh, no external assets. */
+  /* Dark brand surface: night ground, a cobalt glow top-left and a lime glow low right. */
   .hero-mesh {
     background-color: hsl(var(--ink));
     background-image:
-      radial-gradient(ellipse 80% 60% at 15% 0%, hsl(180 70% 38% / 0.30), transparent 62%),
-      radial-gradient(ellipse 70% 60% at 85% 15%, hsl(196 68% 42% / 0.22), transparent 60%),
-      /* A warm ember low in the frame keeps the ground from reading as cold
-         teal-black - the warmth is the brand, the teal is the guest. */
-      radial-gradient(ellipse 90% 70% at 50% 112%, hsl(28 45% 26% / 0.34), transparent 66%);
+      radial-gradient(ellipse 70% 60% at 10% 0%, hsl(228 88% 50% / 0.38), transparent 62%),
+      radial-gradient(ellipse 60% 55% at 95% 105%, hsl(var(--signal) / 0.16), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 70% 10%, hsl(258 90% 66% / 0.14), transparent 60%);
   }
+
+  /* Isometric cube grid drawn as a repeating outline, for dark surfaces. */
+  .cube-grid {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 0 60 17v35L30 69 0 52V17ZM30 0v0M0 17l30 17 30-17M30 34v35M30 69v35M0 52v35l30 17 30-17V52' fill='none' stroke='%235c82ff' stroke-opacity='0.13' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 60px 104px;
+  }
+
+
 
   /* Fine grain so large flat areas don't band. */
   .grain::after {
@@ -358,45 +267,14 @@ textarea {
    A thin light that travels round the search bar's edge, over frosted glass.
    No transform on hover: the calendar and phone sheet are fixed-position and
    a transformed ancestor would pull them out of place. */
-@property --halo-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
 .search-halo {
-  position: relative;
-  padding: 1.5px;
-  border-radius: 1.1rem;
-  background:
-    conic-gradient(from var(--halo-angle), transparent 0deg, hsl(var(--primary)) 55deg, rgba(255, 255, 255, 0.85) 85deg, hsl(var(--primary)) 115deg, transparent 175deg, transparent 360deg),
-    rgba(255, 255, 255, 0.14);
-  box-shadow:
-    0 30px 80px -24px rgba(0, 0, 0, 0.75),
-    0 0 0 6px rgba(255, 255, 255, 0.06),
-    0 0 48px -12px hsl(var(--primary) / 0.55);
-  backdrop-filter: blur(14px) saturate(1.2);
-  animation: halo-spin 7s linear infinite;
-  transition: box-shadow 0.35s ease, filter 0.35s ease;
-}
-.search-halo:hover,
-.search-halo:focus-within {
-  filter: brightness(1.04);
-  box-shadow:
-    0 34px 90px -22px rgba(0, 0, 0, 0.8),
-    0 0 0 7px rgba(255, 255, 255, 0.09),
-    0 0 70px -8px hsl(var(--primary) / 0.75);
-}
-.search-halo-glow {
-  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.35), transparent 70%);
-  animation: halo-breathe 5s ease-in-out infinite;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.7);
 }
 @media (min-width: 640px) {
   .search-halo { border-radius: 9999px; }
-}
-@keyframes halo-spin { to { --halo-angle: 360deg; } }
-@keyframes halo-breathe { 50% { opacity: 0.55; } }
-@media (prefers-reduced-motion: reduce) {
-  .search-halo, .search-halo-glow { animation: none; }
 }
 
 /* ── Homepage hero motion ───────────────────────────────────────────────── */

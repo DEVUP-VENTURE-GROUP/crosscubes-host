@@ -50,7 +50,16 @@ router.get(
       },
       programs: { rewardsEnabled: cfg.programs.rewardsEnabled, referralEnabled: cfg.programs.referralEnabled, membershipEnabled: cfg.programs.membershipEnabled },
       checkout: { otherMethodsEnabled: cfg.checkout.otherMethodsEnabled },
-      assetPartner: { managementFeeBps: cfg.assetPartner.managementFeeBps, minSeasonMonths: cfg.assetPartner.minSeasonMonths },
+      // The standard partner terms, the same figures every partner agreement prints.
+      assetPartner: {
+        managementFeeBps: cfg.assetPartner.managementFeeBps,
+        minSeasonMonths: cfg.assetPartner.minSeasonMonths,
+        insuranceMonthlyCents: cfg.assetPartner.insuranceMonthlyCents,
+        detailingMonthlyCents: cfg.assetPartner.detailingMonthlyCents,
+        deductibleCapCents: cfg.assetPartner.deductibleCapCents,
+        maintenanceApprovalCents: cfg.assetPartner.maintenanceApprovalCents,
+        payoutDayOfMonth: cfg.assetPartner.payoutDayOfMonth,
+      },
       // Sign-in by text code is only offered when a text provider is actually configured.
       auth: { phoneSignIn: config.notifications.smsEnabled },
       // Public by design; a pk_ key identifies the account to Stripe.js and can charge nothing.

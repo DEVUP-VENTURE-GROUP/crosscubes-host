@@ -14,7 +14,8 @@ export const IMPORT_SAMPLE = `4T1C11AK5NU123456, TXA1234, , Listed
 5YJ3E1EA7KF317834, TXB5678, Tesla Model 3 Long Range, Unlisted`;
 
 /** The fleet's home base - pre-filled since every car in a batch import shares it. */
-export const DEFAULT_IMPORT_ADDRESS = '3001 Esters Road, Irving, TX 75062';
+// Empty on purpose: each city operator enters their own base address.
+export const DEFAULT_IMPORT_ADDRESS = '';
 
 /** One car per line; tabs (a spreadsheet paste) or commas; a trailing status word is the status. */
 export function parseImport(text: string): { rows: ParsedRow[]; errors: string[] } {

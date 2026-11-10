@@ -128,7 +128,7 @@ export class AssetPartnerEnvelopeService {
 
   private async countersigner() {
     const c = (await platformConfigService.get()).assetPartner;
-    const organisation = c.countersignerOrganisation || 'CrossCubes';
+    const organisation = c.countersignerOrganisation || 'CatoDrive, Inc. (CrossCubes)';
     return { name: c.countersignerName || organisation, title: c.countersignerTitle || 'Authorised signatory', organisation };
   }
 

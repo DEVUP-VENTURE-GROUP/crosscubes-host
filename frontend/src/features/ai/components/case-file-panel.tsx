@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileSearch, Sparkles, HelpCircle, CheckCircle2, AlertCircle, FileWarning } from 'lucide-react';
+import { FileSearch, HelpCircle, CheckCircle2, AlertCircle, FileWarning } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,7 @@ export function CaseFilePanel({ claimId }: { claimId: string }) {
           <div>
             <p className="flex items-center gap-2 font-semibold">
               <FileSearch className="h-5 w-5 text-primary" /> Case file
-              <Badge tone="muted"><Sparkles className="me-1 inline h-3 w-3" />AI</Badge>
+              <Badge tone="muted">Draft</Badge>
             </p>
             <p className="mt-0.5 text-sm text-muted-foreground">
               Booking, trip, messages, photos and citations, assembled into a brief.

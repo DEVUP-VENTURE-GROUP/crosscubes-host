@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { loadStripeForKey, useStripePublishableKey } from '@/features/payments/stripe-key';
 import { api } from '@/lib/api/client';
 import { safeMessage } from '@/lib/utils/safe-message';
+import { BRAND_HEX } from '@/lib/brand';
 
 /**
  * Adding a real card.
@@ -90,7 +91,7 @@ export function AddCard({ onSaved }: { onSaved?: () => void }) {
           variables: {
             // Matched to the app's own tokens so the iframe does not read as a
             // third-party panel dropped into the page.
-            colorPrimary: '#0c7979',
+            colorPrimary: BRAND_HEX.primary,
             borderRadius: '12px',
             fontFamily: 'inherit',
           },

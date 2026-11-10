@@ -4,7 +4,7 @@ import { config } from '@/lib/config';
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Sparkles, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Box, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useFacets } from '@/features/vehicles/hooks';
 import { formatMoney } from '@/lib/utils/format';
@@ -109,7 +109,7 @@ export function CategoryCarousel({ city }: { city: string }) {
               {available ? (
                 <div className="relative z-10 flex translate-y-1 flex-col gap-0.5 p-4 transition-transform duration-500 group-hover:translate-y-0">
                   <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-white/80 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                    <Sparkles className="h-2.5 w-2.5" /> Explore
+                    <Box className="h-2.5 w-2.5" /> Explore
                   </span>
                   <h3 className="display text-lg leading-tight text-white">{t.label}</h3>
                   <p className="text-xs font-medium text-white/65">{t.description}</p>

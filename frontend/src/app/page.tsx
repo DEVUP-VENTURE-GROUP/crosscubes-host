@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ShieldCheck, Zap, ArrowRight, CarFront, KeyRound, Route, BadgeCheck,
   Search, UserCheck, FileCheck2, Lock, CreditCard, Ban, ClipboardList,
   MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CubeArt } from '@/components/brand/cube-art';
+import { useLiveHubs } from '@/features/hubs/api';
 import { Reveal } from '@/components/ui/reveal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VehicleCard } from '@/features/vehicles/components/vehicle-card';
@@ -20,19 +21,16 @@ import { useTrending, useFacets } from '@/features/vehicles/hooks';
 const STEPS = [
   {
     icon: CarFront,
-    image: '/crosscubes/crosscubes-find-the-one.webp',
     title: 'Find the one',
     body: 'Browse our premium managed fleet. Filter by price, vehicle type, or delivery - every car is operated by us.',
   },
   {
     icon: KeyRound,
-    image: '/crosscubes/crosscubes-book-in-seconds.webp',
     title: 'Book in seconds',
     body: 'Reserve instantly with Instant Book. No back-and-forth, no waiting on anyone to approve.',
   },
   {
     icon: Route,
-    image: '/crosscubes/crosscubes-hit-the-road.webp',
     title: 'Hit the road',
     body: 'Pick it up or have our team deliver it - your door, hotel, or terminal. Keys in hand, on time.',
   },
@@ -57,8 +55,8 @@ const RESERVATION_TRUST = [
 const WHY_ITEMS = [
   {
     icon: MapPin,
-    title: 'Curbside at the terminal',
-    body: 'We deliver to DFW International and Love Field - no shuttle, no satellite lot, no queue.',
+    title: 'Delivered where you land',
+    body: 'Every city sets its own delivery spots: the airport terminal, your hotel or your office. No shuttle, no satellite lot.',
   },
   {
     icon: ShieldCheck,
@@ -93,36 +91,31 @@ export default function HomePage() {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       {/* A rounded photo card that starts just below the floating navbar, so nothing in the photo hides behind it;
           the search bar sits across the card's bottom edge. */}
-      <section className="full-bleed px-3 pt-[5.5rem] sm:px-5">
-        <h1 className="sr-only">CrossCubes: rent premium cars delivered to you</h1>
-
-        <div className="relative mx-auto max-w-7xl">
-        <div className="relative isolate aspect-[3/2] overflow-hidden rounded-lg ring-1 ring-white/10 sm:aspect-auto sm:h-[56vh] sm:min-h-[380px] sm:rounded-lg lg:h-[62vh] lg:max-h-[640px]">
-          <Image
-            src="/crosscubes/crosscubes-hit-the-road.webp"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="hero-drift -z-10 object-cover object-[center_35%]"
-          />
-          {/* A soft band of light that crosses the photo every few seconds */}
-          <div aria-hidden className="hero-sweep pointer-events-none absolute inset-0" />
-          {/* Gentle vignette and a darker base, so the search bar always reads */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.45)_100%)]" />
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
+      <section className="full-bleed relative isolate overflow-hidden hero-mesh">
+        <div aria-hidden className="cube-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_75%)]" />
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-10 pt-28 sm:px-6 sm:pb-12 sm:pt-32 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-6">
+          <div className="min-w-0">
+            <Reveal>
+              <LiveCitiesBadge />
+              <h1 className="display mt-6 text-[2.75rem] leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
+                Cars, <span className="text-signal">city</span>
+                <br />
+                by city.
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+                Every car is run by a local CrossCubes team: delivered to your terminal, hotel or door, checked before every trip, and backed by one company in every city.
+              </p>
+            </Reveal>
+          </div>
+          <div className="relative mx-auto hidden w-full max-w-md lg:block">
+            <CubeArt className="w-full" />
+          </div>
         </div>
-
-        {/* Search bar: across the photo's bottom edge on phones, centred on the photo from tablet up */}
-        <Reveal delay={60} className="relative z-10 -mt-10 sm:pointer-events-none sm:absolute sm:inset-0 sm:mt-0 sm:flex sm:items-center sm:justify-center sm:px-8">
-          <div className="relative mx-auto w-[min(100%,60rem)] px-1 sm:pointer-events-auto sm:px-0">
-            <div aria-hidden className="search-halo-glow pointer-events-none absolute -inset-6 -z-10 hidden rounded-[3rem] blur-3xl sm:block" />
-            <div className="search-halo">
-              <SearchBarFields calendarPlacement="overlay" />
-            </div>
+        <Reveal delay={80} className="relative mx-auto -mt-4 max-w-7xl px-4 pb-14 sm:-mt-8 sm:px-6 sm:pb-20">
+          <div className="search-halo">
+            <SearchBarFields calendarPlacement="overlay" />
           </div>
         </Reveal>
-        </div>
       </section>
 
       {/* ── Body sections ────────────────────────────────────────────────── */}
@@ -194,15 +187,17 @@ export default function HomePage() {
           )}
         </section>
 
+        <CitiesSection />
+
         {/* ── How it works ───────────────────────────────────────────────── */}
         <Reveal as="section" className="space-y-10 sm:space-y-14">
           <div className="max-w-xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">How it works</p>
             <h2 className="display mt-2 text-3xl text-foreground sm:text-4xl lg:text-5xl">
-              No counter. No queue.<br className="hidden sm:block" /> No paperwork.
+              From search to keys in three steps.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Three steps from search to keys in hand.
+              Choose the car, verify once, and it is brought to you.
             </p>
           </div>
           <div className="grid gap-8 md:grid-cols-3 md:gap-6 lg:gap-10">
@@ -215,14 +210,10 @@ export default function HomePage() {
                   </span>
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border/50 mb-5">
-                  <Image
-                    src={s.image}
-                    alt={s.title}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105"
-                  />
+                <div className="relative mb-5 flex aspect-[4/3] w-full items-end overflow-hidden rounded-lg hero-mesh p-6">
+                  <div aria-hidden className="cube-grid absolute inset-0" />
+                  <span className="display relative text-8xl leading-none text-white/10 transition-colors duration-500 group-hover:text-white/20">0{i + 1}</span>
+                  <s.icon aria-hidden className="absolute end-6 top-6 h-10 w-10 text-signal transition-transform duration-500 group-hover:-translate-y-1" />
                 </div>
                 <h3 className="display text-xl text-foreground">{s.title}</h3>
                 <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
@@ -279,7 +270,7 @@ export default function HomePage() {
         </section>
 
         {/* ── Asset Partner CTA ──────────────────────────────────────────── */}
-        <Reveal as="section" className="relative isolate grain overflow-hidden rounded-lg hero-mesh">
+        <Reveal as="section" className="relative isolate overflow-hidden rounded-lg hero-mesh">
           <div className="grid items-center gap-10 px-8 py-14 sm:px-14 sm:py-16 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
             <div className="max-w-lg">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
@@ -308,15 +299,9 @@ export default function HomePage() {
             </div>
 
             <div className="relative order-first lg:order-last">
-              <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-primary/15 blur-3xl" />
-              <Image
-                src="/crosscubes/crosscubes-more-opportunities.webp"
-                alt="CrossCubes managed fleet earnings"
-                width={1200}
-                height={800}
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="h-auto w-full rounded-lg object-cover ring-1 ring-white/15"
-              />
+              <div className="cube-grid relative overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] p-6">
+                <CubeArt className="mx-auto w-full max-w-sm" />
+              </div>
             </div>
           </div>
         </Reveal>
@@ -467,5 +452,66 @@ function ReservationFlowSection() {
 
       </div>
     </section>
+  );
+}
+
+// ─── Live cities ──────────────────────────────────────────────────────────────
+
+function LiveCitiesBadge() {
+  const live = useLiveHubs();
+  const names = (live.data ?? []).map((h) => h.city);
+  return (
+    <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+      <span aria-hidden className="relative flex h-2 w-2 shrink-0">
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-signal" />
+      </span>
+      <span className="truncate">{names.length ? `Live in ${names.join(' · ')}` : 'Opening city by city'}</span>
+    </span>
+  );
+}
+
+function CitiesSection() {
+  const live = useLiveHubs();
+  const hubs = live.data ?? [];
+  return (
+    <Reveal as="section" className="space-y-8">
+      <div className="max-w-xl">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Cities</p>
+        <h2 className="display mt-2 text-3xl text-foreground sm:text-4xl">One company. Run local in every city.</h2>
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">Each city has its own CrossCubes team that looks after the cars, the cleaning and the hand-over.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {live.isLoading
+          ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-44 rounded-lg" />)
+          : hubs.map((h) => (
+              <Link
+                key={h.id}
+                href={`/search?city=${encodeURIComponent(h.city)}`}
+                className="group relative isolate flex h-44 flex-col justify-between overflow-hidden rounded-lg hero-mesh p-6 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <div aria-hidden className="cube-grid absolute inset-0 -z-10" />
+                <span className="inline-flex w-fit items-center rounded-full bg-signal px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-signal-foreground">Live · {h.code}</span>
+                <div>
+                  <p className="display text-3xl leading-none">{h.city}</p>
+                  <p className="mt-2 flex items-center gap-1.5 text-sm text-white/70">
+                    {h.state} · Browse cars <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </p>
+                </div>
+              </Link>
+            ))}
+        <Link
+          href="/cities"
+          className="group flex h-44 flex-col justify-between rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <MapPin className="h-6 w-6 text-primary" aria-hidden />
+          <div>
+            <p className="display text-2xl text-foreground">Your city next?</p>
+            <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground group-hover:text-primary">
+              Run CrossCubes where you live <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </p>
+          </div>
+        </Link>
+      </div>
+    </Reveal>
   );
 }

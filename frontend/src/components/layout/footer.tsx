@@ -53,7 +53,7 @@ export function Footer() {
               <span className="display text-xl tracking-tight">{config.appName}</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Premium managed vehicles, delivered curbside at DFW and Love Field. Book in seconds, no rental counter.
+              Cars run by a local team in every city, delivered to your terminal, hotel or door. Part of CatoDrive, Inc.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border pt-8 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} CrossCubes Inc. All rights reserved.
+            © {new Date().getFullYear()} CatoDrive, Inc. CrossCubes is a CatoDrive company.
           </p>
           {/* Terms and privacy stay one click from every page. */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">

@@ -1,0 +1,86 @@
+/* ── CrossCubes brand ─────────────────────────────────────────────────
+   The one place the look is set. Every screen in every app reads these
+   tokens, so changing a value here re-skins the guest site, the partner
+   portal, the city panel and HQ admin together.
+
+   Night-blue neutrals, an electric cobalt brand colour, and a signal lime
+   that is only ever used on dark surfaces (it fails contrast on white).
+   Every text colour clears 4.5:1 on its ground; the chart series pass the
+   colour-blind checks in both modes.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --background: 228 40% 98%;
+  --foreground: 232 40% 8%;
+  --subtle: 228 33% 95%;
+  --card: 0 0% 100%;
+  --card-foreground: 232 40% 8%;
+  --primary: 228 88% 50%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 228 90% 95%;
+  --secondary: 228 30% 94%;
+  --secondary-foreground: 232 40% 8%;
+  --muted: 228 26% 94%;
+  --muted-foreground: 229 14% 42%;
+  --accent: 228 90% 95%;
+  --accent-foreground: 232 40% 8%;
+  --destructive: 4 64% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 159 76% 28%;
+  --success-foreground: 0 0% 100%;
+  --warning: 32 88% 34%;
+  --warning-foreground: 0 0% 100%;
+  --border: 228 24% 88%;
+  --input: 228 24% 86%;
+  --ring: 228 88% 50%;
+  /* Sharp, cube-like corners: cards 8px, controls 5px. */
+  --radius: 0.5rem;
+
+  /* Dark marketing surfaces and the signal colour that lives on them. */
+  --ink: 232 42% 6%;
+  --ink-foreground: 228 40% 96%;
+  --signal: 75 92% 58%;
+  --signal-foreground: 232 42% 6%;
+
+  --chart-1: 228 87% 56%;
+  --chart-2: 172 87% 32%;
+  --chart-3: 36 100% 38%;
+  --chart-4: 346 71% 57%;
+  --chart-5: 258 90% 66%;
+}
+
+.dark {
+  --background: 232 42% 6%;
+  --foreground: 228 40% 96%;
+  --subtle: 231 30% 9%;
+  --card: 231 34% 10%;
+  --card-foreground: 228 40% 96%;
+  --primary: 226 100% 68%;
+  --primary-foreground: 232 42% 6%;
+  --primary-soft: 228 60% 16%;
+  --secondary: 231 26% 15%;
+  --secondary-foreground: 228 40% 96%;
+  --muted: 231 24% 14%;
+  --muted-foreground: 229 16% 66%;
+  --accent: 228 60% 16%;
+  --accent-foreground: 228 40% 96%;
+  --destructive: 5 73% 63%;
+  --destructive-foreground: 232 42% 6%;
+  --success: 159 54% 46%;
+  --success-foreground: 232 42% 6%;
+  --warning: 38 92% 58%;
+  --warning-foreground: 232 42% 6%;
+  --border: 231 24% 17%;
+  --input: 231 24% 20%;
+  --ring: 226 100% 68%;
+
+  --ink: 231 34% 10%;
+  --ink-foreground: 228 40% 96%;
+  --signal: 75 92% 58%;
+  --signal-foreground: 232 42% 6%;
+
+  --chart-1: 228 89% 65%;
+  --chart-2: 172 76% 37%;
+  --chart-3: 36 77% 45%;
+  --chart-4: 346 74% 63%;
+  --chart-5: 255 83% 70%;
+}

@@ -138,8 +138,8 @@ describe('partner emails', () => {
 
   it('leave out the guest travel banner', () => {
     const partner = renderEmail({ title: 'Hi', body: 'Body', audience: 'partner' });
-    expect(partner).not.toContain('cato-hero-banner');
+    expect(partner).not.toContain('crosscubes-banner');
     const guest = renderEmail({ title: 'Hi', body: 'Body', audience: 'guest' });
-    expect(guest.includes('cato-hero-banner')).toBe(!!config.notifications.webUrl);
+    expect(guest.includes('crosscubes-banner')).toBe(!!config.notifications.webUrl);
   });
 });

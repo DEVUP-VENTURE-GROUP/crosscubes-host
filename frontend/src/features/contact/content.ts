@@ -6,22 +6,20 @@ export const CONTACT = {
   assetPartnerHotlineDisplay: '(214) 814-0402',
   assetPartnerHotlineHref: 'tel:+12148140402',
   email: 'shoaib@catodrive.com',
-  location: 'Dallas/Fort Worth, TX',
+  location: 'Dallas–Fort Worth, TX (CatoDrive, Inc. headquarters)',
   hours: 'Mon–Sun: 8 AM – 10 PM Central',
   /** DFW Airport, where operations are centred. */
   mapCenter: { lat: 32.8998, lng: -97.0403 },
 } as const;
 
 export const CONTACT_CARDS = [
-  { key: 'email', title: 'Email Us', lines: [CONTACT.email, 'Questions about your account or a trip', 'Corporate accounts'] },
+  { key: 'email', title: 'Email Us', lines: [CONTACT.email, 'Questions about your account or a trip', 'Partner and city enquiries'] },
   { key: 'call', title: 'Asset Partner hotline', lines: [CONTACT.assetPartnerHotlineDisplay, 'For car owners listing with CrossCubes', '8 AM – 10 PM Central'] },
-  { key: 'visit', title: 'Visit Us', lines: ['Dallas/Fort Worth, TX', 'Operations near DFW Airport', 'By appointment only'] },
+  { key: 'visit', title: 'Visit Us', lines: ['CatoDrive, Inc. headquarters', 'Dallas–Fort Worth, TX', 'By appointment only'] },
 ] as const;
 
 export const INTEREST_OPTIONS: { value: ContactInterest; label: string }[] = [
   { value: 'asset_partner', label: 'Listing my vehicle as an Asset Partner' },
-  { value: 'investor', label: 'Investing in CrossCubes' },
-  { value: 'corporate', label: 'A corporate account' },
   { value: 'general', label: 'A general question' },
   { value: 'other', label: 'Something else' },
 ];
@@ -29,8 +27,7 @@ export const INTEREST_OPTIONS: { value: ContactInterest; label: string }[] = [
 export const CONTACT_FAQ = [
   { q: 'How do I become an asset partner?', a: 'Start the intake form on the Asset Partners page - it takes about 10 minutes. Our team reviews every submission and schedules an in-person vehicle assessment within 2–3 business days.' },
   { q: 'What’s the fastest way to reach you?', a: `Send us a message with the form below or email ${CONTACT.email}; we reply within 24 hours. Car owners interested in becoming an Asset Partner can call or text our Asset Partner hotline, ${CONTACT.assetPartnerHotlineDisplay}.` },
-  { q: 'Do you offer corporate accounts?', a: 'Yes - B2B fleet accounts for enterprises and staffing agencies, with volume pricing and consolidated billing. Select "A corporate account" below and tell us your team size and use case.' },
-  { q: 'Where are you located?', a: 'CrossCubes operates near DFW International Airport and Dallas Love Field, serving the greater Dallas/Fort Worth area. Our office is by appointment only - reach out to schedule a visit.' },
+  { q: 'Where are you located?', a: 'CrossCubes runs city by city, each with its own local team; see the live cities on the home page. The company behind it, CatoDrive, Inc., is headquartered in Dallas–Fort Worth, Texas.' },
 ] as const;
 
 /** The contact form's own checks: field keys that are missing or invalid. */

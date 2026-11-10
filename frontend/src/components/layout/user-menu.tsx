@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Car, LogOut, Wallet, Gift, User, LifeBuoy, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Sparkles } from 'lucide-react';
+  Car, LogOut, Wallet, Gift, User, LifeBuoy, Heart, ChevronDown, Search, BookOpen, MessageSquare, FileWarning, Box } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store';
 import { useUnreadMessages } from '@/features/messaging/hooks';
 import { useLogout } from '@/features/auth/hooks';
@@ -54,7 +54,7 @@ export function UserMenu() {
     { href: '/saved-searches', label: 'Saved searches', icon: Search, inFooter: false },
     { href: '/wallet', label: 'Wallet', icon: Wallet, inFooter: false },
     { href: '/citations', label: 'Tickets & tolls', icon: FileWarning, inFooter: false },
-    ...(programs.membership ? [{ href: '/membership', label: 'Membership', icon: Sparkles, inFooter: false }] : []),
+    ...(programs.membership ? [{ href: '/membership', label: 'Membership', icon: Box, inFooter: false }] : []),
     ...(programs.rewards ? [{ href: '/rewards', label: 'Rewards', icon: Gift, inFooter: false }] : []),
     { href: '/account', label: 'Account', icon: User, inFooter: true },
     { href: '/help', label: 'Help centre', icon: BookOpen, inFooter: false },

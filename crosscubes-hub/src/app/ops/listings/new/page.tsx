@@ -4,7 +4,7 @@ import { IMAGE_ACCEPT } from '@/lib/upload-formats';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Check, ImagePlus, Loader2, X, Sparkles } from 'lucide-react';
+import { Check, ImagePlus, Loader2, X, Box } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -416,8 +416,8 @@ export default function NewListingPage() {
               <div className="sm:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Smart Price AI</span>
+                    <Box className="h-4 w-4 text-primary" />
+                    <span className="font-medium">Smart Price</span>
                     {smartPrice.data && (
                       <span className="text-muted-foreground">
                         Market median ${(smartPrice.data.median / 100).toFixed(0)} · {smartPrice.data.demand} demand · {smartPrice.data.sampleSize} comps

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, BadgeCheck, Building2, Car, ClipboardCheck, KeyRound, LineChart, MapPin, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Building2, Car, ClipboardCheck, KeyRound, LineChart, MapPin, ShieldCheck, Box, Users } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,11 +35,11 @@ export default function RunACityPage() {
 
   return (
     <div className="space-y-20 pb-20">
-      <section className="full-bleed relative isolate grain overflow-hidden hero-mesh">
+      <section className="full-bleed relative isolate overflow-hidden hero-mesh">
         <div className="mx-auto max-w-6xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20">
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden /> City licence
+              <Box className="h-3.5 w-3.5" aria-hidden /> City licence
             </span>
           </Reveal>
           <Reveal delay={80}>

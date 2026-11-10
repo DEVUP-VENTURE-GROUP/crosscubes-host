@@ -2,591 +2,198 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
-  ArrowRight, ArrowDown, ShieldCheck, Car, Camera, ClipboardCheck, Settings2, Wallet,
-  Star, ChevronDown, CheckCircle2, Gauge, Calendar, FileCheck, Sparkles,
-  Phone, Mail, Clock,
+  ArrowRight, Calculator, Camera, Car, CheckCircle2, ChevronDown, ClipboardCheck, FileCheck, MapPin,
+  Settings2, ShieldCheck, Wallet,
 } from 'lucide-react';
 import { Reveal } from '@/components/ui/reveal';
-import { SectionEyebrow, CountUp, BRAND, TractionStats } from '@/features/marketing/sections';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CubeArt } from '@/components/brand/cube-art';
 import { SiteLink } from '@/components/layout/site-link';
-import { CONTACT } from '@/features/contact/content';
-
-/**
- * Asset Partners - CrossCubes's primary acquisition page (v1 priority, per the
- * business). Someone who already owns an eligible car lists it here; CrossCubes runs
- * 100% of operations and pays them a monthly share. Host (self-managed listing)
- * and Corporate/Fleet remain as v2/v3 surfaces, unchanged by this page.
- *
- * All figures are business-supplied (owner economics, fleet revenue, vehicle
- * tiers, testimonials) - confirm before each campaign. "Apply Now" routes to
- * the dedicated Asset Partner intake form (/asset-partners/apply), which
- * submits a real application for admin review.
- */
-
-const STATS = [
-  { prefix: '$', value: 766143, suffix: '+', decimals: 0, label: 'Fleet Revenue', comma: true },
-  { prefix: '$1,029–$1,841', value: 0, suffix: '', decimals: 0, label: 'Net Monthly Per Vehicle', raw: true },
-  { prefix: '', value: 100, suffix: '+', decimals: 0, label: 'Vehicles Managed' },
-  { prefix: '', value: 5100, suffix: '+', decimals: 0, label: 'Trips Completed · 4.9★ All-Star Host', comma: true },
-] as const;
+import { SectionEyebrow, BRAND } from '@/features/marketing/sections';
+import { usePlatformConfig } from '@/features/platform/config';
+import { useLiveHubs } from '@/features/hubs/api';
+import { formatMoney } from '@/lib/utils/format';
 
 const STEPS = [
-  { n: '01', icon: Car, title: 'List the Car You Own', body: 'You already own an eligible vehicle - CrossCubes lists it, photographs it, and prices it dynamically. No purchase or financing required.' },
-  { n: '02', icon: Camera, title: `${BRAND} Lists It`, body: 'We photograph, list, price dynamically, and manage your car. You do nothing. $0 additional effort.' },
-  { n: '03', icon: ClipboardCheck, title: 'Guest Books Online', body: 'A vetted traveler books. CrossCubes screens every trip. You’re never involved.' },
-  { n: '04', icon: Settings2, title: 'We Manage Everything', body: 'Valet pickup, terminal delivery, cleaning, maintenance coordination. Full white-glove service.' },
-  { n: '05', icon: Wallet, title: 'You Get Paid', body: 'Your share of every booking hits your account monthly - check on the 5th or Zelle. No invoices. No chasing.', tag: 'Net $1,029–$1,841 / month' },
-] as const;
-
-const ECONOMICS: { label: string; value: string; muted?: boolean }[] = [
-  { label: 'Average daily rate', value: '$65–$120/day' },
-  { label: 'Target utilization (70–80%)', value: '~21–24 days/month' },
-  { label: 'Gross monthly revenue', value: '$1,365–$2,028' },
-  { label: 'Management fee (20%)', value: '−$273 to −$406', muted: true },
-  { label: 'Roamly fleet insurance', value: '−$137', muted: true },
-  { label: 'Professional detailing', value: '−$50', muted: true },
-];
-
-const TIERS = [
-  { tier: 'Conservative', amount: '$1,029', vehicles: 'Kia Sportage, Buick Envista', tone: 'default' as const },
-  { tier: 'Mid-range', amount: '$1,400', vehicles: 'VW Tiguan, Jeep Grand Cherokee', tone: 'primary' as const },
-  { tier: 'Top performer', amount: '$1,841', vehicles: 'VW Atlas, Nissan Pathfinder', tone: 'success' as const },
-] as const;
-
-const GROWTH = [
-  { year: '2023', value: '$1,574' },
-  { year: '2025', value: '$307K' },
-  { year: '2026', value: '$405K+' },
+  { icon: Car, title: 'Apply with your car', body: 'Pick your city, add the car and three photos. About ten minutes, and nothing to pay to apply.' },
+  { icon: ClipboardCheck, title: 'Your city team reviews it', body: 'The local CrossCubes team checks the car and your papers, and tells you exactly what to fix if anything.' },
+  { icon: Camera, title: 'We list it', body: 'We photograph it, write the listing and price it for your city, every day.' },
+  { icon: Settings2, title: 'We run every trip', body: 'Guest checks, delivery, cleaning and the hand-over back. You are never on call.' },
+  { icon: Wallet, title: 'You get paid monthly', body: 'A statement every month showing every trip and every deduction, then your payout by Zelle or check.' },
 ] as const;
 
 const REQUIREMENTS = [
-  { icon: Calendar, label: 'Model year', value: '2018 or newer' },
-  { icon: Gauge, label: 'Mileage', value: 'Under 130,000 miles at onboarding' },
-  { icon: FileCheck, label: 'Title', value: 'Clean only - no salvage, rebuilt, flood, or lien' },
-  { icon: ShieldCheck, label: 'Condition', value: 'No major body, structural, rust or cosmetic damage' },
-  { icon: CheckCircle2, label: 'Standards', value: 'Smoke-free · pet-free · 4/32" minimum tread' },
+  { icon: FileCheck, label: 'Title', value: 'A clean title in your name. Salvage, rebuilt, flood and lemon titles can’t be accepted.' },
+  { icon: ShieldCheck, label: 'Condition', value: 'No major body, structural or safety problems. We inspect every car before it goes live.' },
+  { icon: CheckCircle2, label: 'Standards', value: 'Smoke-free and pet-free, with tyres and brakes in good order.' },
+  { icon: MapPin, label: 'City', value: 'The car is kept in a city where CrossCubes is live.' },
 ] as const;
 
-const RISKS = [
-  { scenario: 'Renter damages the vehicle', detail: 'Roamly commercial fleet insurance covers the vehicle during all non-trip periods in CrossCubes custody. Your deductible is capped at $1,000 per incident (Addendum No. 1) - CrossCubes absorbs any unrecovered deductible above that cap.', owner: 'CrossCubes' as const },
-  { scenario: 'The car sits empty', detail: 'We manage pricing, listing optimization and the booking pipeline 24/7. Your exposure is zero.', owner: 'CrossCubes' as const },
-  { scenario: 'Guest no-show or late return', detail: 'Our operations team handles all guest issues, rescheduling and late-fee recovery.', owner: 'CrossCubes' as const },
-  { scenario: 'Routine maintenance', detail: 'Routine maintenance under $500 is handled without interrupting you. Anything above $500 requires your approval first.', owner: 'Shared' as const },
-  { scenario: 'Regulatory / platform changes', detail: 'We monitor TOS, airport concession rules and P2P regulations proactively.', owner: 'CrossCubes' as const },
-] as const;
-
-/**
- * The four things every prospective partner asks, answered in CrossCubes's own
- * voice.
- *
- * This section used to be four testimonials - quotes attributed to a
- * "Portfolio Owner", a "DFW Investor" and a "Co-host Owner" who are not real
- * people, making specific financial claims ("$1,400 my first month",
- * "breakeven in 14 months", "insurance covered everything, I paid nothing").
- * Presenting those as customer endorsements is an FTC problem regardless of
- * whether the underlying economics are accurate, and the insurance one asserts
- * a claims outcome we cannot evidence.
- *
- * Every answer below is the same substance, stated as what the programme does
- * rather than as something a customer said. Each figure here is also published
- * elsewhere on this page (ECONOMICS, RISKS, FAQ), so there is one story.
- *
- * When real, attributable partner quotes exist, they belong here - with a real
- * name and consent, replacing this block.
- */
-const PARTNER_ANSWERS = [
-  {
-    q: 'Do I have to do anything?',
-    a: 'No. CrossCubes photographs the car, lists it, prices it, screens every guest, handles delivery and collection, and coordinates cleaning and maintenance. Your involvement after handover is approving anything over the maintenance threshold.',
-  },
-  {
-    q: 'What does it actually pay?',
-    a: 'You keep the large majority of every booking; your exact share is set out in your partner agreement. Insurance and detailing are itemised monthly, never bundled into a vague fee.',
-  },
-  {
-    q: 'What if a renter damages it?',
-    a: 'Your exposure is capped per incident under Addendum No. 1 of the partner agreement, and CrossCubes absorbs unrecovered damage above that cap. The cap is stated in your agreement before you sign.',
-  },
-  {
-    q: 'Can I get my car back?',
-    a: 'It stays your car. Set blackout dates whenever you need it and it will not be booked during those windows. The exit terms are in the agreement, not buried in a policy page.',
-  },
-] as const;
-
-const FAQ = [
-  { q: 'What vehicles do you accept?', a: 'A 2018-or-newer model with a clean title, under 130,000 miles, no major body, structural or cosmetic damage, and it must be smoke-free, pet-free, with at least 4/32" of tread. AWD SUVs and crossovers with 5–7 seats, leather and Apple CarPlay are strongly preferred - that’s what performs best in the airport market. CrossCubes reserves the right to decline any vehicle that doesn’t meet these standards, which is what keeps quality consistent across every partner’s car.' },
-  { q: 'How much will I actually earn?', a: 'Based on the active fleet, partners net $1,029–$1,841 per vehicle per month after the management fee, insurance and detailing are deducted - roughly $65–$120/day at 70–80% utilization. Where a specific car lands in that range depends mostly on the model: conservative performers like a Kia Sportage sit around $1,029/mo, mid-range vehicles like a VW Tiguan around $1,400/mo, and top performers like a VW Atlas or Nissan Pathfinder around $1,841/mo. These are illustrative examples from the real fleet, not a guarantee.' },
-  { q: 'What does CrossCubes charge?', a: 'A 20% management fee on gross booking revenue - that covers listing, dynamic pricing, guest screening, valet delivery, cleaning coordination and 24/7 operations. Fleet insurance (Roamly) and professional detailing are itemized separately in your monthly statement.' },
-  { q: 'What about insurance?', a: 'Every vehicle is covered by Roamly commercial fleet insurance for the entire time it’s in CrossCubes’s custody - not just during trips. If a renter causes damage, your out-of-pocket exposure is capped at $1,000 per incident; CrossCubes absorbs anything above that cap.' },
-  { q: 'Do I need to buy a car to join?', a: 'No. The program is built for vehicles you already own. There’s no purchase or financing requirement to become an asset partner - your only ongoing responsibility is financing you may already carry on the car itself.' },
-  { q: 'What are the program terms?', a: 'CrossCubes handles listing, pricing, guest screening, delivery, cleaning and maintenance coordination under the management fee described above. Maintenance decisions above $500 always come to you for approval first. Full terms are covered in your partner agreement at signup.' },
-  { q: 'Can I still use my car?', a: 'Yes - CrossCubes works around blackout dates you set, so you can block off the days you need the car and it simply won’t be booked during those windows.' },
-  { q: 'How fast do I get my first payout?', a: 'Payouts run monthly - on the 5th, by check or Zelle - covering trips completed the prior month. Most partners see their first payout within 30–45 days of their car going live, depending on when it starts booking.' },
-] as const;
+const usd = (cents?: number) => (cents == null ? '—' : formatMoney({ amount: cents, currency: 'USD' }));
+const pct = (bps?: number) => (bps == null ? '—' : `${Number((bps / 100).toFixed(1))}%`);
+const ordinal = (n?: number) => {
+  if (n == null) return '—';
+  const tens = n % 100;
+  const suffix = tens >= 11 && tens <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th';
+  return `${n}${suffix}`;
+};
 
 export default function AssetPartnersPage() {
+  const config = usePlatformConfig();
+  const live = useLiveHubs();
+  const t = config.data?.assetPartner;
+  const cities = (live.data ?? []).map((h) => h.city);
+
+  const terms = [
+    { label: 'Management fee', value: pct(t?.managementFeeBps), sub: 'Of each booking, for running everything' },
+    { label: 'Fleet insurance', value: usd(t?.insuranceMonthlyCents), sub: 'Per car, per month' },
+    { label: 'Professional detailing', value: usd(t?.detailingMonthlyCents), sub: 'Per car, per month' },
+    { label: 'Your damage cap', value: usd(t?.deductibleCapCents), sub: 'Most you pay per incident' },
+    { label: 'Repairs need your OK above', value: usd(t?.maintenanceApprovalCents), sub: 'Anything smaller is handled for you' },
+    { label: 'Payout day', value: ordinal(t?.payoutDayOfMonth), sub: 'Of each month, for last month’s trips' },
+  ];
+
+  const faq = [
+    { q: 'Do I have to do anything once the car is live?', a: 'No. Your city team lists it, prices it, checks every guest, delivers and collects it, and arranges cleaning and repairs. You only approve repairs above the limit shown on this page.' },
+    { q: 'How much will I earn?', a: `You keep each booking less the ${pct(t?.managementFeeBps)} management fee, minus insurance and detailing each month. Earnings depend on your car and your city, so use the earnings calculator for an estimate rather than a promise.` },
+    { q: 'What if a guest damages the car?', a: `Your share is capped at ${usd(t?.deductibleCapCents)} per incident, and the cap is written into your agreement before you sign. CrossCubes covers what isn’t recovered above it.` },
+    { q: 'Can I still use my car?', a: 'Yes. Block the dates you need it and it won’t be booked for them. You can also ask for the car back on the notice set out in your agreement.' },
+    { q: 'Who do I sign with?', a: `${BRAND} is part of CatoDrive, Inc. Your agreement is with CatoDrive, Inc. trading as ${BRAND}, and your city team runs the car day to day.` },
+    { q: 'When do I get paid?', a: `On the ${ordinal(t?.payoutDayOfMonth)} of each month, for trips completed the month before, by Zelle or check. Every payout comes with a statement listing each trip and deduction.` },
+  ];
+
   return (
-    <div className="-mt-6">
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="full-bleed relative isolate grain overflow-hidden hero-mesh">
-        <div className="mx-auto max-w-6xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20">
-          <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" /> Become an Asset Partner
+    <div className="-mt-24 space-y-20 pb-20 sm:space-y-24">
+      <section className="full-bleed relative isolate overflow-hidden hero-mesh">
+        <div aria-hidden className="cube-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_75%)]" />
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-16 pt-32 sm:px-6 sm:pb-24 sm:pt-36 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <Reveal className="min-w-0">
+            <span className="text-sm font-semibold uppercase tracking-wider text-signal">
+              Asset Partner programme
             </span>
-          </Reveal>
-          <Reveal delay={80}>
-            <h1 className="display mt-6 max-w-3xl text-[2.4rem] leading-[0.98] text-white sm:mt-7 sm:text-[3.6rem] lg:text-[4.4rem]">
-              Put your car to work. We run it. You collect every month.
+            <h1 className="display mt-6 text-[2.6rem] leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Your car.
+              <br />
+              <span className="text-signal">Our city team.</span>
             </h1>
-          </Reveal>
-          <Reveal delay={160}>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:mt-7 sm:text-xl">
-              {BRAND} asset partners net <span className="font-semibold text-white">$1,029–$1,841/month</span> per
-              vehicle. We handle 100% of operations - listing, pricing, valet delivery, cleaning, maintenance and
-              insurance. Your only job is cashing the check.
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+              Put the car you already own to work. The {BRAND} team in your city lists it, rents it, delivers it and looks after it, and pays you every month.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <SiteLink site="partner" path="/sign-up" className="group inline-flex h-12 items-center gap-2 rounded-md bg-signal px-6 text-sm font-bold text-signal-foreground transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-ink">
+                Apply with your car <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </SiteLink>
+              <Link href="/calculator" className="inline-flex h-12 items-center gap-2 rounded-md border border-white/20 bg-white/5 px-6 text-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                <Calculator className="h-4 w-4" aria-hidden /> Estimate your earnings
+              </Link>
+            </div>
+            <p className="mt-6 text-sm text-white/60">
+              {cities.length ? `Open now in ${cities.join(', ')}.` : 'Opening city by city.'}{' '}
+              <SiteLink site="partner" path="/sign-in" className="font-semibold text-white underline-offset-4 hover:underline">Already a partner? Sign in</SiteLink>
             </p>
           </Reveal>
-          <Reveal delay={240}>
-            <div className="mt-8 flex flex-wrap gap-4 sm:mt-10">
-              <SiteLink site="partner" path="/sign-up" className="group inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03] active:scale-95 sm:h-14 sm:px-7 sm:text-base">
-                Apply Now <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </SiteLink>
-              <a href="#numbers" className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white/10 sm:h-14 sm:px-7 sm:text-base">
-                See the Numbers <ArrowDown className="h-4 w-4" />
-              </a>
-            </div>
-          </Reveal>
-          <Reveal delay={300}>
-            <SiteLink
-              path="/asset-partners/dashboard"
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-white/60 hover:text-white hover:underline"
-            >
-              Already applied? Track your application <ArrowRight className="h-3.5 w-3.5" />
-            </SiteLink>
-          </Reveal>
+          <div className="relative mx-auto hidden w-full max-w-sm lg:block">
+            <CubeArt className="w-full" />
+          </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl space-y-14 px-4 pb-16 pt-8 sm:space-y-16 sm:px-6 sm:pt-12">
-        {/* ── PROVEN TRACTION ────────────────────────────────────────── */}
-        <section className="mb-16 scroll-mt-24">
-          <TractionStats heading="Backed by real numbers." excludeLive />
-        </section>
-
-        {/* ── VERIFIED PERFORMANCE ───────────────────────────────────── */}
-        <section id="numbers" className="scroll-mt-24">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <SectionEyebrow>Verified performance</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">The numbers, unedited.</h2>
-            <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-              Real numbers from a real fleet - 4 years operating, All-Star Host, $0 outside capital.
-            </p>
-          </Reveal>
-          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STATS.map((s, i) => (
-              <Reveal key={s.label} delay={i * 90} className="h-full">
-                <StatCard {...s} />
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── FIVE STEPS ─────────────────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>How it works</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Five steps. Zero headaches. Income in 30 days.</h2>
-            <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">
-              Owner responsibility: vehicle financing only. {BRAND} handles 100% of operations from list to payout.
-            </p>
-          </Reveal>
-          <ol className="mt-12 space-y-3">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.n} as="li" delay={i * 70}>
-                <StepRow {...s} last={i === STEPS.length - 1} />
-              </Reveal>
-            ))}
-          </ol>
-        </section>
-
-        {/* ── OWNER ECONOMICS ────────────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>Step 01 · Owner economics</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Here’s exactly what stays in your pocket.</h2>
-          </Reveal>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-            <Reveal>
-              <div className="overflow-hidden rounded-lg border border-border bg-card">
-                <div className="divide-y divide-border px-6">
-                  {ECONOMICS.map((e) => (
-                    <div key={e.label} className="flex items-center justify-between py-3.5 text-sm">
-                      <span className={e.muted ? 'text-muted-foreground' : 'font-medium text-foreground'}>{e.label}</span>
-                      <span className="numeric tabular-nums font-semibold text-foreground">{e.value}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-baseline justify-between bg-primary/[0.06] px-6 py-5">
-                  <span className="text-base font-black text-foreground">Net monthly to partner</span>
-                  <span className="numeric text-2xl font-black tabular-nums text-primary">$1,029–$1,841</span>
-                </div>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                Verified from the active fleet - earnings examples are illustrative only; no income guarantees.
-              </p>
-            </Reveal>
-
-            <Reveal delay={100}>
-              <div className="flex h-full flex-col gap-3">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                  What partners actually earn, by vehicle
-                </p>
-                {TIERS.map((t) => (
-                  <TierRow key={t.tier} {...t} />
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ── TOP PERFORMERS ─────────────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>Step 02 · Top performers (2025)</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Real revenue from real vehicles.</h2>
-          </Reveal>
-
-          <div className="mt-12 grid gap-4 lg:grid-cols-2">
-            <Reveal>
-              <div className="h-full rounded-lg border border-border bg-card p-7">
-                <ul className="space-y-3 text-sm text-foreground">
-                  <li className="flex items-start gap-2.5">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-                    <span><span className="font-semibold">VW Atlas / Nissan Pathfinder</span> - top performers, ~$1,841/mo net</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                    <span><span className="font-semibold">VW Tiguan / Jeep Grand Cherokee</span> - mid-range, ~$1,400/mo net</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
-                    <span><span className="font-semibold">Kia Sportage / Buick Envista</span> - conservative, ~$1,029/mo net</span>
-                  </li>
-                </ul>
-                <div className="mt-6 rounded-lg bg-primary/5 p-4 ring-1 ring-primary/15">
-                  <p className="text-xs font-bold uppercase tracking-wider text-primary">Sweet spot vehicles</p>
-                  <p className="mt-1.5 text-sm text-muted-foreground">
-                    AWD SUVs and crossovers, 5–7 seats, leather interiors, Apple CarPlay - 2018 or newer, under
-                    130,000 miles, clean title only.
-                  </p>
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={100}>
-              <div className="h-full rounded-lg border border-border bg-card p-7">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">Fleet revenue growth</p>
-                <div className="mt-4 flex items-end justify-between gap-4">
-                  {GROWTH.map((g, i) => (
-                    <div key={g.year} className="flex flex-1 flex-col items-center gap-2">
-                      <div
-                        className="w-full rounded-t-xl bg-gradient-to-t from-primary/40 to-primary"
-                        style={{ height: `${44 + i * 34}px` }}
-                      />
-                      <p className="numeric text-lg font-black text-foreground">{g.value}</p>
-                      <p className="text-xs text-muted-foreground">{g.year}</p>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-                  <span className="font-semibold text-foreground">$405K+ earned in 2026</span> across 100 managed
-                  vehicles, with $0 outside capital. The airport market is strong and proven.
-                </p>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ── VEHICLE REQUIREMENTS ───────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>Step 03 · Vehicle requirements</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Does your car qualify?</h2>
-          </Reveal>
-
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {REQUIREMENTS.map((r, i) => (
-              <Reveal key={r.label} delay={i * 60}>
-                <div className="flex items-start gap-3.5 rounded-lg border border-border bg-card p-5">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <r.icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{r.label}</p>
-                    <p className="mt-0.5 text-sm font-semibold text-foreground">{r.value}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-            <Reveal delay={REQUIREMENTS.length * 60}>
-              <div className="flex items-start gap-3.5 rounded-lg border border-primary/20 bg-primary/5 p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
-                  <Star className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-primary">Strongly preferred</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    SUVs and crossovers, 5–7 seats, leather, Apple CarPlay
-                  </p>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-          <Reveal delay={(REQUIREMENTS.length + 1) * 60}>
-            <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-              {BRAND} holds the right to reject any vehicle that doesn’t meet standards. This protects every partner
-              on the platform.
-            </p>
-          </Reveal>
-        </section>
-
-        {/* ── RISK & RESPONSIBILITY ──────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>Risk &amp; responsibility</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Every risk has an owner. Most of them are us.</h2>
-          </Reveal>
-          <div className="mt-12 overflow-hidden rounded-lg border border-border">
-            {RISKS.map((r, i) => (
-              <Reveal key={r.scenario} delay={i * 60}>
-                <RiskRow {...r} first={i === 0} />
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── WHAT PARTNERS ASK ──────────────────────────────────────── */}
-        <section>
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <SectionEyebrow>Straight answers</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">The four questions everyone asks.</h2>
-          </Reveal>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {PARTNER_ANSWERS.map((t, i) => (
-              <Reveal key={t.q} delay={i * 80}>
-                <AnswerCard {...t} />
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        {/* ── FAQ ─────────────────────────────────────────────────────── */}
-        <section>
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <SectionEyebrow>Asset Partner FAQ</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Common questions from prospective partners.</h2>
-          </Reveal>
-          <div className="mx-auto mt-12 max-w-3xl divide-y divide-border overflow-hidden rounded-lg border border-border">
-            {FAQ.map((f, i) => (
-              <FaqRow key={f.q} {...f} defaultOpen={i === 0} />
-            ))}
-          </div>
-        </section>
-
-        {/* ── CONTACT ─────────────────────────────────────────────────── */}
-        <section>
-          <Reveal className="max-w-3xl">
-            <SectionEyebrow>Questions?</SectionEyebrow>
-            <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Talk to the partnerships team.</h2>
-          </Reveal>
-          <Reveal delay={80}>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-              <ContactCell icon={Phone} label="Asset Partner hotline: call or text" value={CONTACT.assetPartnerHotlineDisplay} href={CONTACT.assetPartnerHotlineHref} />
-              <ContactCell icon={Mail} label="Email" value="shoaib@catodrive.com" href="mailto:shoaib@catodrive.com" />
-              <ContactCell icon={Clock} label="Response Time" value="We review every application and respond within 2–3 business days." />
-              <ContactCell icon={ClipboardCheck} label="Eligibility" value="2018+ · under 130,000 miles · clean title · SUV preferred" />
-            </div>
-          </Reveal>
-          <Reveal delay={140}>
-            <Link href="/contact?interest=asset_partner" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
-              Or send us a message <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Reveal>
-        </section>
-
-        {/* ── CLOSING CTA ────────────────────────────────────────────── */}
-        <Reveal>
-          <section className="relative isolate overflow-hidden rounded-lg px-5 py-16 text-center sm:px-12 sm:py-24">
-            <Image
-              src="/newsections/become_asset_partner.webp"
-              alt=""
-              fill
-              sizes="(min-width: 1152px) 1100px, 100vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/80 to-ink/70" />
-            <div className="relative">
-              <Sparkles className="mx-auto h-8 w-8 text-primary" />
-              <h2 className="display mx-auto mt-5 max-w-2xl text-3xl text-white sm:text-4xl lg:text-5xl">
-                Your car could be earning next month.
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-base text-white/75 sm:text-lg">
-                List the vehicle you already own - {BRAND} does the rest.
-              </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <SiteLink site="partner" path="/sign-up" className="group inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.03] active:scale-95 sm:h-14 sm:px-7 sm:text-base">
-                  Apply Now <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </SiteLink>
-              </div>
-            </div>
-          </section>
+      <section id="terms" className="scroll-mt-24">
+        <Reveal className="max-w-2xl">
+          <SectionEyebrow>The terms</SectionEyebrow>
+          <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">Partner terms</h2>
+          <p className="mt-4 text-base text-muted-foreground sm:text-lg">These are the standard terms printed in every partner agreement. Nothing is bundled or hidden.</p>
         </Reveal>
-      </div>
-    </div>
-  );
-}
-
-/* ── Pieces ─────────────────────────────────────────────────────────── */
-
-function StatCard({ prefix = '', value, suffix = '', decimals = 0, comma, label, raw }: {
-  prefix?: string; value: number; suffix?: string; decimals?: number; comma?: boolean; label: string; raw?: boolean;
-}) {
-  return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-primary/40 sm:p-6">
-      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/10 blur-2xl transition-opacity duration-500 group-hover:opacity-80" />
-      <p className="numeric text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-        {raw ? prefix : <>{prefix}<CountUp value={value} decimals={decimals} comma={comma} />{suffix}</>}
-      </p>
-      <p className="mt-2 text-sm font-medium text-foreground sm:mt-3">{label}</p>
-    </div>
-  );
-}
-
-function StepRow({ n, icon: Icon, title, body, tag, last }: {
-  n: string; icon: typeof Car; title: string; body: string; tag?: string; last: boolean;
-}) {
-  return (
-    <div className="group relative flex gap-5 rounded-lg border border-border bg-card p-6 transition-all duration-500 hover:border-primary/40 sm:p-7">
-      <div className="relative flex flex-col items-center">
-        <span className="numeric flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
-          {n}
-        </span>
-        {!last && <span className="mt-2 hidden w-px flex-1 bg-gradient-to-b from-primary/40 to-transparent sm:block" />}
-      </div>
-      <div className="flex-1 pb-1">
-        <h3 className="display flex items-center gap-2 text-xl">
-          <Icon className="h-5 w-5 text-primary" /> {title}
-        </h3>
-        <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{body}</p>
-        {tag && (
-          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <CheckCircle2 className="h-3.5 w-3.5" /> {tag}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TierRow({ tier, amount, vehicles, tone }: { tier: string; amount: string; vehicles: string; tone: 'default' | 'primary' | 'success' }) {
-  const tones = {
-    default: 'bg-muted text-muted-foreground',
-    primary: 'bg-primary/10 text-primary ring-1 ring-primary/20',
-    success: 'bg-success/10 text-success ring-1 ring-success/20',
-  } as const;
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-5 py-4">
-      <div>
-        <p className="text-sm font-semibold text-foreground">{tier}</p>
-        <p className="text-xs text-muted-foreground">{vehicles}</p>
-      </div>
-      <span className={`numeric shrink-0 rounded-full px-3 py-1.5 text-sm font-black tabular-nums ${tones[tone]}`}>
-        {amount}/mo
-      </span>
-    </div>
-  );
-}
-
-function RiskRow({ scenario, detail, owner, first }: {
-  scenario: string; detail: string; owner: 'CrossCubes' | 'Shared'; first: boolean;
-}) {
-  const isCato = owner === 'CrossCubes';
-  return (
-    <div className={`flex flex-col gap-4 bg-card p-6 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:gap-6 sm:p-7 ${first ? '' : 'border-t border-border'}`}>
-      <div className="flex-1">
-        <p className="font-semibold text-foreground">{scenario}</p>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{detail}</p>
-      </div>
-      <span
-        className={`inline-flex shrink-0 items-center gap-1.5 self-start rounded-full px-3.5 py-1.5 text-xs font-bold sm:self-center ${
-          isCato
-            ? 'bg-success/10 text-success ring-1 ring-success/20'
-            : 'bg-warning/10 text-warning ring-1 ring-warning/20 dark:text-warning'
-        }`}
-      >
-        <ShieldCheck className="h-3.5 w-3.5" /> {isCato ? `${BRAND} covers this` : 'Shared responsibility'}
-      </span>
-    </div>
-  );
-}
-
-/**
- * A question and CrossCubes's answer to it. Replaces the old TestimonialCard,
- * which framed company claims as quotes from partners who do not exist.
- *
- * The card is quieter than the one it replaces: no hover lift, no coloured
- * shadow, no gradient-filled avatar disc. This is reference material someone
- * reads before committing their car - it should hold still while they read it.
- */
-function AnswerCard({ q, a }: { q: string; a: string }) {
-  return (
-    <div className="flex h-full flex-col rounded-lg border border-border bg-card p-7">
-      <h3 className="text-base font-semibold text-foreground">{q}</h3>
-      <p className="mt-3 flex-1 text-[15px] leading-relaxed text-muted-foreground">{a}</p>
-    </div>
-  );
-}
-
-function FaqRow({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(!!defaultOpen);
-  return (
-    <div className="bg-card">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-muted/30"
-      >
-        <span className="text-[15px] font-semibold text-foreground">{q}</span>
-        <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300 ${open ? 'rotate-180 text-primary' : ''}`} />
-      </button>
-      <div className={`grid transition-all duration-300 ease-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-        <div className="overflow-hidden">
-          <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{a}</p>
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          {terms.map((x, i) => (
+            <Reveal key={x.label} delay={i * 60}>
+              <div className="h-full rounded-lg border border-border bg-card p-5 sm:p-6">
+                <p className="text-label font-semibold text-muted-foreground">{x.label}</p>
+                {config.isLoading ? (
+                  <Skeleton className="mt-3 h-9 w-24" />
+                ) : (
+                  <p className="display mt-2 text-3xl tabular-nums text-foreground sm:text-4xl">{x.value}</p>
+                )}
+                <p className="mt-2 text-sm text-muted-foreground">{x.sub}</p>
+              </div>
+            </Reveal>
+          ))}
         </div>
-      </div>
+        {config.isError && <p role="alert" className="mt-4 text-sm text-destructive">We couldn’t load the current terms. They are also in the agreement you review before signing.</p>}
+      </section>
+
+      <section className="relative isolate overflow-hidden rounded-lg hero-mesh px-6 py-14 text-white sm:px-12 sm:py-20">
+        <div aria-hidden className="cube-grid absolute inset-0 -z-10" />
+        <Reveal className="max-w-2xl">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-signal">From application to payout</span>
+          <h2 className="display mt-4 text-3xl sm:text-4xl lg:text-5xl">How it works</h2>
+        </Reveal>
+        <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {STEPS.map((s, i) => (
+            <li key={s.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+              <span className="display text-5xl leading-none text-white/15">0{i + 1}</span>
+              <s.icon className="mt-4 h-6 w-6 text-signal" aria-hidden />
+              <h3 className="mt-3 font-semibold">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/65">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+        <Reveal>
+          <SectionEyebrow>Which cars</SectionEyebrow>
+          <h2 className="display mt-4 text-3xl sm:text-4xl">What we look for.</h2>
+          <p className="mt-4 text-base text-muted-foreground">The application checks the title straight away; the city team checks the rest in person.</p>
+        </Reveal>
+        <ul className="divide-y divide-border rounded-lg border border-border bg-card">
+          {REQUIREMENTS.map((r) => (
+            <li key={r.label} className="flex gap-4 p-5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><r.icon className="h-5 w-5" aria-hidden /></span>
+              <div>
+                <p className="font-semibold text-foreground">{r.label}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{r.value}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mx-auto max-w-3xl">
+        <Reveal className="text-center">
+          <SectionEyebrow>Questions</SectionEyebrow>
+          <h2 className="display mt-4 text-3xl sm:text-4xl">Common questions</h2>
+        </Reveal>
+        <div className="mt-10 space-y-3">
+          {faq.map((f) => <FaqItem key={f.q} q={f.q} a={f.a} />)}
+        </div>
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Something else? <Link href="/contact?interest=asset_partner" className="font-semibold text-primary hover:underline">Ask the team</Link>
+        </p>
+      </section>
+
+      <Reveal as="section" className="relative isolate overflow-hidden rounded-lg hero-mesh px-6 py-16 text-center text-white sm:px-12 sm:py-24">
+        <div aria-hidden className="cube-grid absolute inset-0 -z-10" />
+        <h2 className="display mx-auto max-w-2xl text-3xl sm:text-4xl lg:text-5xl">Apply with your car</h2>
+        <p className="mx-auto mt-4 max-w-xl text-white/70">Ten minutes to apply. Your city team gets back to you, and you can follow every step in your partner portal.</p>
+        <SiteLink site="partner" path="/sign-up" className="group mt-8 inline-flex h-12 items-center gap-2 rounded-md bg-signal px-7 text-sm font-bold text-signal-foreground transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-ink">
+          Apply with your car <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </SiteLink>
+      </Reveal>
     </div>
   );
 }
 
-function ContactCell({ icon: Icon, label, value, href }: {
-  icon: typeof Phone; label: string; value: string; href?: string;
-}) {
-  const content = (
-    <>
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <Icon className="h-4.5 w-4.5" />
-      </span>
-      <p className="mt-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-[15px] leading-snug text-foreground ${href ? 'font-semibold' : ''}`}>{value}</p>
-    </>
-  );
-  return href ? (
-    <a href={href} className="bg-card p-6 transition-colors hover:bg-primary/[0.04]">{content}</a>
-  ) : (
-    <div className="bg-card p-6">{content}</div>
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-4 p-5 text-start font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        {q}
+        <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {open && <p className="px-5 pb-5 text-sm leading-relaxed text-muted-foreground">{a}</p>}
+    </div>
   );
 }

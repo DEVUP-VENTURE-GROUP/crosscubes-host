@@ -26,7 +26,7 @@ export type Ownership = 'owned' | 'financed' | 'leased';
 
 // Exhibit E proof of ownership, worded for how the car is held.
 export const OWNERSHIP_PAPERS: Record<Ownership, { label: string; hint: string }> = {
-  owned: { label: 'Vehicle title', hint: 'Front and back of the Texas title in your name' },
+  owned: { label: 'Vehicle title', hint: 'Front and back of the title in your name' },
   financed: { label: 'Loan statement', hint: 'A recent loan statement or payoff letter showing the lender and the car' },
   leased: { label: 'Lease agreement and permission', hint: 'Your lease plus the leasing company’s written OK to rent the car out' },
 };

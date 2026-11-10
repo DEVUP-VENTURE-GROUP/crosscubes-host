@@ -209,8 +209,8 @@ class MarkerAnimator {
     wrap.style.willChange = 'transform';
     wrap.innerHTML = isCar
       ? `<div class="relative">
-           <span class="absolute inset-0 -m-2 animate-ping rounded-full bg-teal-500/25"></span>
-           <span class="relative block text-teal-600 drop-shadow">${CAR_SVG}</span>
+           <span class="absolute inset-0 -m-2 animate-ping rounded-full bg-primary/25"></span>
+           <span class="relative block text-primary drop-shadow">${CAR_SVG}</span>
          </div>`
       // The person meeting the car is deliberately a different shape, not just
       // a different colour - colour alone fails for a colour-blind viewer.
