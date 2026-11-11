@@ -1160,7 +1160,10 @@ export default function VehicleDetailPage() {
                 </span>
               </label>
             )}
-            <Button className="w-full rounded-xl py-6 text-base font-bold transition-transform hover:scale-[1.02] active:scale-[0.98]" size="lg" disabled={!quote.data || !canQuote || quote.isPending || (status === 'authenticated' && !agreedTerms)} loading={createBooking.isPending} onClick={book}>
+            {v.bookable === false && (
+              <p role="status" className="rounded-lg bg-subtle p-3 text-center text-sm font-medium">This car isn’t available to book right now. Please choose another car.</p>
+            )}
+            <Button className="w-full rounded-xl py-6 text-base font-bold transition-transform hover:scale-[1.02] active:scale-[0.98]" size="lg" disabled={v.bookable === false || !quote.data || !canQuote || quote.isPending || (status === 'authenticated' && !agreedTerms)} loading={createBooking.isPending} onClick={book}>
               {status !== 'authenticated'
                 ? 'Sign in to book'
                 : v.listing.instantBook

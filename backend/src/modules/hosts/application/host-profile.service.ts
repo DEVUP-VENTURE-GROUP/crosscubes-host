@@ -1,4 +1,5 @@
 import { HostModel } from '../infrastructure/host.model';
+import { wheelbaseInsuranceService } from '../../insurance/application/wheelbase-insurance.service';
 import { UserModel } from '../../users/infrastructure/user.model';
 import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
@@ -52,7 +53,7 @@ export class HostProfileService {
 
     const [user, listedVehicles, responsiveness, kyc, cancellationRatePct] = await Promise.all([
       UserModel.findOne({ _id: host.userId }).lean(),
-      VehicleModel.countDocuments({ hostId, status: 'listed', verificationStatus: 'verified' }),
+      wheelbaseInsuranceService.guestVisibleFilter().then((insured) => VehicleModel.countDocuments({ hostId, status: 'listed', verificationStatus: 'verified', ...insured })),
       this.responsiveness(hostId),
       KycModel.findOne({ userId: host.userId }, { status: 1 }).lean(),
       this.cancellationRate(hostId),
@@ -90,7 +91,8 @@ export class HostProfileService {
    * listings are the host's business, not the public's.
    */
   async publicVehicles(hostId: string) {
-    const vehicles = await VehicleModel.find({ hostId, status: 'listed', verificationStatus: 'verified' })
+    const insured = await wheelbaseInsuranceService.guestVisibleFilter();
+    const vehicles = await VehicleModel.find({ hostId, status: 'listed', verificationStatus: 'verified', ...insured })
       .sort({ ratingAvg: -1, createdAt: -1 })
       .limit(24)
       .lean();

@@ -14,6 +14,7 @@ import type {
 import type { CreateVehicleDto } from '../dto/vehicle.schemas';
 import { vinDecodeService } from './vin-decode.service';
 import { toPublicVehicle } from './vehicle-public';
+import { isInsuredForBooking } from '../../insurance/application/wheelbase-insurance.service';
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
 
 const KM_PER_MILE = 1.609344;
@@ -206,7 +207,10 @@ export class VehicleService implements IVehicleContract {
       const host = await hostService.getByUserId(viewerId);
       if (host && host._id === v.hostId) return v;
     }
-    return toPublicVehicle(v);
+    const { insurance } = await platformConfigService.get();
+    // The car page reads this so a guest on a direct link is told up front, not at checkout.
+    const bookable = v.status === 'listed' && v.verificationStatus === 'verified' && isInsuredForBooking(v.wheelbase, insurance.requireApproved);
+    return { ...toPublicVehicle(v), bookable } as VehicleDoc;
   }
 
   /** Batch resolve (avoids N+1 for favorites / recently-viewed hydration). */

@@ -7,7 +7,8 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatTile } from '@/components/ui/stat-tile';
 import { ErrorState } from '@/components/ui/states';
-import { useMyHub, useMyHubPayouts, holderTotals } from '~/features/hub/api';
+import { useMyHub, useMyHubInsurance, useMyHubPayouts, holderTotals } from '~/features/hub/api';
+import { INSURANCE_HELP, INSURANCE_LABEL, INSURANCE_TONE } from '@/features/insurance/labels';
 import { formatDate, formatMoney } from '@/lib/utils/format';
 import { bpsToPercent, DOCUMENT_LABEL, HUB_STATUS_LABEL, HUB_STATUS_TONE, PAYOUT_METHOD_LABEL, type DocumentKind, type HubStatus } from '@/features/hubs/types';
 
@@ -25,6 +26,7 @@ function dateTone(iso?: string): 'success' | 'warning' | 'destructive' | 'muted'
 export default function MyHubPage() {
   const hub = useMyHub();
   const payouts = useMyHubPayouts();
+  const insurance = useMyHubInsurance();
 
   if (hub.isError) return <ErrorState message="We couldn’t load your hub." retry={() => void hub.refetch()} />;
   if (!hub.data) return <div className="space-y-4" aria-busy="true"><Skeleton className="h-12 w-64" /><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-lg" />)}</div></div>;
@@ -83,6 +85,45 @@ export default function MyHubPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+          <CardTitle>Car insurance</CardTitle>
+          {insurance.data && insurance.data.cars.length > 0 && (
+            <span className="text-sm text-muted-foreground tabular-nums">{insurance.data.cars.filter((c) => c.bookable).length} of {insurance.data.cars.length} cars can be booked</span>
+          )}
+        </CardHeader>
+        <CardContent>
+          {insurance.isLoading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : insurance.isError ? (
+            <ErrorState message="We couldn’t load your cars’ insurance." retry={() => void insurance.refetch()} />
+          ) : !insurance.data?.cars.length ? (
+            <p className="text-sm text-muted-foreground">No cars in your city yet. Each car’s insurance shows here once it’s added.</p>
+          ) : (
+            <>
+              <p className="pb-3 text-sm text-muted-foreground">
+                Cars are insured through Wheelbase. HQ links each car to its Wheelbase listing{insurance.data.requireApproved ? ', and guests only see the cars marked Insured' : ''}.
+                {insurance.data.checkedAt ? ` Last checked ${formatDate(insurance.data.checkedAt)}.` : ''} Ask HQ about any car that isn’t insured.
+              </p>
+              <ul className="divide-y divide-border rounded-lg border border-border">
+                {insurance.data.cars.map((c) => (
+                  <li key={c.id} className="flex items-center gap-3 p-3 text-sm">
+                    {c.photoUrl ? <img src={c.photoUrl} alt="" className="h-10 w-14 shrink-0 rounded-md object-cover" /> : <span className="h-10 w-14 shrink-0 rounded-md bg-muted" aria-hidden />}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{c.name}{c.plate ? <span className="text-muted-foreground"> · {c.plate}</span> : null}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {c.insurance === 'approved' ? [c.planLabel, c.minRenterAge && `Drivers ${c.minRenterAge}+`].filter(Boolean).join(' · ') || INSURANCE_HELP.approved : INSURANCE_HELP[c.insurance]}
+                      </span>
+                    </span>
+                    <Badge tone={INSURANCE_TONE[c.insurance]}>{INSURANCE_LABEL[c.insurance]}</Badge>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Delivery spots</CardTitle></CardHeader>

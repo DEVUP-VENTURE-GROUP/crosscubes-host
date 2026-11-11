@@ -1,4 +1,5 @@
 import { VehicleModel, type VehicleDoc } from '../../vehicles/infrastructure/vehicle.model';
+import { wheelbaseInsuranceService } from '../../insurance/application/wheelbase-insurance.service';
 import { toPublicVehicle } from '../../vehicles/application/vehicle-public';
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
 import type { PlatformConfigDoc } from '../../platform-config/infrastructure/platform-config.model';
@@ -47,6 +48,7 @@ export class SearchService {
       verificationStatus: 'verified',
       hubId: { $in: await hubService.liveHubIds() },
       deletedAt: null,
+      ...(await wheelbaseInsuranceService.guestVisibleFilter()),
       location: {
         $near: {
           $geometry: { type: 'Point', coordinates: [q.lng, q.lat] },
@@ -147,6 +149,7 @@ export class SearchService {
     const EARTH_RADIUS_KM = 6378.1;
     const radiusRadians = (q.radiusKm ?? 25) / EARTH_RADIUS_KM;
     const liveHubs = await hubService.liveHubIds();
+    const insured = await wheelbaseInsuranceService.guestVisibleFilter();
 
     /** The filter for everything EXCEPT the named dimension. */
     const build = (except?: keyof SearchQuery): Record<string, unknown> => {
@@ -155,6 +158,7 @@ export class SearchService {
         verificationStatus: 'verified',
         hubId: { $in: liveHubs },
         deletedAt: null,
+        ...insured,
         location: {
           $geoWithin: { $centerSphere: [[q.lng, q.lat], radiusRadians] },
         },
@@ -261,6 +265,7 @@ export class SearchService {
       verificationStatus: 'verified',
       hubId: { $in: await hubService.liveHubIds() },
       deletedAt: null,
+      ...(await wheelbaseInsuranceService.guestVisibleFilter()),
     };
     const coords = base.location?.coordinates;
     if (coords && coords.length === 2) {
@@ -337,6 +342,7 @@ export class SearchService {
       verificationStatus: 'verified',
       hubId: { $in: await hubService.liveHubIds() },
       deletedAt: null,
+      ...(await wheelbaseInsuranceService.guestVisibleFilter()),
       _id: { $nin: bookedIds },
     };
     if (anchor) {

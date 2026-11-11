@@ -84,7 +84,8 @@ Update later: `git pull && npm ci && npm run build && pm2 restart crosscubes-api
 | `EMAIL_*` / `SMTP_*`, `EMAIL_FROM` | CatoDrive's email account; `EMAIL_FROM` shows `CrossCubes <…@catodrive.com>` |
 | `SMS_*` | CatoDrive's Twilio for now |
 | `TRUST_PROXY_HOPS` | `1` with Cloudflare grey cloud, `2` once the orange cloud is on |
-| `HOST_WEB_URL`, `INSURANCE_WEB_URL`, `WHEELBASE_DEALER_ID` | leave out; CrossCubes has no host site, insurer portal or Wheelbase |
+| `WHEELBASE_DEALER_ID` | the Wheelbase account the cars are insured under (CatoDrive's for now). Optional: staff can set or change it in Admin → Car Insurance, which wins over this value. |
+| `HOST_WEB_URL`, `INSURANCE_WEB_URL` | leave out; CrossCubes has no host site or insurer portal |
 
 ### 1.4 Nginx and HTTPS
 `/etc/nginx/sites-available/crosscubes-api`:

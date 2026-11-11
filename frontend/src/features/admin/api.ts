@@ -187,7 +187,15 @@ export interface PlatformConfig {
     maxMultiplierBps: number;
     occupancyThresholds: { occupancyPct: number; multiplierBps: number }[];
   };
-  insurance?: { wheelbaseDealerId: string; requireApproved: boolean; enforceMinAge: boolean; partnerCommissionBps?: number };
+  insurance?: {
+    wheelbaseDealerId: string;
+    requireApproved: boolean;
+    enforceMinAge: boolean;
+    autoLink?: boolean;
+    missingGraceHours?: number;
+    staleAlertHours?: number;
+    partnerCommissionBps?: number;
+  };
   legal: {
     termsVersion: string;
     termsUrl: string;
@@ -407,6 +415,54 @@ export interface Violation {
   createdAt: string;
 }
 
+export type InsuranceStatus = 'approved' | 'not_approved' | 'not_linked' | 'missing';
+
+export interface WheelbaseSyncResult { listings: number; updated: number; autoLinked: number; unmatched: number; missing: number; lapsed: number }
+export type WheelbaseSyncOutcome = WheelbaseSyncResult | { skipped: 'no_dealer' } | { error: 'unreachable' };
+
+export interface WheelbaseListingRow {
+  id: number;
+  name: string;
+  year?: number;
+  make?: string;
+  model?: string;
+  insuranceState?: string;
+  planLabel?: string;
+  minRenterAge?: number;
+}
+
+export interface WheelbaseCarRow {
+  _id: string;
+  name: string;
+  plate?: string;
+  status: string;
+  photoUrl?: string;
+  hub: { id: string; code: string; name: string } | null;
+  insurance: InsuranceStatus;
+  bookable: boolean;
+  wheelbase: {
+    rentalId: number;
+    name: string;
+    linkedBy: 'auto' | 'admin';
+    insuranceState?: string;
+    planLabel?: string;
+    minRenterAge?: number;
+    found: boolean;
+    missingSince?: string;
+    syncedAt: string;
+  } | null;
+  suggestions: number[];
+}
+
+export interface WheelbaseOverview {
+  dealerId: string;
+  settings: { requireApproved: boolean; enforceMinAge: boolean; autoLink: boolean; missingGraceHours: number; staleAlertHours: number };
+  sync: { lastRunAt?: string; lastOkAt?: string; lastError?: 'not_set_up' | 'unreachable'; lastResult?: WheelbaseSyncResult } | null;
+  error?: string;
+  listings: WheelbaseListingRow[];
+  cars: WheelbaseCarRow[];
+}
+
 export const adminApi = {
   nav: () => api.get<AdminNavItem[]>('/admin/nav'),
   metrics: () => api.get<AdminMetrics>('/admin/metrics'),
@@ -427,6 +483,10 @@ export const adminApi = {
   // Asset Partner applications - the primary acquisition intake. Approving is
   // the gate: the reviewed applicant's host account is verified so
   // vehicle.service will let them list a car.
+  // Wheelbase: each car's insurance, read from the Wheelbase account; staff link cars to listings here.
+  wheelbaseOverview: () => api.get<WheelbaseOverview>('/admin/insurance/wheelbase'),
+  wheelbaseSync: () => api.post<WheelbaseSyncOutcome>('/admin/insurance/wheelbase/sync'),
+  wheelbaseLink: (vehicleId: string, rentalId: number | null) => api.patch(`/admin/insurance/wheelbase/vehicles/${vehicleId}`, { rentalId }),
   // Insurance partners: insurers selling their own protection plans, approved here and paid from their own ledger account.
   insurers: (q: Q = {}) => api.get<Insurer[]>('/admin/insurance-partners', q),
   insurer: (id: string) =>

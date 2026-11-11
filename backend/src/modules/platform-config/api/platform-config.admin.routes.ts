@@ -60,6 +60,9 @@ router.put(
           wheelbaseDealerId: z.string().trim().regex(/^\d{0,20}$/, 'Digits only').optional(),
           requireApproved: z.boolean().optional(),
           enforceMinAge: z.boolean().optional(),
+          autoLink: z.boolean().optional(),
+          missingGraceHours: z.number().int().min(1).max(720).optional(),
+          staleAlertHours: z.number().int().min(1).max(720).optional(),
           partnerCommissionBps: z.number().int().min(0).max(5000).optional(),
         })
         .optional(),

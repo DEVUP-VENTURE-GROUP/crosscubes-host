@@ -20,6 +20,8 @@ import { ROLES } from '../shared/constants/rbac';
 import { timezoneForState } from '../shared/utils/us-timezone';
 import { config } from '../config';
 import { wheelbaseInsuranceService } from '../modules/insurance/application/wheelbase-insurance.service';
+import { HubModel } from '../modules/hubs/infrastructure/hub.model';
+import { VehicleModel } from '../modules/vehicles/infrastructure/vehicle.model';
 import { cancellationNotice } from '../modules/bookings/domain/refund-notice';
 import type { RefundExplanation } from '../modules/bookings/domain/cancellation-policy';
 
@@ -677,7 +679,31 @@ export function registerEventSubscribers(): void {
   // A car that lost its Wheelbase insurance approval must be looked at before it is booked again.
   eventBus.subscribe(EVENTS.INSURANCE_STATUS_CHANGED, async (e) => {
     const p = e.payload as { vehicleId: string; from?: string; to: string; name: string };
-    await notifyStaff('insurance.status_changed', 'Car insurance no longer approved', `${p.name} (vehicle ${p.vehicleId}): Wheelbase insurance changed from ${p.from ?? 'unknown'} to ${p.to}. Check it in Admin → Insurance.`, { vehicleId: p.vehicleId }, 'critical');
+    const trips = await wheelbaseInsuranceService.upcomingTrips(p.vehicleId);
+    const tripLine = trips.length
+      ? ` ${trips.length} upcoming trip${trips.length === 1 ? '' : 's'} on it (${trips.slice(0, 10).map((t) => t.code).join(', ')}${trips.length > 10 ? ', …' : ''}) must move to another car before pickup.`
+      : ' No upcoming trips are booked on it.';
+    const to = p.to === 'missing' ? 'no longer in the Wheelbase account' : `now “${p.to}”`;
+    await notifyStaff('insurance.status_changed', 'Car insurance no longer approved', `${p.name} (vehicle ${p.vehicleId}): Wheelbase insurance is ${to}, so guests can’t book it.${tripLine} Check it in Admin → Car Insurance.`, { vehicleId: p.vehicleId, bookingIds: trips.map((t) => t._id) }, 'critical');
+    const hubId = trips[0]?.hubId ?? (await VehicleModel.findById(p.vehicleId).select('hubId').lean<{ hubId?: string }>())?.hubId;
+    const hub = hubId ? await HubModel.findById(hubId).select('operatorUserId').lean<{ operatorUserId?: string }>() : null;
+    if (hub?.operatorUserId) {
+      await notificationService.send({
+        userId: hub.operatorUserId,
+        templateKey: 'hub.car_insurance_lost',
+        title: `${p.name} can’t be booked right now`,
+        body: `Its insurance is no longer approved, so guests can’t book it.${trips.length ? ` HQ is moving its ${trips.length} upcoming trip${trips.length === 1 ? '' : 's'} to another car.` : ''} HQ will tell you when it’s back.`,
+        data: { vehicleId: p.vehicleId },
+        priority: 'high',
+      });
+    }
+  });
+
+  // Wheelbase has not been read for longer than staff allow: each car keeps its last known insurance.
+  eventBus.subscribe(EVENTS.INSURANCE_SYNC_STALE, async (e) => {
+    const p = e.payload as { lastOkAt: string | null; hours: number };
+    const since = p.lastOkAt ? `since ${new Date(p.lastOkAt).toUTCString()}` : 'yet';
+    await notifyStaff('insurance.sync_stale', 'Wheelbase can’t be read', `CrossCubes hasn’t been able to read Wheelbase ${since} (alert set at ${p.hours} hours). Bookings use each car’s last known insurance. Check the account number in Admin → Car Insurance.`, {}, 'high');
   });
 
   // A new Wheelbase dealer ID is read straight away, not at the next scheduled check.

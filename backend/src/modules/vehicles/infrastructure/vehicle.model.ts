@@ -62,6 +62,8 @@ export interface WheelbaseLink {
   minRenterAge?: number;
   /** False when the listing is no longer in the dealer's Wheelbase account. */
   found: boolean;
+  /** When the listing was first seen missing; cleared when it comes back. */
+  missingSince?: Date;
   syncedAt: Date;
 }
 
@@ -274,6 +276,7 @@ const schema = new Schema<VehicleDoc>(
       planLabel: String,
       minRenterAge: Number,
       found: Boolean,
+      missingSince: Date,
       syncedAt: Date,
     },
     photoMatch: {

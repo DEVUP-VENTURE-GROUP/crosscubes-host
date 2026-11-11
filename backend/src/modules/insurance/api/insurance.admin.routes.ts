@@ -8,12 +8,14 @@ import { wheelbaseInsuranceService } from '../application/wheelbase-insurance.se
 
 const router = Router();
 
-/** Every car with its Wheelbase link and insurance, and the dealer's listings to link to. */
+/** Every car with its city, Wheelbase link and insurance, and the dealer's listings to link to. */
 router.get(
   '/insurance/wheelbase',
   authorize('admin:read'),
-  asyncHandler(async (_req, res) => {
-    sendSuccess(res, await wheelbaseInsuranceService.overview());
+  validate({ query: z.object({ hubId: z.string().trim().min(1).max(64).optional() }) }),
+  asyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    sendSuccess(res, await wheelbaseInsuranceService.overview({ hubId: req.query.hubId as string | undefined }));
   }),
 );
 

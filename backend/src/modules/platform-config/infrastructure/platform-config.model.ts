@@ -304,6 +304,12 @@ export interface PlatformConfigDoc {
     requireApproved: boolean;
     /** Refuse a renter younger than the car's Wheelbase minimum renter age. */
     enforceMinAge: boolean;
+    /** Link a car to the one listing with its year, make and model; off when the account also holds another company's cars. */
+    autoLink: boolean;
+    /** A listing gone from the account counts as uninsured after this many hours. */
+    missingGraceHours: number;
+    /** Staff are alerted when Wheelbase has not been read for this many hours. */
+    staleAlertHours: number;
     /** CrossCubes's share of an insurance partner's protection premium, in basis points, unless set per insurer. */
     partnerCommissionBps: number;
   };
@@ -676,6 +682,9 @@ const schema = new Schema<PlatformConfigDoc>(
       wheelbaseDealerId: { type: String },
       requireApproved: { type: Boolean, default: true },
       enforceMinAge: { type: Boolean, default: true },
+      autoLink: { type: Boolean, default: false },
+      missingGraceHours: { type: Number, default: 48 },
+      staleAlertHours: { type: Number, default: 24 },
       partnerCommissionBps: { type: Number, default: 1500 },
     },
     legal: {

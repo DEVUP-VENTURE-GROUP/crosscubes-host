@@ -145,7 +145,7 @@ export const vehicleReviewService = {
       key: 'wheelbase',
       label: 'Wheelbase insurance',
       detail: !wb
-        ? 'Not linked to a Wheelbase listing. Link it in Insurance.'
+        ? 'Not linked to a Wheelbase listing. Link it in Car Insurance.'
         : wb.found === false
           ? `Listing ${wb.rentalId} is no longer in the Wheelbase account${checked}`
           : `${wb.insuranceState === 'approved' ? 'Approved' : `Not approved (${wb.insuranceState ?? 'unknown'})`} · ${wb.planLabel ?? wb.coverage ?? 'plan unknown'}${wb.minRenterAge ? ` · drivers ${wb.minRenterAge}+` : ''}${checked}`,

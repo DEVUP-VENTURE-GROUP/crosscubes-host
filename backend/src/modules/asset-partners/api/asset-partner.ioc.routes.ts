@@ -32,6 +32,7 @@ import { validate } from '../../../shared/middleware/validate';
 import { sendCreated, sendSuccess } from '../../../shared/http/api-response';
 import { hubService } from '../../hubs/application/hub.service';
 import { hubPayoutService } from '../../hubs/application/hub-payout.service';
+import { wheelbaseInsuranceService } from '../../insurance/application/wheelbase-insurance.service';
 
 const router = Router();
 
@@ -64,6 +65,15 @@ router.get(
   asyncHandler(async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     sendSuccess(res, await hubPayoutService.forHub(req.principal!.hubId!));
+  }),
+);
+
+// Read-only: HQ links cars to Wheelbase; the holder sees which of their cars guests can book.
+router.get(
+  '/hub/insurance',
+  asyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    sendSuccess(res, await wheelbaseInsuranceService.forHub(req.principal!.hubId!));
   }),
 );
 
