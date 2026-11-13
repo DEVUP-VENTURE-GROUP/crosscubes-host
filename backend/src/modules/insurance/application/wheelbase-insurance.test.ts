@@ -10,6 +10,7 @@ import { WheelbaseSyncStateModel } from '../infrastructure/wheelbase-sync-state.
 import { platformConfigService } from '../../platform-config/application/platform-config.service';
 import { searchService } from '../../search/application/search.service';
 import { vehicleService } from '../../vehicles/application/vehicle.service';
+import { bookingService } from '../../bookings/application/booking.service';
 import * as eventBus from '../../../shared/events/event-bus';
 import { EVENTS } from '../../../core/events/event-names';
 import { connectTestDb, clearTestDb, disconnectTestDb } from '../../../testing/mongo';
@@ -170,6 +171,30 @@ describe('what guests and cities see', () => {
     await insuredCar('pending', 'pending');
     expect(await vehicleService.getForViewer(undefined, 'approved')).toMatchObject({ bookable: true, insurance: { approved: true } });
     expect(await vehicleService.getForViewer(undefined, 'pending')).toMatchObject({ bookable: false });
+  });
+
+  it('a guest books through the Wheelbase widget once a dealer is set', async () => {
+    await insuredCar('approved', 'approved');
+    await insuredCar('unlinked');
+    expect(await vehicleService.getForViewer(undefined, 'approved')).toMatchObject({ wheelbaseBooking: { dealerId: '1', rentalId: 1 } });
+    expect(await vehicleService.getForViewer(undefined, 'unlinked')).toMatchObject({ wheelbaseBooking: { dealerId: '1', rentalId: null } });
+
+    insuranceCfg = { wheelbaseDealerId: '' };
+    expect(await vehicleService.getForViewer(undefined, 'approved')).toMatchObject({ wheelbaseBooking: null });
+  });
+
+  it('refuses a CrossCubes checkout while a Wheelbase dealer is set, even with bookings switched on', async () => {
+    await insuredCar('approved', 'approved');
+    const real = await platformConfigService.get();
+    jest.spyOn(platformConfigService, 'get').mockImplementation(async () => ({
+      ...real,
+      booking: { ...real.booking, guestBookingsEnabled: true },
+      insurance: { ...real.insurance, wheelbaseDealerId: '1' },
+    }));
+    const start = new Date(Date.now() + 72 * HOUR).toISOString();
+    const end = new Date(Date.now() + 96 * HOUR).toISOString();
+    await expect(bookingService.create('g', { vehicleId: 'approved', start, end } as never)).rejects.toMatchObject({ code: 'BOOK_ON_WHEELBASE' });
+    expect(await BookingModel.countDocuments()).toBe(0);
   });
 
   it('a city sees only its own cars, each with its status', async () => {

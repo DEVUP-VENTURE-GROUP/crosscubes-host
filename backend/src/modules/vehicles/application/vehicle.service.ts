@@ -210,7 +210,10 @@ export class VehicleService implements IVehicleContract {
     const { insurance } = await platformConfigService.get();
     // The car page reads this so a guest on a direct link is told up front, not at checkout.
     const bookable = v.status === 'listed' && v.verificationStatus === 'verified' && isInsuredForBooking(v.wheelbase, insurance.requireApproved);
-    return { ...toPublicVehicle(v), bookable } as VehicleDoc;
+    const dealerId = insurance.wheelbaseDealerId.trim();
+    // With a dealer set, the car page books through the Wheelbase widget; the dealer and listing ids are public on Wheelbase.
+    const wheelbaseBooking = dealerId ? { dealerId, rentalId: v.wheelbase?.rentalId ?? null } : null;
+    return { ...toPublicVehicle(v), bookable, wheelbaseBooking } as VehicleDoc;
   }
 
   /** Batch resolve (avoids N+1 for favorites / recently-viewed hydration). */

@@ -39,7 +39,7 @@ const nextConfig = {
     return [
       {
         source: '/:path*',
-        headers: securityHeaders({ apiUrl: process.env.NEXT_PUBLIC_API_URL, dev: process.env.NODE_ENV !== 'production' }),
+        headers: securityHeaders({ apiUrl: process.env.NEXT_PUBLIC_API_URL, dev: process.env.NODE_ENV !== 'production', wheelbase: true }),
       },
     ];
   },
