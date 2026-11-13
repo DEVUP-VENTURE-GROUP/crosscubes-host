@@ -310,6 +310,22 @@ export class AvailabilityService implements IAvailabilityContract {
     );
   }
 
+  /** Books the days of a trip taken outside CrossCubes (a Wheelbase reservation), replacing its previous days. */
+  async reserveExternal(vehicleId: string, start: Date, end: Date, ref: string): Promise<void> {
+    await AvailabilityModel.deleteMany({ bookingId: ref });
+    const keys = await this.tripDayKeys(vehicleId, start, end);
+    if (!keys.length) return;
+    await AvailabilityModel.bulkWrite(
+      keys.map((dayKey) => ({
+        updateOne: {
+          filter: { vehicleId, dayKey },
+          update: { $setOnInsert: { vehicleId, dayKey, state: 'booked', bookingId: ref } },
+          upsert: true,
+        },
+      })),
+    );
+  }
+
   /** Host unblocks a range (only removes host blocks, never booked days). */
   async unblock(vehicleId: string, start: Date, end: Date): Promise<void> {
     const keys = dayKeys(start, end);

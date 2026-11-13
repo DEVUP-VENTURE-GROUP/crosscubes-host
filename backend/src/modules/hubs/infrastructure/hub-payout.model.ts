@@ -13,6 +13,9 @@ export interface HubPayoutDoc {
   trips: number;
   /** Trip subtotals, before tax and protection. */
   grossCents: number;
+  /** The part of trips and grossCents booked and paid through Wheelbase, which HQ collects there. */
+  wheelbaseTrips?: number;
+  wheelbaseGrossCents?: number;
   holderShareBps: number;
   amountCents: number;
   status: 'pending' | 'paid';
@@ -27,6 +30,8 @@ const schema = new Schema<HubPayoutDoc>(
     period: { type: String, required: true },
     trips: { type: Number, required: true },
     grossCents: { type: Number, required: true },
+    wheelbaseTrips: Number,
+    wheelbaseGrossCents: Number,
     holderShareBps: { type: Number, required: true },
     amountCents: { type: Number, required: true },
     status: { type: String, enum: ['pending', 'paid'], default: 'pending' },

@@ -15,8 +15,8 @@ import { StatTile } from '@/components/ui/stat-tile';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/toast';
 import { DataTable, type Column } from '@/features/admin/components/data-table';
-import { adminApi, type WheelbaseCarRow, type WheelbaseListingRow, type WheelbaseOverview } from '@/features/admin/api';
-import { INSURANCE_HELP, INSURANCE_LABEL, INSURANCE_TONE, type InsuranceStatus } from '@/features/insurance/labels';
+import { adminApi, type WheelbaseCarRow, type WheelbaseListingRow, type WheelbaseOverview, type WheelbaseReservationRow } from '@/features/admin/api';
+import { INSURANCE_HELP, INSURANCE_LABEL, INSURANCE_TONE, RESERVATION_LABEL, RESERVATION_TONE, reservationAmount, reservationDates, type InsuranceStatus } from '@/features/insurance/labels';
 import { ApiError } from '@/lib/api/types';
 import { formatDateTime } from '@/lib/utils/format';
 
@@ -218,8 +218,42 @@ export default function CarInsurancePage() {
         />
       </div>
 
+      {data && <WheelbaseBookings hubId={hubId} cars={data.cars} />}
+
       {data && <SettingsCard data={data} />}
     </div>
+  );
+}
+
+function WheelbaseBookings({ hubId, cars }: { hubId: string; cars: WheelbaseCarRow[] }) {
+  const q = useQuery({ queryKey: ['wheelbase-reservations', hubId], queryFn: () => adminApi.wheelbaseReservations(hubId || undefined) });
+  const carName = useMemo(() => new Map(cars.map((c) => [c._id, c.name])), [cars]);
+  const columns: Column<WheelbaseReservationRow>[] = [
+    { header: 'Car', cell: (r) => (r.vehicleId ? carName.get(r.vehicleId) ?? 'Car' : <span className="text-warning">Listing {r.rentalId} not linked</span>) },
+    { header: 'Dates', cell: (r) => reservationDates(r.period.start, r.period.end), sortValue: (r) => r.period.start },
+    { header: 'Guest', cell: (r) => r.renterName || '–', hideOnMobile: true },
+    { header: 'Status', cell: (r) => <Badge tone={RESERVATION_TONE[r.state]}>{RESERVATION_LABEL[r.state]}</Badge> },
+    { header: 'Rental amount', numeric: true, cell: (r) => reservationAmount(r.amountCents, r.currency), sortValue: (r) => r.amountCents ?? 0 },
+    { header: 'Wheelbase no.', cell: (r) => r._id, hideOnMobile: true },
+  ];
+  return (
+    <section className="space-y-3" aria-labelledby="wb-bookings">
+      <div>
+        <h2 id="wb-bookings" className="text-lg font-semibold">Wheelbase bookings</h2>
+        <p className="text-sm text-muted-foreground">Every trip booked and paid through Wheelbase arrives here on its own, blocks the car’s dates and counts in the city’s statement.</p>
+      </div>
+      <DataTable
+        columns={columns}
+        rows={q.data}
+        isLoading={q.isLoading}
+        isError={q.isError}
+        onRetry={() => void q.refetch()}
+        errorMessage="We couldn’t load the Wheelbase bookings."
+        emptyTitle="No Wheelbase bookings yet"
+        emptyDescription="They appear here once the Zapier connection is on and a guest books."
+        caption={q.data ? `${q.data.length} bookings` : undefined}
+      />
+    </section>
   );
 }
 

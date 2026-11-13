@@ -85,7 +85,20 @@ Update later: `git pull && npm ci && npm run build && pm2 restart crosscubes-api
 | `SMS_*` | CatoDrive's Twilio for now |
 | `TRUST_PROXY_HOPS` | `1` with Cloudflare grey cloud, `2` once the orange cloud is on |
 | `WHEELBASE_DEALER_ID` | the Wheelbase account the cars are insured under (CatoDrive's for now). Optional: staff can set or change it in Admin → Car Insurance, which wins over this value. While it is set, every trip is booked and paid through the Wheelbase widget on the car page and the CrossCubes checkout refuses bookings. |
+| `WHEELBASE_WEBHOOK_SECRET` | 64 random hex characters (`openssl rand -hex 32`). The Zapier zap sends it in the `X-CrossCubes-Secret` header; without it every Wheelbase booking is refused. Set up the zap as in 1.3a. |
 | `HOST_WEB_URL`, `INSURANCE_WEB_URL` | leave out; CrossCubes has no host site or insurer portal |
+
+### 1.3a Wheelbase bookings feed (Zapier, one time)
+
+Guests book and pay inside the Wheelbase widget, which sends nothing back to CrossCubes. A Zapier zap forwards every reservation, so each one blocks the car's dates and counts in the city statement.
+
+1. In Zapier, create a zap. Trigger: **Wheelbase → New or Updated Reservation**, and connect the Wheelbase account (dealer 4879882).
+2. Action: **Webhooks by Zapier → POST**. URL: `https://<api domain>/api/v1/integrations/wheelbase/reservations`. Payload type: `json`.
+3. Header: `X-CrossCubes-Secret` = the server's `WHEELBASE_WEBHOOK_SECRET`.
+4. Data fields, mapped from the trigger: `reservationId` (reservation id), `rentalId` (rental id), `status`, `from` (pickup date), `to` (return date), `amount` (rental price before tax and insurance), `currency`, `renterName`, `updatedAt`.
+5. Test the zap. The booking shows under Admin → Car Insurance → Wheelbase bookings.
+
+The receiver is idempotent and ignores out-of-order updates, so Zapier retries are safe.
 
 ### 1.4 Nginx and HTTPS
 `/etc/nginx/sites-available/crosscubes-api`:

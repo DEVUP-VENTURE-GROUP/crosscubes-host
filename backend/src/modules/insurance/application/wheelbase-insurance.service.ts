@@ -12,6 +12,7 @@ import { WheelbaseSyncStateModel, type WheelbaseSyncStateDoc } from '../infrastr
 import { HubModel, type HubDoc } from '../../hubs/infrastructure/hub.model';
 import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import type { BookingStatus } from '../../bookings/domain/booking-status';
+import { wheelbaseReservationService } from './wheelbase-reservation.service';
 
 const HOUR = 3_600_000;
 /** Our own state for a listing gone from the account past the grace window; Wheelbase never sends it. */
@@ -264,6 +265,7 @@ export const wheelbaseInsuranceService = {
     const listing = (await fetchDealerListings(dealer)).find((l) => l.id === rentalId);
     if (!listing) throw new ValidationError('That listing is not in this Wheelbase account.');
     await VehicleModel.updateOne({ _id: vehicleId }, { $set: { wheelbase: linkFrom(listing, 'admin') } });
+    await wheelbaseReservationService.attachToVehicle(rentalId, vehicleId);
   },
 
   /** Added to every guest-facing car query so guests only see cars the booking rule would accept. */

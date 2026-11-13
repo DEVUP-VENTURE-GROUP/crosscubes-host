@@ -26,6 +26,21 @@ export interface MyHubInsurance {
   cars: { id: string; name: string; plate?: string; status: string; photoUrl?: string; insurance: InsuranceStatus; bookable: boolean; planLabel?: string; minRenterAge?: number }[];
 }
 
+export interface MyHubWheelbaseBooking {
+  _id: string;
+  rentalId: number;
+  vehicleId?: string;
+  status: string;
+  state: 'active' | 'completed' | 'cancelled';
+  period: { start: string; end: string };
+  amountCents?: number;
+  currency: string;
+  renterName?: string;
+}
+
+export const useMyHubWheelbaseBookings = () =>
+  useQuery({ queryKey: ['my-hub-wheelbase-bookings'], queryFn: () => api.get<MyHubWheelbaseBooking[]>('/ioc/hub/wheelbase-bookings') });
+
 export const useMyHubInsurance = () => useQuery({ queryKey: ['my-hub-insurance'], queryFn: () => api.get<MyHubInsurance>('/ioc/hub/insurance') });
 
 /** The licence holder's own money: their monthly statements, split into owed and paid. */

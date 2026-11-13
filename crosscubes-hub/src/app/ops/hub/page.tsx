@@ -7,8 +7,8 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatTile } from '@/components/ui/stat-tile';
 import { ErrorState } from '@/components/ui/states';
-import { useMyHub, useMyHubInsurance, useMyHubPayouts, holderTotals } from '~/features/hub/api';
-import { INSURANCE_HELP, INSURANCE_LABEL, INSURANCE_TONE } from '@/features/insurance/labels';
+import { useMyHub, useMyHubInsurance, useMyHubPayouts, useMyHubWheelbaseBookings, holderTotals } from '~/features/hub/api';
+import { INSURANCE_HELP, INSURANCE_LABEL, INSURANCE_TONE, RESERVATION_LABEL, RESERVATION_TONE, reservationAmount, reservationDates } from '@/features/insurance/labels';
 import { formatDate, formatMoney } from '@/lib/utils/format';
 import { bpsToPercent, DOCUMENT_LABEL, HUB_STATUS_LABEL, HUB_STATUS_TONE, PAYOUT_METHOD_LABEL, type DocumentKind, type HubStatus } from '@/features/hubs/types';
 
@@ -27,6 +27,7 @@ export default function MyHubPage() {
   const hub = useMyHub();
   const payouts = useMyHubPayouts();
   const insurance = useMyHubInsurance();
+  const wbBookings = useMyHubWheelbaseBookings();
 
   if (hub.isError) return <ErrorState message="We couldn’t load your hub." retry={() => void hub.refetch()} />;
   if (!hub.data) return <div className="space-y-4" aria-busy="true"><Skeleton className="h-12 w-64" /><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28 rounded-lg" />)}</div></div>;
@@ -126,6 +127,37 @@ export default function MyHubPage() {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle>Wheelbase bookings</CardTitle></CardHeader>
+        <CardContent>
+          {wbBookings.isLoading ? (
+            <Skeleton className="h-24 w-full" />
+          ) : wbBookings.isError ? (
+            <ErrorState message="We couldn’t load your Wheelbase bookings." retry={() => void wbBookings.refetch()} />
+          ) : !wbBookings.data?.length ? (
+            <p className="text-sm text-muted-foreground">No Wheelbase bookings yet. Trips guests book on your cars appear here on their own.</p>
+          ) : (
+            <>
+              <p className="pb-3 text-sm text-muted-foreground">Guests book and pay through Wheelbase. Each trip blocks the car’s dates here and counts in your monthly statement once it ends.</p>
+              <ul className="divide-y divide-border rounded-lg border border-border">
+                {wbBookings.data.map((b) => {
+                  const car = insurance.data?.cars.find((c) => c.id === b.vehicleId);
+                  return (
+                    <li key={b._id} className="flex items-center gap-3 p-3 text-sm">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{car?.name ?? 'Car'}{b.renterName ? <span className="text-muted-foreground"> · {b.renterName}</span> : null}</span>
+                        <span className="block truncate text-xs text-muted-foreground tabular-nums">{reservationDates(b.period.start, b.period.end)} · {reservationAmount(b.amountCents, b.currency)}</span>
+                      </span>
+                      <Badge tone={RESERVATION_TONE[b.state]}>{RESERVATION_LABEL[b.state]}</Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Delivery spots</CardTitle></CardHeader>
         <CardContent>
           {h.deliverySpots.length === 0 ? (
@@ -165,7 +197,7 @@ export default function MyHubPage() {
                 <li key={p._id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
                   <span>
                     <span className="block font-semibold">{MONTH.format(new Date(`${p.period}-01T00:00:00Z`))}</span>
-                    <span className="block text-xs text-muted-foreground tabular-nums">{p.trips} trips · {usd(p.grossCents)} in rentals · {bpsToPercent(p.holderShareBps)}</span>
+                    <span className="block text-xs text-muted-foreground tabular-nums">{p.trips} trips{p.wheelbaseTrips ? ` (${p.wheelbaseTrips} via Wheelbase)` : ''} · {usd(p.grossCents)} in rentals · {bpsToPercent(p.holderShareBps)}</span>
                   </span>
                   <span className="text-end">
                     <span className="block font-semibold tabular-nums">{usd(p.amountCents)}</span>

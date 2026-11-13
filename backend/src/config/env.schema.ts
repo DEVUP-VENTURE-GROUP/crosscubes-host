@@ -141,6 +141,8 @@ export const envSchema = z.object({
   OPENROUTER_API_KEY: optional(z.string()),
   // Wheelbase dealer account the fleet's insurance is read from; kept out of the source.
   WHEELBASE_DEALER_ID: optional(z.string().regex(/^\d{1,20}$/)),
+  // Shared with the Zapier zap that forwards Wheelbase reservations; without it the receiver refuses every call.
+  WHEELBASE_WEBHOOK_SECRET: optional(z.string().min(32)),
   /** Second key, tried only when the primary fails on auth, rate limit or credit. */
   OPENROUTER_API_KEY_FALLBACK: optional(z.string()),
   /** Default model. Vision-capable, because damage review reads photographs. */

@@ -21,3 +21,25 @@ export const INSURANCE_HELP: Record<InsuranceStatus, string> = {
   not_linked: 'Not linked to its Wheelbase listing yet.',
   missing: 'Its listing is no longer in the Wheelbase account.',
 };
+
+export type ReservationState = 'active' | 'completed' | 'cancelled';
+
+export const RESERVATION_LABEL: Record<ReservationState, string> = {
+  active: 'Booked',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+export const RESERVATION_TONE: Record<ReservationState, 'success' | 'muted' | 'warning'> = {
+  active: 'success',
+  completed: 'muted',
+  cancelled: 'warning',
+};
+
+export const reservationAmount = (cents: number | undefined, currency: string) =>
+  cents === undefined ? '–' : (cents / 100).toLocaleString('en-US', { style: 'currency', currency: currency || 'USD' });
+
+export const reservationDates = (start: string, end: string) => {
+  const f = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  return `${f(start)} – ${f(end)}`;
+};

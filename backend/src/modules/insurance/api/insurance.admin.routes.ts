@@ -4,6 +4,7 @@ import { authorize } from '../../../shared/middleware/authorize';
 import { validate } from '../../../shared/middleware/validate';
 import { asyncHandler } from '../../../shared/middleware/async-handler';
 import { sendSuccess } from '../../../shared/http/api-response';
+import { wheelbaseReservationService } from '../application/wheelbase-reservation.service';
 import { wheelbaseInsuranceService } from '../application/wheelbase-insurance.service';
 
 const router = Router();
@@ -16,6 +17,17 @@ router.get(
   asyncHandler(async (req, res) => {
     res.set('Cache-Control', 'private, no-store');
     sendSuccess(res, await wheelbaseInsuranceService.overview({ hubId: req.query.hubId as string | undefined }));
+  }),
+);
+
+/** Reservations Wheelbase has sent through the zap, newest pickup first; optionally one city's. */
+router.get(
+  '/insurance/wheelbase/reservations',
+  authorize('admin:read'),
+  validate({ query: z.object({ hubId: z.string().trim().min(1).max(64).optional() }) }),
+  asyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    sendSuccess(res, await wheelbaseReservationService.list({ hubId: req.query.hubId as string | undefined, limit: 200 }));
   }),
 );
 

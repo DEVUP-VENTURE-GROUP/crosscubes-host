@@ -192,6 +192,7 @@ export const config = Object.freeze({
   },
   wheelbase: {
     dealerId: env.WHEELBASE_DEALER_ID ?? '',
+    webhookSecret: env.WHEELBASE_WEBHOOK_SECRET ?? '',
   },
   ai: {
     apiKey: env.OPENROUTER_API_KEY,

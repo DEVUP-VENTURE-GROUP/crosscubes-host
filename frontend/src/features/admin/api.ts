@@ -454,6 +454,21 @@ export interface WheelbaseCarRow {
   suggestions: number[];
 }
 
+/** A trip booked and paid in Wheelbase, as the Zapier feed reported it. */
+export interface WheelbaseReservationRow {
+  _id: string;
+  rentalId: number;
+  vehicleId?: string;
+  hubId?: string;
+  status: string;
+  state: 'active' | 'completed' | 'cancelled';
+  period: { start: string; end: string };
+  amountCents?: number;
+  currency: string;
+  renterName?: string;
+  updatedAt: string;
+}
+
 export interface WheelbaseOverview {
   dealerId: string;
   settings: { requireApproved: boolean; enforceMinAge: boolean; autoLink: boolean; missingGraceHours: number; staleAlertHours: number };
@@ -487,6 +502,8 @@ export const adminApi = {
   wheelbaseOverview: () => api.get<WheelbaseOverview>('/admin/insurance/wheelbase'),
   wheelbaseSync: () => api.post<WheelbaseSyncOutcome>('/admin/insurance/wheelbase/sync'),
   wheelbaseLink: (vehicleId: string, rentalId: number | null) => api.patch(`/admin/insurance/wheelbase/vehicles/${vehicleId}`, { rentalId }),
+  wheelbaseReservations: (hubId?: string) =>
+    api.get<WheelbaseReservationRow[]>(`/admin/insurance/wheelbase/reservations${hubId ? `?hubId=${encodeURIComponent(hubId)}` : ''}`),
   // Insurance partners: insurers selling their own protection plans, approved here and paid from their own ledger account.
   insurers: (q: Q = {}) => api.get<Insurer[]>('/admin/insurance-partners', q),
   insurer: (id: string) =>

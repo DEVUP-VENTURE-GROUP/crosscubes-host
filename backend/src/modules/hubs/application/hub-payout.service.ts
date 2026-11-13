@@ -5,6 +5,7 @@ import { platformConfigService } from '../../platform-config/application/platfor
 import { notificationService } from '../../notifications/application/notification.service';
 import { ConflictError } from '../../../core/errors/app-error';
 import { logger } from '../../../infrastructure/logging/logger';
+import { wheelbaseReservationService } from '../../insurance/application/wheelbase-reservation.service';
 
 const periodOf = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 const monthBounds = (period: string) => {
@@ -34,18 +35,21 @@ export class HubPayoutService {
     return written;
   }
 
-  /** The holder's share of the trips that ended in the month and were completed, the same trips partners are paid on. */
+  /** The holder's share of the trips that ended in the month: completed CrossCubes trips plus uncancelled Wheelbase ones. */
   private async write(hub: HubDoc, period: string, holderShareBps: number): Promise<HubPayoutDoc> {
     const { start, end } = monthBounds(period);
     const [row] = await BookingModel.aggregate<{ trips: number; gross: number }>([
       { $match: { hubId: hub._id, status: 'completed', 'period.end': { $gte: start, $lt: end } } },
       { $group: { _id: null, trips: { $sum: 1 }, gross: { $sum: '$priceBreakdown.subtotal.amount' } } },
     ]).exec();
-    const grossCents = row?.gross ?? 0;
+    const wheelbase = await wheelbaseReservationService.completedTotals(hub._id, start, end);
+    const grossCents = (row?.gross ?? 0) + wheelbase.grossCents;
     const doc = await HubPayoutModel.create({
       hubId: hub._id,
       period,
-      trips: row?.trips ?? 0,
+      trips: (row?.trips ?? 0) + wheelbase.trips,
+      wheelbaseTrips: wheelbase.trips,
+      wheelbaseGrossCents: wheelbase.grossCents,
       grossCents,
       holderShareBps,
       amountCents: Math.round((grossCents * holderShareBps) / 10_000),

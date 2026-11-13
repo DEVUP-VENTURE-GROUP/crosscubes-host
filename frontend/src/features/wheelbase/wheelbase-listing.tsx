@@ -1,19 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { createElement, useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const WIDGET_SRC = 'https://d2toxav8qvoos4.cloudfront.net/latest/wheelbase-widget.js';
 const LOAD_TIMEOUT_MS = 20_000;
-
-declare module 'react' {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      'listing-details': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & Record<string, string | undefined>;
-    }
-  }
-}
 
 let loading: Promise<void> | null = null;
 
@@ -92,13 +83,13 @@ export function WheelbaseListing({ dealerId, rentalId }: { dealerId: string; ren
         </div>
       )}
       {state === 'ready' && theme && (
-        <listing-details
-          dealer-id={dealerId}
-          rental-id={String(rentalId)}
-          hide-description="true"
-          hide-features="true"
-          {...theme}
-        />
+        createElement('listing-details', {
+          'dealer-id': dealerId,
+          'rental-id': String(rentalId),
+          'hide-description': 'true',
+          'hide-features': 'true',
+          ...theme,
+        })
       )}
     </div>
   );
