@@ -54,7 +54,7 @@ export interface WheelbaseLink {
   rentalId: number;
   name: string;
   /** How the link was made: matched on year/make/model, or chosen by an admin. */
-  linkedBy: 'auto' | 'admin';
+  linkedBy: 'auto' | 'admin' | 'import';
   insuranceState?: string;
   coverage?: string;
   eligible?: boolean;
@@ -269,7 +269,7 @@ const schema = new Schema<VehicleDoc>(
     wheelbase: {
       rentalId: Number,
       name: String,
-      linkedBy: { type: String, enum: ['auto', 'admin'] },
+      linkedBy: { type: String, enum: ['auto', 'admin', 'import'] },
       insuranceState: String,
       coverage: String,
       eligible: Boolean,

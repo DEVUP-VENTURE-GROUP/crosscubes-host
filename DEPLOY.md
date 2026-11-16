@@ -88,9 +88,14 @@ Update later: `git pull && npm ci && npm run build && pm2 restart crosscubes-api
 | `WHEELBASE_WEBHOOK_SECRET` | 64 random hex characters (`openssl rand -hex 32`). The Zapier zap sends it in the `X-CrossCubes-Secret` header; without it every Wheelbase booking is refused. Set up the zap as in 1.3a. |
 | `HOST_WEB_URL`, `INSURANCE_WEB_URL` | leave out; CrossCubes has no host site or insurer portal |
 
-### 1.3a Wheelbase bookings feed (Zapier, one time)
+### 1.3a Wheelbase: cars, dates and bookings
 
-Guests book and pay inside the Wheelbase widget, which sends nothing back to CrossCubes. A Zapier zap forwards every reservation, so each one blocks the car's dates and counts in the city statement.
+With the dealer ID set, the server reads Wheelbase on its own, every "Read Wheelbase every (minutes)" in Admin → Car Insurance (default 15):
+
+- **Cars.** Every listing in the account becomes a live CrossCubes car in the city whose area covers its location, under that city's fleet account (the hub's `operatorHostId`), with Wheelbase's photos, price and description, kept in step on every read. A listing outside every city, in a city without a fleet account, or missing a detail is listed under "listings not added yet" with the reason. A car deleted in CrossCubes is not added back. Switch: "Add Wheelbase cars automatically".
+- **Dates.** Each car's taken days are copied from Wheelbase, so date search only shows free cars. This needs the server on a US network; Wheelbase refuses requests from India.
+
+Guests book and pay inside the Wheelbase widget, which sends nothing back to CrossCubes, so a Zapier zap forwards each reservation's guest and amount for the city statement.
 
 1. In Zapier, create a zap. Trigger: **Wheelbase → New or Updated Reservation**, and connect the Wheelbase account (dealer 4879882).
 2. Action: **Webhooks by Zapier → POST**. URL: `https://<api domain>/api/v1/integrations/wheelbase/reservations`. Payload type: `json`.

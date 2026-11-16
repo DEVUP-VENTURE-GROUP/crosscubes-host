@@ -326,6 +326,23 @@ export class AvailabilityService implements IAvailabilityContract {
     );
   }
 
+  /** Makes the days held under `ref` exactly `keys`: new days are booked, days no longer listed are freed. */
+  async syncExternalDays(vehicleId: string, keys: string[], ref: string): Promise<{ added: number; freed: number }> {
+    const freed = await AvailabilityModel.deleteMany({ vehicleId, bookingId: ref, dayKey: { $nin: keys } });
+    if (!keys.length) return { added: 0, freed: freed.deletedCount };
+    const res = await AvailabilityModel.bulkWrite(
+      keys.map((dayKey) => ({
+        updateOne: {
+          filter: { vehicleId, dayKey },
+          update: { $setOnInsert: { vehicleId, dayKey, state: 'booked', bookingId: ref } },
+          upsert: true,
+        },
+      })),
+      { ordered: false },
+    );
+    return { added: res.upsertedCount, freed: freed.deletedCount };
+  }
+
   /** Host unblocks a range (only removes host blocks, never booked days). */
   async unblock(vehicleId: string, start: Date, end: Date): Promise<void> {
     const keys = dayKeys(start, end);

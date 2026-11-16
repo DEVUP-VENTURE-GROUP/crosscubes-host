@@ -37,6 +37,9 @@ interface SettingsDraft {
   requireApproved: boolean;
   enforceMinAge: boolean;
   autoLink: boolean;
+  importListings: boolean;
+  syncMinutes: string;
+  calendarDays: string;
   missingGraceHours: string;
   staleAlertHours: string;
 }
@@ -46,6 +49,9 @@ const draftFrom = (o: WheelbaseOverview): SettingsDraft => ({
   requireApproved: o.settings.requireApproved,
   enforceMinAge: o.settings.enforceMinAge,
   autoLink: o.settings.autoLink,
+  importListings: o.settings.importListings,
+  syncMinutes: String(o.settings.syncMinutes),
+  calendarDays: String(o.settings.calendarDays),
   missingGraceHours: String(o.settings.missingGraceHours),
   staleAlertHours: String(o.settings.staleAlertHours),
 });
@@ -146,7 +152,7 @@ export default function CarInsurancePage() {
           <span className="block min-w-0 text-sm">
             <span className="block truncate font-medium">{c.wheelbase.name} <span className="text-xs text-muted-foreground tabular-nums">#{c.wheelbase.rentalId}</span></span>
             <span className="block truncate text-xs text-muted-foreground">
-              {[c.wheelbase.insuranceState && `Wheelbase: ${c.wheelbase.insuranceState}`, c.wheelbase.planLabel, c.wheelbase.minRenterAge && `${c.wheelbase.minRenterAge}+ drivers`, c.wheelbase.linkedBy === 'auto' ? 'Linked automatically' : 'Linked by staff']
+              {[c.wheelbase.insuranceState && `Wheelbase: ${c.wheelbase.insuranceState}`, c.wheelbase.planLabel, c.wheelbase.minRenterAge && `${c.wheelbase.minRenterAge}+ drivers`, c.wheelbase.linkedBy === 'import' ? 'Added from Wheelbase' : c.wheelbase.linkedBy === 'auto' ? 'Linked automatically' : 'Linked by staff']
                 .filter(Boolean)
                 .join(' · ')}
             </span>
@@ -285,7 +291,17 @@ function SyncStatus({ data, onSync, syncing }: { data: WheelbaseOverview; onSync
               <p className="font-semibold">Wheelbase account {data.dealerId}</p>
               <p className="text-muted-foreground">
                 {data.listings.length} listings in the account.{last ? ` Last read ${formatDateTime(last)}.` : ' Not read yet.'}
+                {data.sync?.lastResult?.imported ? ` ${data.sync.lastResult.imported} added as cars on the last read.` : ''}
+                {data.sync?.lastResult?.calendarErrors ? ` Booked dates couldn’t be read for ${data.sync.lastResult.calendarErrors} cars.` : ''}
               </p>
+              {!!data.sync?.lastResult?.skipped?.length && (
+                <details className="mt-2">
+                  <summary className="cursor-pointer font-medium">{data.sync.lastResult.skipped.length} listings not added yet</summary>
+                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                    {data.sync.lastResult.skipped.map((x) => <li key={x.rentalId}>{x.name} #{x.rentalId}: {x.reason}</li>)}
+                  </ul>
+                </details>
+              )}
             </>
           )}
         </div>
@@ -337,7 +353,9 @@ function SettingsCard({ data }: { data: WheelbaseOverview }) {
   useEffect(() => setDraft(draftFrom(data)), [data]);
 
   const hours = (v: string) => Number.isInteger(Number(v)) && Number(v) >= 1 && Number(v) <= 720;
-  const valid = /^\d{0,20}$/.test(draft.dealerId.trim()) && hours(draft.missingGraceHours) && hours(draft.staleAlertHours);
+  const within = (v: string, min: number, max: number) => Number.isInteger(Number(v)) && Number(v) >= min && Number(v) <= max;
+  const valid = /^\d{0,20}$/.test(draft.dealerId.trim()) && hours(draft.missingGraceHours) && hours(draft.staleAlertHours)
+    && within(draft.syncMinutes, 5, 1440) && within(draft.calendarDays, 30, 365);
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftFrom(data));
 
   const save = useMutation({
@@ -348,6 +366,9 @@ function SettingsCard({ data }: { data: WheelbaseOverview }) {
           requireApproved: draft.requireApproved,
           enforceMinAge: draft.enforceMinAge,
           autoLink: draft.autoLink,
+          importListings: draft.importListings,
+          syncMinutes: Number(draft.syncMinutes),
+          calendarDays: Number(draft.calendarDays),
           missingGraceHours: Number(draft.missingGraceHours),
           staleAlertHours: Number(draft.staleAlertHours),
         },
@@ -362,7 +383,7 @@ function SettingsCard({ data }: { data: WheelbaseOverview }) {
     onError: (e) => setError(fail(e, 'We couldn’t save these settings.')),
   });
 
-  const toggle = (key: 'requireApproved' | 'enforceMinAge' | 'autoLink', label: string, hint: string) => (
+  const toggle = (key: 'requireApproved' | 'enforceMinAge' | 'autoLink' | 'importListings', label: string, hint: string) => (
     <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm">
       <input type="checkbox" className="mt-0.5 accent-[hsl(var(--primary))]" checked={draft[key]} onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.checked }))} />
       <span>
@@ -386,10 +407,17 @@ function SettingsCard({ data }: { data: WheelbaseOverview }) {
           <Field label="Alert staff after (hours)" hint="When Wheelbase hasn’t been read for this long.">
             <Input type="number" min={1} max={720} value={draft.staleAlertHours} onChange={(e) => setDraft((d) => ({ ...d, staleAlertHours: e.target.value }))} />
           </Field>
+          <Field label="Read Wheelbase every (minutes)" hint="Cars, insurance and booked dates. 5 to 1440.">
+            <Input type="number" min={5} max={1440} value={draft.syncMinutes} onChange={(e) => setDraft((d) => ({ ...d, syncMinutes: e.target.value }))} />
+          </Field>
+          <Field label="Copy booked dates for (days ahead)" hint="How far ahead search knows a car is taken. 30 to 365.">
+            <Input type="number" min={30} max={365} value={draft.calendarDays} onChange={(e) => setDraft((d) => ({ ...d, calendarDays: e.target.value }))} />
+          </Field>
         </div>
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {toggle('requireApproved', 'Approved cars only', 'Guests only see and book cars Wheelbase has approved. Turning this off lets uninsured cars be booked.')}
           {toggle('enforceMinAge', 'Driver minimum age', 'Refuse a driver younger than the car’s Wheelbase minimum, at booking and again at pickup.')}
+          {toggle('importListings', 'Add Wheelbase cars automatically', 'Every listing in the account becomes a car in the CrossCubes city that covers it, with its photos and price. A car you delete is not added back.')}
           {toggle('autoLink', 'Link cars automatically', 'Link a car to the one listing with its year, make and model. Keep this off while the account also holds another company’s cars.')}
         </div>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

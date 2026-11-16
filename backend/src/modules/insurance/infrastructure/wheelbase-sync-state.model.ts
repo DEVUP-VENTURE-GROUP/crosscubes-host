@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import type { WheelbaseSyncResult } from '../application/wheelbase-insurance.service';
 
 export interface WheelbaseSyncStateDoc {
   _id: 'wheelbase';
@@ -6,7 +7,7 @@ export interface WheelbaseSyncStateDoc {
   lastOkAt?: Date;
   /** Why the last read failed, for staff; cleared by the next good read. */
   lastError?: 'not_set_up' | 'unreachable';
-  lastResult?: { listings: number; updated: number; autoLinked: number; unmatched: number; missing: number; lapsed: number };
+  lastResult?: WheelbaseSyncResult;
   /** Set once per outage so staff get one alert, not one every run. */
   staleAlertedAt?: Date;
 }
@@ -17,7 +18,11 @@ const schema = new Schema<WheelbaseSyncStateDoc>(
     lastRunAt: Date,
     lastOkAt: Date,
     lastError: { type: String, enum: ['not_set_up', 'unreachable'] },
-    lastResult: { listings: Number, updated: Number, autoLinked: Number, unmatched: Number, missing: Number, lapsed: Number },
+    lastResult: {
+      listings: Number, updated: Number, autoLinked: Number, unmatched: Number, missing: Number, lapsed: Number, imported: Number,
+      skipped: [{ _id: false, rentalId: Number, name: String, reason: String }],
+      calendars: Number, calendarErrors: Number,
+    },
     staleAlertedAt: Date,
   },
   { collection: 'wheelbase_sync_state', versionKey: false },

@@ -7,14 +7,22 @@ import { ConflictError, NotFoundError, ValidationError } from '../../../core/err
 import { emit } from '../../../shared/events/event-bus';
 import { EVENTS } from '../../../core/events/event-names';
 import { logger } from '../../../infrastructure/logging/logger';
-import { fetchDealerListings, type WheelbaseListing } from '../infrastructure/wheelbase.client';
+import { fetchBlockedRanges, fetchDealerListings, type WheelbaseListing } from '../infrastructure/wheelbase.client';
 import { WheelbaseSyncStateModel, type WheelbaseSyncStateDoc } from '../infrastructure/wheelbase-sync-state.model';
 import { HubModel, type HubDoc } from '../../hubs/infrastructure/hub.model';
 import { BookingModel } from '../../bookings/infrastructure/booking.model';
 import type { BookingStatus } from '../../bookings/domain/booking-status';
 import { wheelbaseReservationService } from './wheelbase-reservation.service';
+import { importListing, importedContent } from './wheelbase-listing-import';
+import { WheelbaseImportModel } from '../infrastructure/wheelbase-import.model';
+import { availabilityService, dayKeys } from '../../availability/application/availability.service';
 
 const HOUR = 3_600_000;
+const CLAIM_MS = 10 * 60_000;
+const MAX_SKIPPED = 50;
+const CALENDAR_CONCURRENCY = 4;
+/** Availability rows owned by the Wheelbase calendar copy, kept apart from single reservations sent by Zapier. */
+export const CALENDAR_REF = 'wheelbase:calendar';
 /** Our own state for a listing gone from the account past the grace window; Wheelbase never sends it. */
 export const MISSING_STATE = 'missing';
 const UPCOMING: BookingStatus[] = ['pending_verification', 'pending_payment', 'pending_approval', 'confirmed', 'paid'];
@@ -66,6 +74,13 @@ export interface WheelbaseSyncResult {
   missing: number;
   /** Missing past the grace window, so no longer bookable. */
   lapsed: number;
+  /** Listings turned into CrossCubes cars on this run. */
+  imported: number;
+  /** Listings that could not become cars yet, and why. */
+  skipped: { rentalId: number; name: string; reason: string }[];
+  /** Cars whose booked dates were copied from Wheelbase, and those Wheelbase would not answer for. */
+  calendars: number;
+  calendarErrors: number;
 }
 
 export type WheelbaseSyncOutcome = WheelbaseSyncResult | { skipped: 'no_dealer' } | { error: 'unreachable' };
@@ -105,7 +120,7 @@ export const wheelbaseInsuranceService = {
     const cars = await VehicleModel.find({ deletedAt: null }).lean<VehicleDoc[]>();
     const graceMs = cfg.missingGraceHours * HOUR;
 
-    const out: WheelbaseSyncResult = { listings: listings.length, updated: 0, autoLinked: 0, unmatched: 0, missing: 0, lapsed: 0 };
+    const out: WheelbaseSyncResult = { listings: listings.length, updated: 0, autoLinked: 0, unmatched: 0, missing: 0, lapsed: 0, imported: 0, skipped: [], calendars: 0, calendarErrors: 0 };
 
     for (const car of cars) {
       const current = car.wheelbase;
@@ -130,7 +145,7 @@ export const wheelbaseInsuranceService = {
         if (current.insuranceState === 'approved' && next.insuranceState !== 'approved') {
           emit(EVENTS.INSURANCE_STATUS_CHANGED, car._id, { vehicleId: car._id, from: current.insuranceState, to: next.insuranceState ?? 'unknown', name: l.name });
         }
-        await VehicleModel.updateOne({ _id: car._id }, { $set: { wheelbase: next } });
+        await VehicleModel.updateOne({ _id: car._id }, { $set: { wheelbase: next, ...(current.linkedBy === 'import' ? importedContent(car, l) : {}) } });
         out.updated += 1;
         continue;
       }
@@ -147,9 +162,72 @@ export const wheelbaseInsuranceService = {
         out.unmatched += 1;
       }
     }
+    if (cfg.importListings) await this.importNew(listings, now, out);
+    await this.syncCalendars(now, cfg.calendarDays, out);
     await saveState({ lastRunAt: now, lastOkAt: now, lastResult: out }, ['lastError', 'staleAlertedAt']);
-    logger.info(out, 'wheelbase insurance sync');
+    logger.info({ ...out, skipped: out.skipped.length }, 'wheelbase sync');
     return out;
+  },
+
+  /** Runs the sync when the admin-set interval has passed since the last run; the job asks every few minutes. */
+  async syncIfDue(now = new Date()): Promise<WheelbaseSyncOutcome | { skipped: 'not_due' }> {
+    const [{ insurance }, state] = await Promise.all([platformConfigService.get(), WheelbaseSyncStateModel.findById('wheelbase').select('lastRunAt').lean<WheelbaseSyncStateDoc>()]);
+    const last = state?.lastRunAt ? new Date(state.lastRunAt).getTime() : 0;
+    if (now.getTime() - last < insurance.syncMinutes * 60_000) return { skipped: 'not_due' };
+    return this.sync(now);
+  },
+
+  /** Every listing no car is linked to becomes a car, once; a deleted car's listing is never brought back. */
+  async importNew(listings: WheelbaseListing[], now: Date, out: WheelbaseSyncResult): Promise<void> {
+    const linked = new Set<number>(await VehicleModel.distinct('wheelbase.rentalId', { deletedAt: null }));
+    const done = new Set<number>(await WheelbaseImportModel.distinct('_id', { vehicleId: { $exists: true } }));
+    await WheelbaseImportModel.deleteMany({ vehicleId: { $exists: false }, claimedAt: { $lt: new Date(now.getTime() - CLAIM_MS) } });
+    for (const l of listings) {
+      if (linked.has(l.id) || done.has(l.id)) continue;
+      try {
+        await WheelbaseImportModel.create({ _id: l.id, claimedAt: now });
+      } catch {
+        continue;
+      }
+      try {
+        const r = await importListing(l, linkFrom(l, 'import'));
+        if ('vehicleId' in r) {
+          await WheelbaseImportModel.updateOne({ _id: l.id }, { $set: { vehicleId: r.vehicleId } });
+          await wheelbaseReservationService.attachToVehicle(l.id, r.vehicleId);
+          out.imported += 1;
+          continue;
+        }
+        if (out.skipped.length < MAX_SKIPPED) out.skipped.push({ rentalId: l.id, name: l.name, reason: r.skip });
+      } catch (err) {
+        logger.warn({ rentalId: l.id, err: (err as Error).message }, 'wheelbase listing import failed');
+        if (out.skipped.length < MAX_SKIPPED) out.skipped.push({ rentalId: l.id, name: l.name, reason: 'Could not be added; it will be tried again' });
+      }
+      await WheelbaseImportModel.deleteOne({ _id: l.id, vehicleId: { $exists: false } });
+    }
+  },
+
+  /** Copies each linked car's taken dates from Wheelbase, so search and the city calendar match what Wheelbase will sell. */
+  async syncCalendars(now: Date, days: number, out: WheelbaseSyncResult): Promise<void> {
+    const cars = await VehicleModel.find({ deletedAt: null, 'wheelbase.rentalId': { $exists: true } }).select('_id wheelbase.rentalId').lean<{ _id: string; wheelbase: { rentalId: number } }[]>();
+    const from = now.toISOString().slice(0, 10);
+    const to = new Date(now.getTime() + days * 86_400_000).toISOString().slice(0, 10);
+    let next = 0;
+    const worker = async () => {
+      while (next < cars.length) {
+        const car = cars[next++];
+        try {
+          const ranges = await fetchBlockedRanges(car.wheelbase.rentalId, from, to);
+          const keys = new Set<string>();
+          for (const r of ranges) for (const k of dayKeys(new Date(`${r.from}T00:00:00Z`), new Date(`${r.to}T00:00:00Z`))) if (k >= from) keys.add(k);
+          await availabilityService.syncExternalDays(car._id, [...keys], CALENDAR_REF);
+          out.calendars += 1;
+        } catch (err) {
+          out.calendarErrors += 1;
+          logger.warn({ vehicleId: car._id, err: (err as Error).message }, 'wheelbase calendar read failed');
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(CALENDAR_CONCURRENCY, cars.length) }, worker));
   },
 
   /** Records a failed read and alerts staff once, when the last good read is older than they allow. */
@@ -191,6 +269,9 @@ export const wheelbaseInsuranceService = {
         requireApproved: cfg.requireApproved,
         enforceMinAge: cfg.enforceMinAge,
         autoLink: cfg.autoLink,
+        importListings: cfg.importListings,
+        syncMinutes: cfg.syncMinutes,
+        calendarDays: cfg.calendarDays,
         missingGraceHours: cfg.missingGraceHours,
         staleAlertHours: cfg.staleAlertHours,
       },

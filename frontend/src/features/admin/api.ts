@@ -192,6 +192,9 @@ export interface PlatformConfig {
     requireApproved: boolean;
     enforceMinAge: boolean;
     autoLink?: boolean;
+    importListings?: boolean;
+    syncMinutes?: number;
+    calendarDays?: number;
     missingGraceHours?: number;
     staleAlertHours?: number;
     partnerCommissionBps?: number;
@@ -417,7 +420,10 @@ export interface Violation {
 
 export type InsuranceStatus = 'approved' | 'not_approved' | 'not_linked' | 'missing';
 
-export interface WheelbaseSyncResult { listings: number; updated: number; autoLinked: number; unmatched: number; missing: number; lapsed: number }
+export interface WheelbaseSyncResult {
+  listings: number; updated: number; autoLinked: number; unmatched: number; missing: number; lapsed: number;
+  imported?: number; skipped?: { rentalId: number; name: string; reason: string }[]; calendars?: number; calendarErrors?: number;
+}
 export type WheelbaseSyncOutcome = WheelbaseSyncResult | { skipped: 'no_dealer' } | { error: 'unreachable' };
 
 export interface WheelbaseListingRow {
@@ -443,7 +449,7 @@ export interface WheelbaseCarRow {
   wheelbase: {
     rentalId: number;
     name: string;
-    linkedBy: 'auto' | 'admin';
+    linkedBy: 'auto' | 'admin' | 'import';
     insuranceState?: string;
     planLabel?: string;
     minRenterAge?: number;
@@ -471,7 +477,7 @@ export interface WheelbaseReservationRow {
 
 export interface WheelbaseOverview {
   dealerId: string;
-  settings: { requireApproved: boolean; enforceMinAge: boolean; autoLink: boolean; missingGraceHours: number; staleAlertHours: number };
+  settings: { requireApproved: boolean; enforceMinAge: boolean; autoLink: boolean; importListings: boolean; syncMinutes: number; calendarDays: number; missingGraceHours: number; staleAlertHours: number };
   sync: { lastRunAt?: string; lastOkAt?: string; lastError?: 'not_set_up' | 'unreachable'; lastResult?: WheelbaseSyncResult } | null;
   error?: string;
   listings: WheelbaseListingRow[];

@@ -1,5 +1,5 @@
 const listings = jest.fn();
-jest.mock('../infrastructure/wheelbase.client', () => ({ fetchDealerListings: (...a: unknown[]) => listings(...a) }));
+jest.mock('../infrastructure/wheelbase.client', () => ({ fetchDealerListings: (...a: unknown[]) => listings(...a), fetchBlockedRanges: async () => [] }));
 
 import { wheelbaseInsuranceService, insuranceStatusOf } from './wheelbase-insurance.service';
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
