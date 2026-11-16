@@ -85,8 +85,8 @@ async function bootstrap(): Promise<void> {
     .catch((err) => logger.warn({ err: (err as Error).message }, 'platform car rules sync failed'));
   // Partner cars already live before the 'your car is live' message existed must not get it on their next relist.
   void VehicleModel.updateMany({ assetPartnerId: { $exists: true, $ne: null }, status: 'listed', partnerLiveNotifiedAt: null }, { $set: { partnerLiveNotifiedAt: new Date() } }).catch(() => undefined);
-  // Link and refresh each car's Wheelbase insurance at boot, not six hours after a deploy.
-  void wheelbaseInsuranceService.sync().catch((err) => logger.warn({ err: (err as Error).message }, 'wheelbase insurance sync at boot failed'));
+  // Read Wheelbase at boot when due, not one interval after a deploy.
+  void wheelbaseInsuranceService.syncIfDue().catch((err) => logger.warn({ err: (err as Error).message }, 'wheelbase insurance sync at boot failed'));
 
   // Background jobs need Redis (BullMQ). Skip gracefully in dev without Redis.
   if (isRedisHealthy()) {

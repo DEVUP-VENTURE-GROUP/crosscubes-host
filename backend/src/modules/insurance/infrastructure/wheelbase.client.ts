@@ -102,3 +102,27 @@ export async function fetchDealerListings(dealerId: string): Promise<WheelbaseLi
     };
   });
 }
+
+const AVAILABILITY = 'https://api.outdoorsy.com/v0/availability';
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The date ranges Wheelbase shows as taken for one listing (booked or blocked), as local calendar dates, inclusive. */
+export async function fetchBlockedRanges(rentalId: number, from: string, to: string): Promise<{ from: string; to: string }[]> {
+  const q = new URLSearchParams({ rental_id: String(rentalId), from, to });
+  let res: Response;
+  try {
+    res = await fetch(`${AVAILABILITY}?${q}`, {
+      headers: { Accept: 'application/json', 'User-Agent': 'CrossCubes/1.0 (+https://www.crosscubes.com)' },
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (err) {
+    throw new ExternalServiceError(`Wheelbase unreachable: ${(err as Error).message}`);
+  }
+  if (!res.ok) throw new ExternalServiceError(`Wheelbase availability ${res.status}`);
+  const body = (await res.json().catch(() => null)) as { response?: unknown } | null;
+  if (!body || !Array.isArray(body.response)) throw new ExternalServiceError('Wheelbase availability: unexpected response');
+  return body.response
+    .map((r) => r as { from?: unknown; to?: unknown })
+    .map((r) => ({ from: String(r.from ?? '').slice(0, 10), to: String(r.to ?? '').slice(0, 10) }))
+    .filter((r) => DAY.test(r.from) && DAY.test(r.to) && r.from <= r.to);
+}

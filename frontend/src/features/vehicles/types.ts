@@ -93,6 +93,10 @@ export interface Vehicle {
   externalRating?: { source: string; rating: number; trips: number };
   /** The car's insurance cover as read from Wheelbase: plan name and minimum driver age. */
   insurance?: { approved: boolean; planLabel?: string; minRenterAge?: number };
+  /** False when guests can't book it now (not listed, or not insured); only on the public view. */
+  bookable?: boolean;
+  /** Set when trips are booked through the Wheelbase widget; rentalId is null until the car is linked. */
+  wheelbaseBooking?: { dealerId: string; rentalId: number | null } | null;
   totalTrips: number;
 }
 

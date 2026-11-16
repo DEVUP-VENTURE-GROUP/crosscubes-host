@@ -9,7 +9,7 @@
  * 'unsafe-inline' is needed for Next.js hydration without nonces; 'unsafe-eval' only because the
  * Google Maps JavaScript API requires it.
  */
-export function securityHeaders({ apiUrl, dev = false } = {}) {
+export function securityHeaders({ apiUrl, dev = false, wheelbase = false } = {}) {
   let apiOrigin = '';
   try {
     apiOrigin = new URL(apiUrl ?? '').origin;
@@ -23,11 +23,14 @@ export function securityHeaders({ apiUrl, dev = false } = {}) {
   const apple = 'https://appleid.cdn-apple.com https://appleid.apple.com';
   const mapbox = 'https://api.mapbox.com https://events.mapbox.com';
   const cloudflare = 'https://static.cloudflareinsights.com https://cloudflareinsights.com';
+  // The Wheelbase booking widget: its script and chunks, plus the listing, quote and booking APIs it calls.
+  const wheelbaseScript = wheelbase ? 'https://d2toxav8qvoos4.cloudfront.net' : '';
+  const wheelbaseApi = wheelbase ? 'https://api.outdoorsy.com https://search.outdoorsy.com' : '';
 
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${stripe} ${google} ${apple} ${mapbox} ${cloudflare}`,
-    `connect-src 'self' ${apiOrigin} ${apiWs} ${stripe} ${google} ${apple} ${mapbox} ${cloudflare} https://*.firebaseio.com https://*.firebaseapp.com https://*.amazonaws.com${dev ? ' https: ws: http://localhost:* http://127.0.0.1:*' : ''}`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${stripe} ${google} ${apple} ${mapbox} ${cloudflare} ${wheelbaseScript}`,
+    `connect-src 'self' ${apiOrigin} ${apiWs} ${stripe} ${google} ${apple} ${mapbox} ${cloudflare} ${wheelbaseScript} ${wheelbaseApi} https://*.firebaseio.com https://*.firebaseapp.com https://*.amazonaws.com${dev ? ' https: ws: http://localhost:* http://127.0.0.1:*' : ''}`,
     `frame-src ${stripe} https://accounts.google.com https://appleid.apple.com https://*.firebaseapp.com`,
     // Local development serves photos from the API over plain http (localhost:4400).
     `img-src 'self' data: blob: https:${dev ? ' http://localhost:* http://127.0.0.1:*' : ''}`,

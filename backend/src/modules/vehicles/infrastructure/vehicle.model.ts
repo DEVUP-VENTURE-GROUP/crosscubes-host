@@ -54,7 +54,7 @@ export interface WheelbaseLink {
   rentalId: number;
   name: string;
   /** How the link was made: matched on year/make/model, or chosen by an admin. */
-  linkedBy: 'auto' | 'admin';
+  linkedBy: 'auto' | 'admin' | 'import';
   insuranceState?: string;
   coverage?: string;
   eligible?: boolean;
@@ -62,6 +62,8 @@ export interface WheelbaseLink {
   minRenterAge?: number;
   /** False when the listing is no longer in the dealer's Wheelbase account. */
   found: boolean;
+  /** When the listing was first seen missing; cleared when it comes back. */
+  missingSince?: Date;
   syncedAt: Date;
 }
 
@@ -267,13 +269,14 @@ const schema = new Schema<VehicleDoc>(
     wheelbase: {
       rentalId: Number,
       name: String,
-      linkedBy: { type: String, enum: ['auto', 'admin'] },
+      linkedBy: { type: String, enum: ['auto', 'admin', 'import'] },
       insuranceState: String,
       coverage: String,
       eligible: Boolean,
       planLabel: String,
       minRenterAge: Number,
       found: Boolean,
+      missingSince: Date,
       syncedAt: Date,
     },
     photoMatch: {

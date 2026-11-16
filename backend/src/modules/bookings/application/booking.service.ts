@@ -220,6 +220,10 @@ export class BookingService {
     if (bookingCfg.guestBookingsEnabled === false) {
       throw new ConflictError(bookingCfg.guestBookingsPausedMessage || 'We’re not taking new bookings right now. Please check back soon.', 'BOOKINGS_PAUSED');
     }
+    // Wheelbase carries the insurance, so once a dealer is set every trip is booked and paid in Wheelbase, never here.
+    if (await wheelbaseInsuranceService.dealerId()) {
+      throw new ConflictError('This car is booked through Wheelbase. Please use the booking form on the car page.', 'BOOK_ON_WHEELBASE');
+    }
 
     // Namespaced by guest so one user's key can never match, or read, another user's booking.
     const scopedKey = idempotencyKey ? `${guestId}:${idempotencyKey}` : undefined;

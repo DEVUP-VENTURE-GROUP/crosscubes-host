@@ -17,6 +17,8 @@ export const EVENTS = {
   KYC_ATTEMPT_FAILED: 'kyc.attempt_failed',
   VEHICLE_RECALL_FOUND: 'vehicle.recall_found',
   INSURANCE_STATUS_CHANGED: 'insurance.status_changed',
+  // Wheelbase has not been read for longer than staff allow; insurance shown is the last known.
+  INSURANCE_SYNC_STALE: 'insurance.sync_stale',
 
   USER_LOGGED_IN: 'user.logged_in',
 

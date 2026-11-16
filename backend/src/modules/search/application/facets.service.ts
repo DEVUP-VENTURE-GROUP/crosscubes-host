@@ -1,4 +1,5 @@
 import { VehicleModel } from '../../vehicles/infrastructure/vehicle.model';
+import { wheelbaseInsuranceService } from '../../insurance/application/wheelbase-insurance.service';
 import { HostModel } from '../../hosts/infrastructure/host.model';
 import { hubService } from '../../hubs/application/hub.service';
 
@@ -31,7 +32,12 @@ export interface MarketplaceFacets {
 }
 
 /** Only bookable supply counts — an unverified or unlisted car, or one outside a live hub, isn't a facet. */
-const bookable = async () => ({ status: 'listed', verificationStatus: 'verified', hubId: { $in: await hubService.liveHubIds() } });
+const bookable = async () => ({
+  status: 'listed',
+  verificationStatus: 'verified',
+  hubId: { $in: await hubService.liveHubIds() },
+  ...(await wheelbaseInsuranceService.guestVisibleFilter()),
+});
 
 /**
  * The real shape of the marketplace: which cities and categories actually have

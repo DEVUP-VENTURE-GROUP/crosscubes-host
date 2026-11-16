@@ -47,6 +47,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { slug: 'kyc', path: A('kyc'), apiPath: '/admin/kyc', label: 'ID Checks', group: 'People & cars', permission: 'kyc:review' },
   { slug: 'hosts', path: A('hosts'), apiPath: '/admin/hosts', label: 'City operators', group: 'People & cars', permission: 'admin:read' },
   { slug: 'vehicles', path: A('vehicles'), apiPath: '/admin/vehicles', label: 'Vehicles', group: 'People & cars', permission: 'admin:read' },
+  { slug: 'insurance', path: A('insurance'), apiPath: '/admin/insurance/wheelbase', label: 'Car Insurance', group: 'People & cars', permission: 'admin:read' },
   { slug: 'bookings', path: A('bookings'), apiPath: '/admin/bookings', label: 'Bookings', group: 'People & cars', permission: 'admin:read' },
 
   { slug: 'support', path: A('support'), apiPath: '/admin/tickets', label: 'Support Tickets', group: 'Help & safety', permission: 'ticket:manage' },

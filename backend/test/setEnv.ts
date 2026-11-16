@@ -11,3 +11,5 @@ process.env.JWT_ACCESS_SECRET = 'test_access_secret_0123456789abcdef';
 process.env.JWT_REFRESH_SECRET = 'test_refresh_secret_fedcba9876543210';
 process.env.JWT_ACCESS_TTL = '900';
 process.env.JWT_REFRESH_TTL = '2592000';
+// Keeps a developer's real dealer id in .env out of tests (dotenv never overrides a set variable).
+process.env.WHEELBASE_DEALER_ID = '';

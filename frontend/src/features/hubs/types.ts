@@ -128,6 +128,9 @@ export interface HubPayout {
   period: string;
   trips: number;
   grossCents: number;
+  /** The part of trips and grossCents booked and paid through Wheelbase. */
+  wheelbaseTrips?: number;
+  wheelbaseGrossCents?: number;
   holderShareBps: number;
   amountCents: number;
   status: 'pending' | 'paid';

@@ -248,7 +248,8 @@ describe('guests only see cars in live hubs', () => {
   it('hides a car until its hub goes live', async () => {
     await VehicleModel.init();
     const hub = await readyHub();
-    const c = await car(hub._id);
+    // Insured, as every car guests can see must be.
+    const c = await car(hub._id, HOUSTON, { wheelbase: { rentalId: 1, name: 'Camry', linkedBy: 'admin', insuranceState: 'approved', found: true, syncedAt: new Date() } });
     const search = () => searchService.searchVehicles({ ...HOUSTON, radiusKm: 30 });
     expect(await search()).toHaveLength(0);
     await hubService.setStatus(hub._id, 'live', 'hq');
