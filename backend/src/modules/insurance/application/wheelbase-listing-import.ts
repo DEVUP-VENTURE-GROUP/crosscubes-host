@@ -25,6 +25,7 @@ export type ImportOutcome = { vehicleId: string } | { skip: string };
 /** Turns one Wheelbase listing into a listed CrossCubes car under the fleet account of the city that covers it. */
 export async function importListing(l: WheelbaseListing, link: WheelbaseLink): Promise<ImportOutcome> {
   const d = l.details;
+  if (!l.live) return { skip: 'Hidden or not published in Wheelbase' };
   const lat = d.location?.lat;
   const lng = d.location?.lng;
   if (lat === undefined || lng === undefined) return { skip: 'No location on the Wheelbase listing' };

@@ -12,6 +12,8 @@ export interface WheelbaseListing {
   eligible?: boolean;
   planLabel?: string;
   minRenterAge?: number;
+  /** False when the dealer has hidden or unpublished it in Wheelbase, so it can't be booked there. */
+  live: boolean;
   /** Listing content, used to fill CrossCubes cars on import. */
   details: {
     photoUrls: string[];
@@ -83,6 +85,7 @@ export async function fetchDealerListings(dealerId: string): Promise<WheelbaseLi
       eligible: typeof a.insurance_eligible === 'boolean' ? a.insurance_eligible : undefined,
       planLabel: plan?.label || undefined,
       minRenterAge: num(a.minimum_renter_age),
+      live: a.hidden !== true && a.published !== false,
       details: (() => {
         const feats = (a.features ?? {}) as Record<string, unknown>;
         const loc = (a.location ?? {}) as Record<string, unknown>;

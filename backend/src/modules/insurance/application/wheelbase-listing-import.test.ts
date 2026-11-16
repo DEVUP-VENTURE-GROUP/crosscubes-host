@@ -45,6 +45,7 @@ const listing = (id: number, over: Record<string, unknown> = {}, details: Record
   model: 'Envista',
   insuranceState: 'approved',
   minRenterAge: 21,
+  live: true,
   ...over,
   details: {
     photoUrls: ['https://img.example/1.jpg', 'https://img.example/2.jpg'],
@@ -90,12 +91,14 @@ describe('cars come from the Wheelbase account', () => {
     listings.mockResolvedValue([
       listing(1, {}, { location: { city: 'Denver', state: 'CO', lat: 39.74, lng: -104.99 } }),
       listing(2, {}, { fuelType: undefined, seats: undefined }),
+      listing(4, { live: false }),
     ]);
     const r = await wheelbaseInsuranceService.sync(NOW);
     expect(r).toMatchObject({ imported: 0 });
     expect((r as WheelbaseSyncResult).skipped).toEqual([
       { rentalId: 1, name: '2024 Buick Envista', reason: 'Denver is not inside any CrossCubes city' },
       { rentalId: 2, name: '2024 Buick Envista', reason: 'The Wheelbase listing has no fuel type, seats' },
+      { rentalId: 4, name: '2024 Buick Envista', reason: 'Hidden or not published in Wheelbase' },
     ]);
     expect(await WheelbaseImportModel.countDocuments({})).toBe(0);
 
