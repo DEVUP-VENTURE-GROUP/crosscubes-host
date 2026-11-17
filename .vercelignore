@@ -1,0 +1,11 @@
+backend
+mobile
+docs
+**/node_modules
+**/.next
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.production
+**/*.pem
+.git

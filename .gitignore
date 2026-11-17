@@ -44,3 +44,6 @@ get-your-ride/
 !**/.env.example
 !**/.env.local.example
 !**/.env.production.example
+
+# Vercel CLI link
+.vercel
