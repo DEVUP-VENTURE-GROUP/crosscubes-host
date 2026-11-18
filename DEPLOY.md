@@ -14,7 +14,7 @@
 1. In each folder: `npm ci`, then copy the example settings file as shown.
 2. Start a local MongoDB replica set and Redis (commands are in `backend/.env.example`), then `npm run dev` in `backend/` and in each site.
 3. Use Stripe **test** keys only. With no Stripe key the API takes payments through a built-in mock.
-4. Every app has a `.env.production.example` listing what production needs; real values live only on the server and in Vercel, never in Git.
+4. Production settings are prepared as `.env.production` in each app folder (backend, frontend, admin-web, crosscubes-hub, partner-web), kept on the owner's machine only. Git and Vercel uploads both ignore them; real values live only on the server and in Vercel, never in Git.
 
 CatoDrive uses ports 3000–3030 and 8080, so both projects can run side by side.
 
@@ -55,7 +55,7 @@ sudo npm i -g pm2
 ```bash
 git clone https://github.com/DEVUP-VENTURE-GROUP/crosscubes-host.git && cd crosscubes-host/backend
 npm ci
-cp .env.production.example .env && nano .env   # fill in the blanks, see 1.3; never commit this file
+nano .env   # paste the prepared backend/.env.production here, fill in what is still empty (Stripe), see 1.3; never commit this file
 npm run build
 pm2 start dist/main.js --name crosscubes-api
 pm2 save && pm2 startup   # run the command it prints, so it survives reboots
