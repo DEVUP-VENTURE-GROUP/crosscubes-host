@@ -34,7 +34,7 @@ placeholder secrets, half-set S3). Work through the checklist and it starts.
 | Guest site | Vercel, root `frontend/` | `crosscubes.com`, `www.crosscubes.com` |
 | Partner portal | Vercel, root `partner-web/` | `partners.crosscubes.com` |
 | City operator panel | Vercel, root `crosscubes-hub/` | `hub.crosscubes.com/<secret>` |
-| HQ admin | Vercel, root `admin-web/` | `admin.crosscubes.com/<secret>` |
+| HQ admin | Vercel, root `admin-web/` | `<secret admin subdomain>.crosscubes.com/<secret>` |
 
 ---
 
@@ -72,7 +72,7 @@ Update later: `git pull && npm ci && npm run build && pm2 restart crosscubes-api
 | `WEB_URL` | `https://www.crosscubes.com` |
 | `PARTNER_WEB_URL` | `https://partners.crosscubes.com` |
 | `HUB_WEB_URL` | `https://hub.crosscubes.com/<hub slug>` |
-| `CORS_ORIGINS` | `https://crosscubes.com,https://www.crosscubes.com,https://partners.crosscubes.com,https://hub.crosscubes.com,https://admin.crosscubes.com` |
+| `CORS_ORIGINS` | `https://crosscubes.com,https://www.crosscubes.com,https://partners.crosscubes.com,https://hub.crosscubes.com,https://<secret admin subdomain>.crosscubes.com` |
 | `ADMIN_SLUG` | your secret admin path; same as the admin site's `NEXT_PUBLIC_ADMIN_SLUG` |
 | `MONGO_URI` | the CrossCubes Atlas cluster, database `crosscubes` |
 | `REDIS_URL` | the CrossCubes Redis; `REDIS_PREFIX=crosscubes` |
@@ -144,7 +144,7 @@ Every project: `NEXT_PUBLIC_API_URL=https://api.crosscubes.com/api/v1`, `NEXT_PU
 | `crosscubes-web` | `frontend/` | `crosscubes.com`, `www` | — |
 | `crosscubes-partners` | `partner-web/` | `partners.crosscubes.com` | — |
 | `crosscubes-hub` | `crosscubes-hub/` | `hub.crosscubes.com` | `CROSSCUBES_HUB_SLUG` (long random secret; the build refuses to run without it) |
-| `crosscubes-admin` | `admin-web/` | `admin.crosscubes.com` | `NEXT_PUBLIC_ADMIN_SLUG` = backend `ADMIN_SLUG` |
+| `crosscubes-admin` | `admin-web/` | `<secret admin subdomain>.crosscubes.com` (never `admin.`) | `NEXT_PUBLIC_ADMIN_SLUG` = backend `ADMIN_SLUG` |
 
 Keep the slugs out of this repo.
 
@@ -158,7 +158,7 @@ Keep the slugs out of this repo.
 | CNAME | `@`, `www` | Vercel target for `crosscubes-web` | per Vercel |
 | CNAME | `partners` | Vercel target for `crosscubes-partners` | per Vercel |
 | CNAME | `hub` | Vercel target for `crosscubes-hub` | per Vercel |
-| CNAME | `admin` | Vercel target for `crosscubes-admin` | per Vercel |
+| CNAME | `<secret admin subdomain>` | Vercel target for `crosscubes-admin` | per Vercel |
 
 With the orange cloud on, set SSL/TLS to **Full (strict)**.
 
@@ -168,7 +168,7 @@ With the orange cloud on, set SSL/TLS to **Full (strict)**.
 Browsers upload photos and papers straight to S3, so the bucket must allow the sites:
 ```json
 [{
-  "AllowedOrigins": ["https://crosscubes.com", "https://www.crosscubes.com", "https://partners.crosscubes.com", "https://hub.crosscubes.com", "https://admin.crosscubes.com"],
+  "AllowedOrigins": ["https://crosscubes.com", "https://www.crosscubes.com", "https://partners.crosscubes.com", "https://hub.crosscubes.com", "https://<secret admin subdomain>.crosscubes.com"],
   "AllowedMethods": ["PUT", "GET"],
   "AllowedHeaders": ["*"],
   "MaxAgeSeconds": 3000
@@ -190,7 +190,7 @@ Browsers upload photos and papers straight to S3, so the bucket must allow the s
 ```bash
 curl https://api.crosscubes.com/api/v1/system/ready     # {"mongo":true,"redis":true}
 ```
-1. Sign in to `admin.crosscubes.com/<ADMIN_SLUG>/login`.
+1. Sign in to `<secret admin subdomain>.crosscubes.com/<ADMIN_SLUG>/login`.
 2. Send a test email and text: `POST /api/v1/notifications/test` (super_admin).
 3. One city licence paid with a real card, then refunded.
 4. One partner sign-up through to the dashboard.
