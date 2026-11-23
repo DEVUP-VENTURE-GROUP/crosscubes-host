@@ -24,7 +24,6 @@ export interface PlatformPublicConfig {
   /** The published Asset Partner management fee; the owner keeps the rest. */
   assetPartner?: { managementFeeBps: number; minSeasonMonths?: number; insuranceMonthlyCents?: number; detailingMonthlyCents?: number; deductibleCapCents?: number; maintenanceApprovalCents?: number; payoutDayOfMonth?: number };
   /** Whether admin has the testing notice switched on. */
-  siteNotice?: { enabled: boolean };
   auth?: { phoneSignIn: boolean };
   /** Protection tiers a guest can buy at checkout; priced per day in cents. */
   protection: { code: string; label: string; description: string; pricePerDay: number }[];
