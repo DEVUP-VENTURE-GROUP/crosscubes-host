@@ -122,9 +122,11 @@ export async function fetchBlockedRanges(rentalId: number, from: string, to: str
     throw new ExternalServiceError(`Wheelbase unreachable: ${(err as Error).message}`);
   }
   if (!res.ok) throw new ExternalServiceError(`Wheelbase availability ${res.status}`);
-  const body = (await res.json().catch(() => null)) as { response?: unknown } | null;
-  if (!body || !Array.isArray(body.response)) throw new ExternalServiceError('Wheelbase availability: unexpected response');
-  return body.response
+  const body = (await res.json().catch(() => null)) as unknown;
+  // The API answers with a bare list; older widget builds read it wrapped in `response`.
+  const rows = Array.isArray(body) ? body : Array.isArray((body as { response?: unknown } | null)?.response) ? (body as { response: unknown[] }).response : null;
+  if (!rows) throw new ExternalServiceError('Wheelbase availability: unexpected response');
+  return rows
     .map((r) => r as { from?: unknown; to?: unknown })
     .map((r) => ({ from: String(r.from ?? '').slice(0, 10), to: String(r.to ?? '').slice(0, 10) }))
     .filter((r) => DAY.test(r.from) && DAY.test(r.to) && r.from <= r.to);
