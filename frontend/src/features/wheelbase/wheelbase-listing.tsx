@@ -42,7 +42,7 @@ function tokenHex(token: string): string | undefined {
 
 type Theme = Record<'primary-color' | 'text-color' | 'text-secondary-color' | 'surface-color' | 'card-color' | 'border-color', string | undefined>;
 
-export function WheelbaseListing({ dealerId, rentalId }: { dealerId: string; rentalId: number }) {
+export function WheelbaseListing({ dealerId, rentalId, showDetails = false }: { dealerId: string; rentalId: number; showDetails?: boolean }) {
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [theme, setTheme] = useState<Theme | null>(null);
 
@@ -86,8 +86,7 @@ export function WheelbaseListing({ dealerId, rentalId }: { dealerId: string; ren
         createElement('listing-details', {
           'dealer-id': dealerId,
           'rental-id': String(rentalId),
-          'hide-description': 'true',
-          'hide-features': 'true',
+          ...(showDetails ? {} : { 'hide-description': 'true', 'hide-features': 'true' }),
           ...theme,
         })
       )}

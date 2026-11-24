@@ -317,6 +317,24 @@ export default function VehicleDetailPage() {
   if (isLoading) return <Skeleton className="h-[70vh] w-full" />;
   if (isError || !v) return <ErrorState message="Vehicle not found." />;
 
+  // A Wheelbase car's page is the Wheelbase listing itself: photos, details, dates, price and booking all come from Wheelbase.
+  if (v.wheelbaseBooking) {
+    const { dealerId, rentalId } = v.wheelbaseBooking;
+    return (
+      <div className="space-y-10 pb-20">
+        {rentalId && v.bookable !== false ? (
+          <WheelbaseListing dealerId={dealerId} rentalId={rentalId} showDetails />
+        ) : (
+          <div role="status" className="rounded-lg border border-border bg-card p-6">
+            <h1 className="text-xl font-semibold">{v.listing.title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">This car isn’t available to book right now. Please choose another car.</p>
+          </div>
+        )}
+        <SimilarCars vehicleId={id} />
+      </div>
+    );
+  }
+
   const photos = v.photos?.length ? v.photos : [];
   // Delivery is offered only to the host's named, priced spots; there is no free-typed address or airport.
   const activeDeliveryLocations = (v.listing.deliveryLocations ?? []).filter((l) => l.enabled);
@@ -756,30 +774,7 @@ export default function VehicleDetailPage() {
         promo code are component state, and a duplicated tree is how the two
         surfaces silently drift apart.
       */}
-      {v.wheelbaseBooking ? (
-        <div className="h-fit space-y-4 rounded-lg border border-border bg-card p-5 lg:sticky lg:top-24 sm:p-6">
-          <span className="flex items-baseline gap-1">
-            <DailyPrice amount={v.pricing.dailyPrice} currency={v.pricing.currency} className="text-2xl font-extrabold tracking-tight" />
-            <span className="text-muted-foreground">/ day</span>
-          </span>
-          {v.wheelbaseBooking.rentalId && v.bookable !== false ? (
-            <>
-              <Button className="w-full rounded-xl py-6 text-base font-bold" size="lg" onClick={() => document.getElementById('book')?.scrollIntoView({ behavior: 'smooth' })}>
-                Check dates and book
-              </Button>
-              <p className="flex items-start gap-2 text-sm text-muted-foreground">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                Booking, payment and insurance are handled by Wheelbase, our insurance partner.
-              </p>
-            </>
-          ) : (
-            <p role="status" className="rounded-lg bg-subtle p-3 text-center text-sm font-medium">This car isn’t available to book right now. Please choose another car.</p>
-          )}
-          {v.insurance?.minRenterAge ? (
-            <p className="text-xs text-muted-foreground">Drivers must be {v.insurance.minRenterAge} or older to be insured on this car.</p>
-          ) : null}
-        </div>
-      ) : !bookings.open ? (
+      {!bookings.open ? (
         <div role="status" className="h-fit rounded-lg border border-border bg-card p-5 lg:sticky lg:top-24 sm:p-6">
           <p className="flex items-center gap-2 font-semibold"><CalendarX2 className="h-5 w-5 text-muted-foreground" aria-hidden />Bookings are paused</p>
           <p className="mt-2 text-sm text-muted-foreground">{bookings.message}</p>
@@ -1242,15 +1237,7 @@ export default function VehicleDetailPage() {
         </div>
         {/* Always opens the sheet - never books straight from here. The guest
             has to see what they are agreeing to and what it costs. */}
-        {v.wheelbaseBooking ? (
-          v.wheelbaseBooking.rentalId && v.bookable !== false ? (
-            <Button size="lg" className="shrink-0 rounded-xl px-7 py-6 text-[17px] font-bold" onClick={() => document.getElementById('book')?.scrollIntoView({ behavior: 'smooth' })}>
-              Check dates
-            </Button>
-          ) : (
-            <p className="max-w-[55%] text-end text-[13px] font-medium text-muted-foreground">Not available to book</p>
-          )
-        ) : !bookings.open ? (
+        {!bookings.open ? (
           <p className="max-w-[55%] text-end text-[13px] font-medium text-muted-foreground">Bookings are paused</p>
         ) : (
         <Button
@@ -1262,16 +1249,6 @@ export default function VehicleDetailPage() {
         </Button>
         )}
       </div>
-
-      {v.wheelbaseBooking?.rentalId && v.bookable !== false && (
-        <section id="book" aria-labelledby="book-heading" className="mt-10 scroll-mt-24">
-          <h2 id="book-heading" className="text-2xl font-bold tracking-tight">Book this car</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Pick your dates, then finish booking and payment with Wheelbase in a new tab.</p>
-          <div className="mt-4">
-            <WheelbaseListing dealerId={v.wheelbaseBooking.dealerId} rentalId={v.wheelbaseBooking.rentalId} />
-          </div>
-        </section>
-      )}
 
       {/* Similar cars - full-width strip under the two-column layout */}
       <SimilarCars vehicleId={id} start={start || undefined} end={end || undefined} days={days} />
